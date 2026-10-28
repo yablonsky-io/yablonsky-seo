@@ -1,0 +1,355 @@
+{
+  "schema": "yablonsky.product-translation-progress.v1",
+  "version": "2026-10-12",
+  "catalog": "5.82.0-positive-2385",
+  "source_catalog_sha256": "9b8a9135d976487e8962be57497a316fd8b71ee542a537fd55d8f41316c10362",
+  "source_messages": 2385,
+  "policy": "YSEO 5.82.0 reconciliation review candidate: all 36 product languages have full 2385-key technical coverage. PO/MO hashes unchanged from final v1.18 localization. Editorial, WordPress integration, security and performance gates pending.",
+  "waves": [
+    {
+      "id": "A",
+      "state": "complete",
+      "languages": [
+        "lt",
+        "uk",
+        "de",
+        "pl",
+        "fr",
+        "es",
+        "ru",
+        "it",
+        "pt",
+        "nl",
+        "sv",
+        "da",
+        "fi",
+        "et"
+      ],
+      "source_messages": 2385,
+      "translated_messages_by_locale": {
+        "lt": 2385,
+        "uk": 2385,
+        "de": 2385,
+        "pl": 2385,
+        "fr": 2385,
+        "es": 2385,
+        "ru": 2385,
+        "it": 2385,
+        "pt": 2385,
+        "nl": 2385,
+        "sv": 2385,
+        "da": 2385,
+        "fi": 2385,
+        "et": 2385
+      },
+      "complete_locales": [
+        "lt",
+        "uk",
+        "de",
+        "pl",
+        "fr",
+        "es",
+        "ru",
+        "it",
+        "pt",
+        "nl",
+        "sv",
+        "da",
+        "fi",
+        "et"
+      ],
+      "partial_locales": [],
+      "runtime_fallback": "English source only for locales outside physically completed packs or unexpected missing runtime keys"
+    },
+    {
+      "id": "B",
+      "state": "complete",
+      "languages": [
+        "zh-Hans",
+        "hi",
+        "ar",
+        "bn",
+        "ur",
+        "id",
+        "ja",
+        "bg",
+        "hr",
+        "cs",
+        "el",
+        "hu",
+        "ga",
+        "lv",
+        "mt",
+        "ro",
+        "sk",
+        "sl",
+        "tr",
+        "zh-Hant",
+        "ko"
+      ],
+      "source_messages": 2385,
+      "translated_messages_by_locale": {
+        "zh-Hans": 2385,
+        "hi": 2385,
+        "ar": 2385,
+        "bn": 2385,
+        "ur": 2385,
+        "id": 2385,
+        "ja": 2385,
+        "bg": 2385,
+        "hr": 2385,
+        "cs": 2385,
+        "el": 2385,
+        "hu": 2385,
+        "ga": 2385,
+        "lv": 2385,
+        "mt": 2385,
+        "ro": 2385,
+        "sk": 2385,
+        "sl": 2385,
+        "tr": 2385,
+        "zh-Hant": 2385,
+        "ko": 2385
+      },
+      "complete_locales": [
+        "zh-Hans",
+        "hi",
+        "ar",
+        "bn",
+        "ur",
+        "id",
+        "ja",
+        "bg",
+        "hr",
+        "cs",
+        "el",
+        "hu",
+        "ga",
+        "lv",
+        "mt",
+        "ro",
+        "sk",
+        "sl",
+        "tr",
+        "zh-Hant",
+        "ko"
+      ],
+      "partial_locales": [],
+      "runtime_fallback": "English source only for expansion locales not yet physically completed or unexpected missing runtime keys"
+    }
+  ],
+  "locales": [
+    {
+      "code": "lt",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "uk",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "de",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "pl",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "fr",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "es",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ru",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "it",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "pt",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "nl",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "sv",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "da",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "fi",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "et",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "zh-Hans",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "hi",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ar",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385,
+      "rtl": true
+    },
+    {
+      "code": "bn",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ur",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385,
+      "rtl": true
+    },
+    {
+      "code": "id",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ja",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "bg",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "hr",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "cs",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "el",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "hu",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ga",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "lv",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "mt",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ro",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "sk",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "sl",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "tr",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "zh-Hant",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    },
+    {
+      "code": "ko",
+      "state": "bundled-complete",
+      "translated_messages": 2385,
+      "source_messages": 2385
+    }
+  ]
+}

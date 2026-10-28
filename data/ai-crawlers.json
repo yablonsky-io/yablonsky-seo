@@ -1,0 +1,163 @@
+{
+  "registry_version": "2026-10-27.r5",
+  "crawlers": [
+    {
+      "agent": "Googlebot",
+      "operator": "Google",
+      "purpose": "search",
+      "label": "Google Search crawler; Cloudflare classifies it as mixed-use at the edge",
+      "evidence_level": "verified_platform",
+      "source": "https://blog.cloudflare.com/accountable-mixed-use-ai-crawlers/",
+      "last_verified_at": "2026-09-20",
+      "mixed_use": true,
+      "control_note": "Use Google-Extended for documented training/data-use control without blocking Google Search.",
+      "accountable": true
+    },
+    {
+      "agent": "Google-Extended",
+      "operator": "Google",
+      "purpose": "training",
+      "label": "Google model-training and Gemini grounding control token",
+      "evidence_level": "verified_direct",
+      "source": "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers",
+      "last_verified_at": "2026-09-20",
+      "control_note": "Control token only; it does not have a separate HTTP crawler user agent and does not affect Google Search.",
+      "accountable": true
+    },
+    {
+      "agent": "Bingbot",
+      "operator": "Microsoft",
+      "purpose": "search",
+      "label": "Bing Search crawler; Cloudflare classifies it as mixed-use at the edge",
+      "evidence_level": "verified_platform",
+      "source": "https://blog.cloudflare.com/accountable-mixed-use-ai-crawlers/",
+      "last_verified_at": "2026-09-20",
+      "mixed_use": true,
+      "control_note": "Do not infer that an edge Training=Block is search-safe for Bingbot.",
+      "accountable": true
+    },
+    {
+      "agent": "Applebot",
+      "operator": "Apple",
+      "purpose": "search",
+      "label": "Apple Search, Siri, Spotlight and Safari discovery",
+      "evidence_level": "verified_direct",
+      "source": "https://support.apple.com/en-us/119829",
+      "last_verified_at": "2026-09-20",
+      "mixed_use": true,
+      "control_note": "Use Applebot-Extended for foundation-model training opt-out without changing Apple Search eligibility.",
+      "accountable": true
+    },
+    {
+      "agent": "Applebot-Extended",
+      "operator": "Apple",
+      "purpose": "training",
+      "label": "Apple foundation-model data-use control token",
+      "evidence_level": "verified_direct",
+      "source": "https://support.apple.com/en-us/119829",
+      "last_verified_at": "2026-09-20",
+      "control_note": "Control token only; Apple says it does not change Apple Search ranking eligibility.",
+      "accountable": true
+    },
+    {
+      "agent": "OAI-SearchBot",
+      "operator": "OpenAI",
+      "purpose": "search",
+      "label": "ChatGPT search indexing",
+      "evidence_level": "verified_direct",
+      "source": "https://help.openai.com/en/articles/12627856-publishers-and-developers-faq",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "OAI-AdsBot",
+      "operator": "OpenAI",
+      "purpose": "ads",
+      "label": "ChatGPT advertising landing page validation",
+      "evidence_level": "verified_direct",
+      "source": "https://help.openai.com/en/articles/20001243-advertiser-guidance-for-allowing-openai-web-crawlers",
+      "last_verified_at": "2026-10-27",
+      "control_note": "Advertising crawler. Keep separate from ChatGPT search and model training."
+    },
+    {
+      "agent": "GPTBot",
+      "operator": "OpenAI",
+      "purpose": "training",
+      "label": "OpenAI model training",
+      "evidence_level": "verified_direct",
+      "source": "https://help.openai.com/en/articles/12627856-publishers-and-developers-faq",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "Claude-SearchBot",
+      "operator": "Anthropic",
+      "purpose": "search",
+      "label": "Claude search indexing",
+      "evidence_level": "verified_direct",
+      "source": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "Claude-User",
+      "operator": "Anthropic",
+      "purpose": "agent",
+      "label": "Claude user-directed retrieval",
+      "evidence_level": "verified_direct",
+      "source": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "ClaudeBot",
+      "operator": "Anthropic",
+      "purpose": "training",
+      "label": "Anthropic model training",
+      "evidence_level": "verified_direct",
+      "source": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "PerplexityBot",
+      "operator": "Perplexity",
+      "purpose": "search",
+      "label": "Perplexity search indexing",
+      "evidence_level": "verified_direct",
+      "source": "https://www.perplexity.ai/help-center/en/articles/10354969-how-does-perplexity-follow-robots-txt",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "Perplexity-User",
+      "operator": "Perplexity",
+      "purpose": "agent",
+      "label": "Perplexity user-directed retrieval",
+      "evidence_level": "verified_direct",
+      "source": "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+      "last_verified_at": "2026-09-06"
+    },
+    {
+      "agent": "MistralAI-Index",
+      "operator": "Mistral AI",
+      "purpose": "search",
+      "label": "Mistral search indexing",
+      "evidence_level": "verified_direct",
+      "source": "https://docs.mistral.ai/robots",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "MistralAI-User",
+      "operator": "Mistral AI",
+      "purpose": "agent",
+      "label": "Mistral user-directed retrieval",
+      "evidence_level": "verified_direct",
+      "source": "https://docs.mistral.ai/robots",
+      "last_verified_at": "2026-09-02"
+    },
+    {
+      "agent": "MistralAI-Training",
+      "operator": "Mistral AI",
+      "purpose": "training",
+      "label": "Mistral model training",
+      "evidence_level": "verified_direct",
+      "source": "https://docs.mistral.ai/robots",
+      "last_verified_at": "2026-09-02"
+    }
+  ]
+}

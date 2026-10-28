@@ -1,0 +1,263 @@
+{
+  "schema": "yablonsky.product-translation-status.v1",
+  "version": "2026-10-12",
+  "catalog": "5.82.0-positive-2385",
+  "policy": "YSEO 5.82.0 review candidate: 5.81.0 functional/positive-language source, 35 original byte-identical 2385-key PO/MO packs + English source = 36/36. Full WordPress, performance, security and plugin-directory release gates are pending.",
+  "source_catalog_sha256": "9b8a9135d976487e8962be57497a316fd8b71ee542a537fd55d8f41316c10362",
+  "locales": [
+    {
+      "code": "en",
+      "tier": "core",
+      "status": "source",
+      "complete": true,
+      "pack": ""
+    },
+    {
+      "code": "zh-Hans",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "zh_CN"
+    },
+    {
+      "code": "hi",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "hi_IN"
+    },
+    {
+      "code": "es",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "es_ES"
+    },
+    {
+      "code": "fr",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "fr_FR"
+    },
+    {
+      "code": "ar",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ar",
+      "rtl": true
+    },
+    {
+      "code": "bn",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "bn_BD"
+    },
+    {
+      "code": "pt",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "pt_PT"
+    },
+    {
+      "code": "ru",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ru_RU"
+    },
+    {
+      "code": "ur",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ur",
+      "rtl": true
+    },
+    {
+      "code": "id",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "id_ID"
+    },
+    {
+      "code": "ja",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ja"
+    },
+    {
+      "code": "de",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "de_DE"
+    },
+    {
+      "code": "it",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "it_IT"
+    },
+    {
+      "code": "nl",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "nl_NL"
+    },
+    {
+      "code": "pl",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "pl_PL"
+    },
+    {
+      "code": "bg",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "bg_BG"
+    },
+    {
+      "code": "hr",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "hr"
+    },
+    {
+      "code": "cs",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "cs_CZ"
+    },
+    {
+      "code": "da",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "da_DK"
+    },
+    {
+      "code": "et",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "et_EE"
+    },
+    {
+      "code": "fi",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "fi_FI"
+    },
+    {
+      "code": "el",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "el"
+    },
+    {
+      "code": "hu",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "hu_HU"
+    },
+    {
+      "code": "ga",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ga"
+    },
+    {
+      "code": "lv",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "lv"
+    },
+    {
+      "code": "lt",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "lt_LT"
+    },
+    {
+      "code": "mt",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "mlt"
+    },
+    {
+      "code": "ro",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ro_RO"
+    },
+    {
+      "code": "sk",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "sk_SK"
+    },
+    {
+      "code": "sl",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "sl_SI"
+    },
+    {
+      "code": "sv",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "sv_SE"
+    },
+    {
+      "code": "uk",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "uk"
+    },
+    {
+      "code": "tr",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "tr_TR"
+    },
+    {
+      "code": "zh-Hant",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "zh_TW"
+    },
+    {
+      "code": "ko",
+      "tier": "core",
+      "status": "bundled-complete",
+      "complete": true,
+      "pack": "ko_KR"
+    }
+  ]
+}

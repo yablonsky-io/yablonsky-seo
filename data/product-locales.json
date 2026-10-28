@@ -1,0 +1,321 @@
+{
+  "schema": "yablonsky.product-locales.v1",
+  "version": "2026-10-08",
+  "policy": "All 36 listed languages are first-class mandatory YSEO product locales with the same completeness contract; WordPress locale aliases may share one reviewed translation catalog only when language semantics match Runtime pack identifiers follow current WordPress/GlotPress wp_locale values; Maltese product code mt maps to WordPress runtime locale mlt.",
+  "locales": [
+    {
+      "code": "en",
+      "name": "English",
+      "wordpress": [
+        "en_US",
+        "en_GB",
+        "en_CA",
+        "en_AU",
+        "en_NZ"
+      ],
+      "tier": "core",
+      "source": true
+    },
+    {
+      "code": "zh-Hans",
+      "name": "中文（简体）",
+      "wordpress": [
+        "zh_CN",
+        "zh_SG"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "zh-Hant",
+      "name": "中文（繁體）",
+      "wordpress": [
+        "zh_TW",
+        "zh_HK"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "hi",
+      "name": "हिन्दी",
+      "wordpress": [
+        "hi_IN"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "es",
+      "name": "Español",
+      "wordpress": [
+        "es_ES",
+        "es_MX",
+        "es_AR",
+        "es_CL",
+        "es_CO",
+        "es_PE",
+        "es_VE",
+        "es_CR",
+        "es_GT"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "fr",
+      "name": "Français",
+      "wordpress": [
+        "fr_FR",
+        "fr_BE",
+        "fr_CA"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "ar",
+      "name": "العربية",
+      "wordpress": [
+        "ar"
+      ],
+      "tier": "core",
+      "rtl": true
+    },
+    {
+      "code": "bn",
+      "name": "বাংলা",
+      "wordpress": [
+        "bn_BD"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "pt",
+      "name": "Português",
+      "wordpress": [
+        "pt_PT",
+        "pt_BR"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "ru",
+      "name": "Русский",
+      "wordpress": [
+        "ru_RU"
+      ],
+      "tier": "core",
+      "pack": "ru_RU"
+    },
+    {
+      "code": "ur",
+      "name": "اردو",
+      "wordpress": [
+        "ur"
+      ],
+      "tier": "core",
+      "rtl": true
+    },
+    {
+      "code": "id",
+      "name": "Bahasa Indonesia",
+      "wordpress": [
+        "id_ID"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "ja",
+      "name": "日本語",
+      "wordpress": [
+        "ja"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "de",
+      "name": "Deutsch",
+      "wordpress": [
+        "de_DE",
+        "de_AT",
+        "de_CH",
+        "de_DE_formal"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "it",
+      "name": "Italiano",
+      "wordpress": [
+        "it_IT"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "nl",
+      "name": "Nederlands",
+      "wordpress": [
+        "nl_NL",
+        "nl_BE",
+        "nl_NL_formal"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "pl",
+      "name": "Polski",
+      "wordpress": [
+        "pl_PL"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "bg",
+      "name": "Български",
+      "wordpress": [
+        "bg_BG"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "hr",
+      "name": "Hrvatski",
+      "wordpress": [
+        "hr"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "cs",
+      "name": "Čeština",
+      "wordpress": [
+        "cs_CZ"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "da",
+      "name": "Dansk",
+      "wordpress": [
+        "da_DK"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "et",
+      "name": "Eesti",
+      "wordpress": [
+        "et"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "fi",
+      "name": "Suomi",
+      "wordpress": [
+        "fi"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "el",
+      "name": "Ελληνικά",
+      "wordpress": [
+        "el"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "hu",
+      "name": "Magyar",
+      "wordpress": [
+        "hu_HU"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "ga",
+      "name": "Gaeilge",
+      "wordpress": [
+        "ga"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "lv",
+      "name": "Latviešu",
+      "wordpress": [
+        "lv"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "lt",
+      "name": "Lietuvių",
+      "wordpress": [
+        "lt_LT"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "mt",
+      "name": "Malti",
+      "wordpress": [
+        "mlt"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "ro",
+      "name": "Română",
+      "wordpress": [
+        "ro_RO"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "sk",
+      "name": "Slovenčina",
+      "wordpress": [
+        "sk_SK"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "sl",
+      "name": "Slovenščina",
+      "wordpress": [
+        "sl_SI"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "sv",
+      "name": "Svenska",
+      "wordpress": [
+        "sv_SE"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "uk",
+      "name": "Українська",
+      "wordpress": [
+        "uk"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "tr",
+      "name": "Türkçe",
+      "wordpress": [
+        "tr_TR"
+      ],
+      "tier": "core"
+    },
+    {
+      "code": "ko",
+      "name": "한국어",
+      "wordpress": [
+        "ko_KR"
+      ],
+      "tier": "core"
+    }
+  ]
+}
