@@ -30,7 +30,7 @@ Yablonsky AI can support selected assisted workflows. Core local SEO features do
 
 ## Installation
 
-1. Obtain the installable `Yablonsky-SEO-5.86.0.zip` from the official release once published.
+1. Download the [installable yablonsky-seo-5.86.0.zip](https://github.com/yablonsky-io/yablonsky-seo/releases/download/v5.86.0/yablonsky-seo-5.86.0.zip).
 2. Open **WordPress Admin → Plugins → Add New → Upload Plugin**.
 3. Install and activate the plugin.
 4. Review the Yablonsky SEO dashboard and configure your preferred indexing and crawler policies.
@@ -43,7 +43,7 @@ GitHub's automatic **Code → Download ZIP** is a source archive, not the offici
 - WordPress 6.8 or later; PHP 7.4 or later, according to plugin metadata.
 - Version 5.86.0 passed the product owner's live WordPress Plugin Check with **“Checks complete. No errors found.”**
 - WordPress.org review and listing approval are separate steps.
-- GitHub release binaries will be linked when published.
+- Installable package: [Download yablonsky-seo-5.86.0.zip](https://github.com/yablonsky-io/yablonsky-seo/releases/download/v5.86.0/yablonsky-seo-5.86.0.zip).
 
 ## Documentation and support
 
