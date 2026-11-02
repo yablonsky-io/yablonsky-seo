@@ -1,0 +1,44 @@
+name: Maintain stable Yablonsky SEO download
+
+on:
+  push:
+    paths:
+      - .github/workflows/yseo-stable-download.yml
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yseo-stable-release-download
+  cancel-in-progress: false
+
+jobs:
+  publish-stable-asset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror installable release asset to a stable filename
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="$(gh release view --repo "$GH_REPO" --json tagName --jq '.tagName')"
+          test -n "$tag"
+          out="$(mktemp -d)"
+          gh release download "$tag" --repo "$GH_REPO" --pattern 'yablonsky-seo-*.zip' --dir "$out"
+          shopt -s nullglob
+          files=( "$out"/yablonsky-seo-[0-9]*.[0-9]*.[0-9]*.zip )
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "Expected exactly one versioned plugin ZIP, found ${#files[@]}" >&2
+            exit 1
+          fi
+          unzip -tq "${files[0]}" > /dev/null
+          cp "${files[0]}" "$out/yablonsky-seo.zip"
+          echo "Stable alias SHA256:"
+          sha256sum "${files[0]}" "$out/yablonsky-seo.zip"
+          gh release upload "$tag" "$out/yablonsky-seo.zip" --repo "$GH_REPO" --clobber
+          echo "Stable latest URL: https://github.com/$GH_REPO/releases/latest/download/yablonsky-seo.zip"
