@@ -1,60 +1,46 @@
 # Yablonsky SEO — GEO & AEO
 
-**Search visibility, structured data and AI discovery for WordPress.**
+**Be found. Be understood. Be the answer.**
 
-Yablonsky SEO brings technical search optimization, content discovery, structured data and optional AI-powered workflows into one WordPress plugin.
+Yablonsky SEO combines technical SEO, structured data, search visibility workflows, generative engine optimization (GEO) and answer engine optimization (AEO) in one WordPress workspace.
 
-**Version:** 5.86.0 · **Plugin slug:** `yablonsky-seo` · **License:** GPL-2.0-or-later
+**[Explore the Yablonsky SEO product page](https://yablonsky.io/seo/)** · **[Latest release and installer](https://github.com/yablonsky-io/yablonsky-seo/releases/latest)**
 
-**[Explore Yablonsky SEO — GEO & AEO](https://yablonsky.io/seo/)**
+## Search appearance and content optimization
 
-## SEO and search visibility
+Manage SEO titles and descriptions, canonical URLs, indexing directives, and social metadata. Review content analysis, readability and answer-readiness indicators, then apply controlled metadata edits through the Bulk SEO Editor.
 
-Manage SEO titles and descriptions, canonical URLs, robots directives, XML sitemaps, social metadata and indexing-related settings. The plugin includes bulk editing for content metadata, internal-link workflows, redirects and 404 diagnostics.
+## Technical SEO and structured data
 
-## Structured data, GEO and AEO
+Use XML sitemaps, Schema.org / JSON-LD, breadcrumbs, redirect management, 404 monitoring and internal-link workflows. Eligible public content can be represented through machine-readable discovery resources, with protection for private and password-restricted content.
 
-Use structured data based on Schema.org and JSON-LD to describe content more clearly to compatible search services. Manage machine-readable discovery signals and crawler policies for search, AI answers and model training where documented by providers. The plugin does not promise rankings, rich results or AI citations.
+## GEO, AEO and crawler policies
 
-## Search performance and technical diagnostics
+Review content structure and readiness for answer-oriented and AI-assisted discovery. Manage documented crawler preferences for search, AI use and model training where supported, including an independent `OAI-AdsBot` policy. These settings do not guarantee indexing, ranking, AI citations or inclusion in specific AI search experiences.
 
-Review organic landing signals and relevant technical SEO indicators. Optional integrations depend on the connected services and data they actually make available. Unverified external crawler identity or CDN/WAF reachability is reported as unknown rather than as a successful check.
+## WooCommerce, international SEO and Search Performance
 
-## WooCommerce and multilingual SEO
+Support product SEO, commerce discovery feeds, language-aware signals with compatible providers and locally aggregated search landing insights. An optional Google Site Kit bridge can show authorized Search Console evidence.
 
-Support product discovery and technical SEO for WooCommerce sites, with language-aware indexing and URL handling where compatible multilingual providers are configured. Localized administration resources are bundled with the plugin.
+## Safe migration and optional AI workflows
 
-## Optional AI capabilities
+Inspect supported SEO providers in Shadow mode, review migration evidence and backups, then explicitly control public SEO authority. Optional Yablonsky AI assists with selected content, metadata and image workflows; the core local SEO functions do not require a remote AI subscription.
 
-Yablonsky AI can support selected assisted workflows. Core local SEO features do not require a paid Yablonsky AI key.
+## Install
 
-## Installation
+1. Open the **[latest GitHub Release](https://github.com/yablonsky-io/yablonsky-seo/releases/latest)**.
+2. Download the **versioned `yablonsky-seo-*.zip` asset** under **Assets**, not GitHub's automatic source-code ZIP.
+3. In WordPress Admin, choose **Plugins → Add New Plugin → Upload Plugin**.
+4. Install, activate, review Settings, then configure SEO authority and optional services as needed.
 
-1. Download the [installable yablonsky-seo-5.86.0.zip](https://github.com/yablonsky-io/yablonsky-seo/releases/download/v5.86.0/yablonsky-seo-5.86.0.zip).
-2. Open **WordPress Admin → Plugins → Add New → Upload Plugin**.
-3. Install and activate the plugin.
-4. Review the Yablonsky SEO dashboard and configure your preferred indexing and crawler policies.
-5. When migrating from another SEO plugin, review the migration and output-authority settings before switching.
+WordPress and PHP requirements, compatibility notes and technical release changes are recorded in the plugin headers, `readme.txt` and GitHub Releases. Release numbers belong there, not in this evergreen overview.
 
-GitHub's automatic **Code → Download ZIP** is a source archive, not the official installable release asset.
+## Documentation, support and license
 
-## Requirements and release status
+The [official product landing](https://yablonsky.io/seo/) explains the main capabilities and benefits. For development issues or bug reports, use [GitHub Issues](https://github.com/yablonsky-io/yablonsky-seo/issues). No unfinished documentation URLs are advertised.
 
-- WordPress 6.8 or later; PHP 7.4 or later, according to plugin metadata.
-- Version 5.86.0 passed the product owner's live WordPress Plugin Check with **“Checks complete. No errors found.”**
-- WordPress.org review and listing approval are separate steps.
-- Installable package: [Download yablonsky-seo-5.86.0.zip](https://github.com/yablonsky-io/yablonsky-seo/releases/download/v5.86.0/yablonsky-seo-5.86.0.zip).
-
-## Documentation and support
-
-This README summarizes the main product areas. Setup help, feature descriptions, FAQs and support entry points will be published through the [official Yablonsky SEO product page](https://yablonsky.io/seo/). A shared documentation platform may later use a separate site-wide `/docs/` namespace; no unfinished documentation URLs are advertised here.
-
-For issues relating to this repository, use GitHub Issues.
-
-## License
-
-GNU GPL version 2 or later. See [LICENSE](LICENSE).
+Licensed under GPL-2.0-or-later; see [LICENSE](LICENSE).
 
 ---
 
-Developed and maintained by **[Yablonsky.io](https://yablonsky.io/)** · [Yablonsky SEO — GEO & AEO](https://yablonsky.io/seo/)
+Developed and maintained by [Yablonsky.io](https://yablonsky.io/) · [Yablonsky SEO — GEO & AEO](https://yablonsky.io/seo/)
