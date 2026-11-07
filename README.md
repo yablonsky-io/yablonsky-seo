@@ -20,7 +20,7 @@ Review content structure and readiness for answer-oriented and AI-assisted disco
 
 ## WooCommerce, international SEO and Search Performance
 
-Support product SEO, commerce discovery feeds, language-aware signals with compatible providers and locally aggregated search landing insights. An optional Google Site Kit bridge can show authorized Search Console evidence.
+Support product SEO, commerce discovery feeds, language-aware signals with compatible providers and locally aggregated search landing insights. For translating the underlying posts, pages, and products, explore the independent [Yablonsky Multilingual plugin for WordPress](https://yablonsky.io/multilingual/). An optional Google Site Kit bridge can show authorized Search Console evidence.
 
 ## Safe migration and optional AI workflows
 
