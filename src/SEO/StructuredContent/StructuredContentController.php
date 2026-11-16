@@ -27,7 +27,9 @@ final class StructuredContentController {
     public function renderFaq( array $atts, ?string $content = null ): string {
         unset( $atts );
         if ( null === $content ) { return ''; }
-        return '<section class="yseo-faq">' . do_shortcode( $content ) . '</section>';
+        // Nested third-party shortcodes may return untrusted HTML. Sanitize the
+        // complete expanded fragment before returning it to the_content.
+        return '<section class="yseo-faq">' . wp_kses_post( do_shortcode( $content ) ) . '</section>';
     }
 
     /** @param array<string,string> $atts */
@@ -43,10 +45,11 @@ final class StructuredContentController {
     public function renderHowTo( array $atts, ?string $content = null ): string {
         $atts = shortcode_atts( array( 'name' => '', 'total_time' => '' ), $atts, 'yseo_howto' );
         $name = trim( wp_strip_all_tags( (string) $atts['name'], true ) );
-        $content = null === $content ? '' : do_shortcode( $content );
+        // The shortcode result is displayed as post HTML, not trusted PHP output.
+        $content = null === $content ? '' : wp_kses_post( do_shortcode( $content ) );
         if ( '' === $content ) { return ''; }
         $heading = '' !== $name ? '<h2>' . esc_html( $name ) . '</h2>' : '';
-        return '<section class="yseo-howto">' . $heading . '<div class="yseo-howto-steps">' . wp_kses_post( $content ) . '</div></section>';
+        return '<section class="yseo-howto">' . $heading . '<div class="yseo-howto-steps">' . $content . '</div></section>';
     }
 
     /** @param array<string,string> $atts */

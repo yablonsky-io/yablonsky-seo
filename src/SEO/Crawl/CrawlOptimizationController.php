@@ -87,7 +87,7 @@ final class CrawlOptimizationController {
         if ( $this->enabled( 'crawl_search_filter_spam' ) && preg_match( '/(?:TALK\s*:|QQ\s*:|[：（）〖〗［］])/iu', $query ) ) { $this->rejectSearch(); }
         if ( $this->enabled( 'crawl_search_filter_special' ) && '' !== $query && ! preg_match( '/[\p{L}\p{N}]/u', $query ) ) { $this->rejectSearch(); }
         if ( $this->enabled( 'crawl_search_redirect_pretty' ) ) {
-            $requestUriRaw = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_UNSAFE_RAW );
+            $requestUriRaw = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
             $requestUri = is_string( $requestUriRaw ) ? sanitize_text_field( wp_unslash( $requestUriRaw ) ) : '';
             $requestPath = trim( (string) wp_parse_url( $requestUri, PHP_URL_PATH ), '/' );
             if ( 0 === strpos( $requestPath . '/', 'search/' ) ) {
@@ -124,10 +124,10 @@ final class CrawlOptimizationController {
     }
 
     private function maybeCleanTrackingParameters(): void {
-        $methodRaw = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_UNSAFE_RAW );
+        $methodRaw = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $method = is_string( $methodRaw ) ? strtoupper( sanitize_key( $methodRaw ) ) : 'GET';
         if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) || is_feed() ) { return; }
-        $queryRaw = filter_input( INPUT_SERVER, 'QUERY_STRING', FILTER_UNSAFE_RAW );
+        $queryRaw = filter_input( INPUT_SERVER, 'QUERY_STRING', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
         if ( ! is_string( $queryRaw ) || '' === $queryRaw ) { return; }
         $args = array();
         parse_str( $queryRaw, $args );
@@ -141,7 +141,7 @@ final class CrawlOptimizationController {
             }
         }
         if ( ! $changed ) { return; }
-        $requestUriRaw = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_UNSAFE_RAW );
+        $requestUriRaw = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
         $requestUri = is_string( $requestUriRaw ) ? wp_unslash( $requestUriRaw ) : '/';
         $path = (string) wp_parse_url( $requestUri, PHP_URL_PATH );
         if ( '' === $path ) { $path = '/'; }

@@ -32,7 +32,7 @@ final class NotFoundAdminController {
 
     public function bulkAction(): void {
         $this->guard( 'yseo_404_bulk' );
-        $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_UNSAFE_RAW ) );
+        $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $rawIds = filter_input( INPUT_POST, 'yseo_ids', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
         $rawIds = is_array( $rawIds ) ? $rawIds : array();
         $ids = array_values( array_slice( array_unique( array_filter( array_map( 'absint', $rawIds ) ) ), 0, 100 ) );
@@ -47,7 +47,7 @@ final class NotFoundAdminController {
         $validator = new RedirectController( $redirectRepository );
         $target = '';
         if ( 'redirect' === $action ) {
-            $targetRaw = trim( (string) filter_input( INPUT_POST, 'bulk_target', FILTER_UNSAFE_RAW ) );
+            $targetRaw = trim( (string) filter_input( INPUT_POST, 'bulk_target', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
             $target = $validator->normalizeTarget( $targetRaw );
             if ( '' === $target ) { $this->back( 'bulk-invalid-target' ); }
         }
@@ -105,13 +105,13 @@ final class NotFoundAdminController {
 
     public function render(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Accessing this page requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
-        $search = trim( sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_search', FILTER_UNSAFE_RAW ) ) );
-        $language = strtolower( str_replace( '_', '-', sanitize_text_field( (string) filter_input( INPUT_GET, 'language', FILTER_UNSAFE_RAW ) ) ) );
-        $dateFrom = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_from', FILTER_UNSAFE_RAW ) );
-        $dateTo = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_to', FILTER_UNSAFE_RAW ) );
+        $search = trim( sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) );
+        $language = strtolower( str_replace( '_', '-', sanitize_text_field( (string) filter_input( INPUT_GET, 'language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ) );
+        $dateFrom = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $dateTo = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $minHits = max( 0, (int) filter_input( INPUT_GET, 'min_hits', FILTER_VALIDATE_INT ) );
-        $sort = sanitize_key( (string) filter_input( INPUT_GET, 'sort', FILTER_UNSAFE_RAW ) );
-        $signal = sanitize_key( (string) filter_input( INPUT_GET, 'signal', FILTER_UNSAFE_RAW ) );
+        $sort = sanitize_key( (string) filter_input( INPUT_GET, 'sort', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $signal = sanitize_key( (string) filter_input( INPUT_GET, 'signal', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         if ( '' === $signal ) { $signal = 'seo'; }
         $perPage = (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT );
         if ( ! in_array( $perPage, array( 25, 50, 100 ), true ) ) { $perPage = 25; }
@@ -133,7 +133,7 @@ final class NotFoundAdminController {
         }
         $securityBridge = NotFoundSecurityBridge::status();
         $securityPlugin = NotFoundSecurityBridge::yablonskySecurityPluginState();
-        $notice = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_notice', FILTER_UNSAFE_RAW ) );
+        $notice = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_notice', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $exportUrl = wp_nonce_url( admin_url( 'admin-post.php?action=yseo_404_export' ), 'yseo_404_export' );
         $cleanupUrl = wp_nonce_url( admin_url( 'admin-post.php?action=yseo_404_cleanup_noise' ), 'yseo_404_cleanup_noise' );
         $maintenanceUrl = wp_nonce_url( admin_url( 'admin-post.php?action=yseo_404_run_maintenance' ), 'yseo_404_run_maintenance' );

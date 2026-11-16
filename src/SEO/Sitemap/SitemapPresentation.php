@@ -37,7 +37,7 @@ final class SitemapPresentation {
 
     public static function isXmlRequest(): bool {
         if ( defined( 'YSEO_SITEMAP_MISSING_REQUEST' ) && YSEO_SITEMAP_MISSING_REQUEST ) { return false; }
-        $requestUri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_UNSAFE_RAW );
+        $requestUri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
         if ( ! is_string( $requestUri ) || '' === $requestUri ) {
             $requestUri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
         }

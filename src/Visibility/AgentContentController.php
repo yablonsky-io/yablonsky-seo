@@ -543,9 +543,9 @@ final class AgentContentController {
     }
 
     private function notModified( string $etag, int $mtime ): bool {
-        $ifNoneMatch = filter_input( INPUT_SERVER, 'HTTP_IF_NONE_MATCH', FILTER_UNSAFE_RAW );
+        $ifNoneMatch = filter_input( INPUT_SERVER, 'HTTP_IF_NONE_MATCH', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $ifNoneMatch ) && '' !== trim( $ifNoneMatch ) && trim( $ifNoneMatch ) === $etag ) { return true; }
-        $ifModifiedSince = filter_input( INPUT_SERVER, 'HTTP_IF_MODIFIED_SINCE', FILTER_UNSAFE_RAW );
+        $ifModifiedSince = filter_input( INPUT_SERVER, 'HTTP_IF_MODIFIED_SINCE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $ifModifiedSince ) && '' !== trim( $ifModifiedSince ) ) {
             $since = strtotime( $ifModifiedSince );
             if ( false !== $since && $since >= $mtime ) { return true; }
@@ -554,12 +554,12 @@ final class AgentContentController {
     }
 
     private function requestMethod(): string {
-        $method = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_UNSAFE_RAW );
+        $method = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         return is_string( $method ) ? strtoupper( sanitize_text_field( $method ) ) : '';
     }
 
     private function relativeRequestPath(): string {
-        $request = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_UNSAFE_RAW );
+        $request = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
         if ( ! is_string( $request ) || '' === $request ) { return ''; }
         $path = wp_parse_url( $request, PHP_URL_PATH );
         $path = is_string( $path ) ? $path : '';

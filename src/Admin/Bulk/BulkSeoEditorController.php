@@ -89,15 +89,15 @@ final class BulkSeoEditorController {
     public function render(): void {
         if ( ! current_user_can( 'edit_posts' ) ) { wp_die( esc_html__( 'Editing SEO metadata requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         $pageNumber = max( 1, (int) filter_input( INPUT_GET, 'paged', FILTER_VALIDATE_INT ) );
-        $postType = sanitize_key( (string) filter_input( INPUT_GET, 'post_type_filter', FILTER_UNSAFE_RAW ) );
-        $postStatus = sanitize_key( (string) filter_input( INPUT_GET, 'post_status_filter', FILTER_UNSAFE_RAW ) );
-        $search = sanitize_text_field( (string) filter_input( INPUT_GET, 's', FILTER_UNSAFE_RAW ) );
-        $languageFilter = sanitize_text_field( (string) filter_input( INPUT_GET, 'language_filter', FILTER_UNSAFE_RAW ) );
+        $postType = sanitize_key( (string) filter_input( INPUT_GET, 'post_type_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $postStatus = sanitize_key( (string) filter_input( INPUT_GET, 'post_status_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $search = sanitize_text_field( (string) filter_input( INPUT_GET, 's', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $languageFilter = sanitize_text_field( (string) filter_input( INPUT_GET, 'language_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $languageIndex = new ResourceLanguageIndex();
         $languageCatalog = $languageIndex->catalog( true );
         if ( '' !== $languageFilter && ! isset( $languageCatalog[ $languageFilter ] ) ) { $languageFilter = ''; }
         $perPage = $this->sanitizePerPage( (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT ) );
-        $idsRaw = sanitize_text_field( (string) filter_input( INPUT_GET, 'ids', FILTER_UNSAFE_RAW ) );
+        $idsRaw = sanitize_text_field( (string) filter_input( INPUT_GET, 'ids', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $selectedIds = array_slice( array_values( array_unique( array_filter( array_map( 'intval', explode( ',', $idsRaw ) ) ) ) ), 0, self::MAX_ROWS );
 
         $publicTypes = get_post_types( array( 'public' => true ), 'objects' );
@@ -137,7 +137,7 @@ final class BulkSeoEditorController {
                 <div class="yps-product-actions"><a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo' ) ); ?>"><?php echo esc_html__( 'Dashboard', 'yablonsky-seo' ); ?></a></div>
             </header>
 
-            <?php if ( '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'updated', FILTER_UNSAFE_RAW ) ) ) : ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'SEO metadata for this page was saved.', 'yablonsky-seo' ); ?></p></div><?php endif; ?>
+            <?php if ( '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'updated', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ) : ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'SEO metadata for this page was saved.', 'yablonsky-seo' ); ?></p></div><?php endif; ?>
 
             <section class="yseo-bulk-toolbar-card" aria-label="<?php echo esc_attr__( 'Bulk editor filters', 'yablonsky-seo' ); ?>">
                 <form method="get" class="yseo-bulk-filter-form">
@@ -236,9 +236,9 @@ final class BulkSeoEditorController {
         if ( ! current_user_can( 'edit_posts' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting bulk AI drafts requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $idsInput = filter_input( INPUT_POST, 'post_ids', FILTER_UNSAFE_RAW );
+        $idsInput = filter_input( INPUT_POST, 'post_ids', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $ids = is_string( $idsInput ) ? array_slice( array_values( array_unique( array_filter( array_map( 'absint', explode( ',', $idsInput ) ) ) ) ), 0, 5 ) : array();
-        $fieldsInput = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
+        $fieldsInput = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $requested = $this->sanitizeAiFields( is_string( $fieldsInput ) ? explode( ',', $fieldsInput ) : array() );
         $editable = array();
         foreach ( $ids as $postId ) { if ( current_user_can( 'edit_post', $postId ) ) { $editable[] = $postId; } }
@@ -267,9 +267,9 @@ final class BulkSeoEditorController {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Editing this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $fieldInput = filter_input( INPUT_POST, 'field', FILTER_UNSAFE_RAW );
+        $fieldInput = filter_input( INPUT_POST, 'field', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $field = is_string( $fieldInput ) ? sanitize_key( $fieldInput ) : '';
-        $fieldsInput = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
+        $fieldsInput = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $requested = in_array( $field, array( 'focus_keyphrase', 'seo_title', 'meta_description' ), true )
             ? array( $field )
             : $this->sanitizeAiFields( is_string( $fieldsInput ) ? explode( ',', $fieldsInput ) : array() );
@@ -295,12 +295,21 @@ final class BulkSeoEditorController {
         if ( ! current_user_can( 'edit_posts' ) ) { wp_die( esc_html__( 'Editing SEO metadata requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::NONCE );
         $perPage = $this->sanitizePerPage( (int) filter_input( INPUT_POST, 'return_per_page', FILTER_VALIDATE_INT ) );
-        $rawRows = filter_input( INPUT_POST, 'rows', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+        // FILTER_CALLBACK operates on the original, unslashed POST payload;
+        // nested scalar metadata is cleaned before it can reach the database.
+        $rawRows = filter_input( INPUT_POST, 'rows', FILTER_CALLBACK, array(
+            'flags' => FILTER_REQUIRE_ARRAY,
+            'options' => 'sanitize_text_field',
+        ) );
         $rows = is_array( $rawRows ) ? array_slice( $rawRows, 0, min( self::MAX_ROWS, $perPage ), true ) : array();
-        $saveScope = sanitize_key( (string) filter_input( INPUT_POST, 'save_scope', FILTER_UNSAFE_RAW ) );
+        $saveScope = sanitize_key( (string) filter_input( INPUT_POST, 'save_scope', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         if ( 'selected' === $saveScope ) {
-            $rawSelected = filter_input( INPUT_POST, 'selected_rows', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
-            $selected = is_array( $rawSelected ) ? array_slice( array_values( array_unique( array_filter( array_map( 'absint', $rawSelected ) ) ) ), 0, self::MAX_ROWS ) : array();
+            // Only bounded positive IDs are accepted from the selected rows.
+            $rawSelected = filter_input( INPUT_POST, 'selected_rows', FILTER_CALLBACK, array(
+                'flags' => FILTER_REQUIRE_ARRAY,
+                'options' => 'absint',
+            ) );
+            $selected = is_array( $rawSelected ) ? array_slice( array_values( array_unique( array_filter( $rawSelected ) ) ), 0, self::MAX_ROWS ) : array();
             $allowed = array_fill_keys( $selected, true );
             $rows = array_filter( $rows, static function ( $id ) use ( $allowed ): bool { return isset( $allowed[ (int) $id ] ); }, ARRAY_FILTER_USE_KEY );
         }
@@ -313,10 +322,10 @@ final class BulkSeoEditorController {
         }
         $return = add_query_arg( array(
             'page' => self::PAGE,
-            'post_type_filter' => sanitize_key( (string) filter_input( INPUT_POST, 'return_post_type', FILTER_UNSAFE_RAW ) ),
-            'post_status_filter' => sanitize_key( (string) filter_input( INPUT_POST, 'return_post_status', FILTER_UNSAFE_RAW ) ),
-            'language_filter' => sanitize_text_field( (string) filter_input( INPUT_POST, 'return_language', FILTER_UNSAFE_RAW ) ),
-            's' => sanitize_text_field( (string) filter_input( INPUT_POST, 'return_search', FILTER_UNSAFE_RAW ) ),
+            'post_type_filter' => sanitize_key( (string) filter_input( INPUT_POST, 'return_post_type', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
+            'post_status_filter' => sanitize_key( (string) filter_input( INPUT_POST, 'return_post_status', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
+            'language_filter' => sanitize_text_field( (string) filter_input( INPUT_POST, 'return_language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
+            's' => sanitize_text_field( (string) filter_input( INPUT_POST, 'return_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
             'paged' => max( 1, (int) filter_input( INPUT_POST, 'return_paged', FILTER_VALIDATE_INT ) ),
             'per_page' => $perPage,
             'updated' => 1,
@@ -340,7 +349,8 @@ final class BulkSeoEditorController {
 
     /** @param mixed $raw */
     private function saveField( int $postId, string $metaKey, $raw, int $max ): void {
-        $value = is_scalar( $raw ) ? sanitize_text_field( wp_unslash( (string) $raw ) ) : '';
+        // The nested request was unslashed and sanitized by filter_input().
+        $value = is_scalar( $raw ) ? sanitize_text_field( (string) $raw ) : '';
         $value = function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $max, 'UTF-8' ) : substr( $value, 0, $max );
         if ( '' === $value ) { delete_post_meta( $postId, $metaKey ); } else { update_post_meta( $postId, $metaKey, $value ); }
     }

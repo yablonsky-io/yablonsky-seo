@@ -165,10 +165,10 @@ final class LocalSeoController {
     public function saveMeta( int $postId, \WP_Post $post ): void {
         unset( $post );
         if ( wp_is_post_revision( $postId ) || wp_is_post_autosave( $postId ) || ! current_user_can( 'edit_post', $postId ) ) { return; }
-        $rawNonce = filter_input( INPUT_POST, 'yseo_location_nonce', FILTER_UNSAFE_RAW );
+        $rawNonce = filter_input( INPUT_POST, 'yseo_location_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || ! wp_verify_nonce( sanitize_text_field( $rawNonce ), self::NONCE ) ) { return; }
         foreach ( $this->fieldDefinitions() as $key => $field ) {
-            $raw = filter_input( INPUT_POST, 'yseo_local_' . $key, FILTER_UNSAFE_RAW );
+            $raw = filter_input( INPUT_POST, 'yseo_local_' . $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
             $value = is_string( $raw ) ? $raw : '';
             if ( 'url' === (string) $field['type'] ) { $value = esc_url_raw( $value, array( 'http', 'https' ) ); }
             elseif ( in_array( $key, array( 'latitude', 'longitude' ), true ) ) { $value = $this->coordinate( $value, 'latitude' === $key ); }

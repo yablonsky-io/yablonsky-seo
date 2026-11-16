@@ -34,7 +34,7 @@ final class NativeSearchSignalsTracker {
         $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
         // A HEAD request does not retrieve a page body and is not an organic entrance.
         if ( 'GET' !== $method ) { return; }
-        $rawReferrerInput = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_UNSAFE_RAW );
+        $rawReferrerInput = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_CALLBACK, array( 'options' => 'esc_url_raw' ) );
         $rawReferrer = is_string( $rawReferrerInput ) ? wp_unslash( $rawReferrerInput ) : '';
         $referrer = esc_url_raw( $rawReferrer, array( 'http', 'https' ) );
         if ( '' === $referrer ) { return; }

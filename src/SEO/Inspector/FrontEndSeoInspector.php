@@ -99,7 +99,13 @@ final class FrontEndSeoInspector {
     }
 
     private function resourceFromRequest(): ?ResourceIdentity {
-        $raw = filter_input( INPUT_POST, 'resource', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+        // Nonce and editor capability were verified in ajaxInspect(). Read
+        // unslashed input through bounded scalar validation, then apply the
+        // type-specific sanitizers and same-origin checks below.
+        $raw = filter_input( INPUT_POST, 'resource', FILTER_CALLBACK, array(
+            'flags' => FILTER_REQUIRE_ARRAY,
+            'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ),
+        ) );
         if ( ! is_array( $raw ) ) { return null; }
         $type = sanitize_key( (string) ( $raw['type'] ?? '' ) );
         $id = absint( $raw['id'] ?? 0 );

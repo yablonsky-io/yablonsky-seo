@@ -45,7 +45,7 @@ final class SearchPerformanceController {
     public function render(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Viewing search performance requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         $range = $this->reportRangeFromRequest();
-        $refresh = '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'load', FILTER_UNSAFE_RAW ) );
+        $refresh = '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'load', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $snapshot = $this->snapshot();
         $report = isset( $snapshot['report'] ) && is_array( $snapshot['report'] ) ? $snapshot['report'] : array();
         $refreshMessages = array();
@@ -181,12 +181,12 @@ final class SearchPerformanceController {
 
     /** @return array{preset:string,start:string,end:string,days:int} */
     private function reportRangeFromRequest(): array {
-        $preset = sanitize_key( (string) filter_input( INPUT_GET, 'range', FILTER_UNSAFE_RAW ) );
+        $preset = sanitize_key( (string) filter_input( INPUT_GET, 'range', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         if ( ! in_array( $preset, array( '7d', '28d', '90d', '180d', 'custom' ), true ) ) { $preset = '28d'; }
         $end = gmdate( 'Y-m-d' );
         if ( 'custom' === $preset ) {
-            $customStart = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_from', FILTER_UNSAFE_RAW ) );
-            $customEnd = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_to', FILTER_UNSAFE_RAW ) );
+            $customStart = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+            $customEnd = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
             if ( '' !== $customStart && '' !== $customEnd && $customStart <= $customEnd ) {
                 $endTs = strtotime( $customEnd . ' 00:00:00 UTC' );
                 $startTs = strtotime( $customStart . ' 00:00:00 UTC' );
@@ -238,7 +238,7 @@ final class SearchPerformanceController {
     public function toggleNativeSignals(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Changing search signal collection requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( 'yseo_native_search_signals_toggle' );
-        $enabled = '1' === sanitize_text_field( (string) filter_input( INPUT_POST, 'enabled', FILTER_UNSAFE_RAW ) ) ? '1' : '0';
+        $enabled = '1' === sanitize_text_field( (string) filter_input( INPUT_POST, 'enabled', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ? '1' : '0';
         update_option( 'yseo_native_search_signals_enabled', $enabled, false );
         wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE ) );
         exit;
