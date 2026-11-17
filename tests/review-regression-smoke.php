@@ -39,7 +39,11 @@ $yseo_assert( is_array( $counts ), 'Internal-link stats returned' );
 foreach ( array( 'modified_desc', 'modified_asc', 'title_asc', 'title_desc', 'bogus-sort' ) as $sort ) {
     $wpdb->last_error = '';
     $page = $links->inventoryPage( 1, 25, 'YSEO audit public source', 'post', 'auto', '', '', $sort );
-    $yseo_assert( '' === (string) $wpdb->last_error && (int) $page['total'] >= 1 && count( $page['items'] ) >= 1, 'Internal links inventory query with sort ' . $sort );
+    $pass = '' === (string) $wpdb->last_error && (int) $page['total'] >= 1 && count( $page['items'] ) >= 1;
+    if ( ! $pass ) {
+        echo 'INTERNAL_LINK_QUERY_DIAGNOSTIC ' . wp_json_encode( array( 'sort' => $sort, 'total' => $page['total'], 'items' => count( $page['items'] ), 'error' => $wpdb->last_error, 'query' => $wpdb->last_query, 'post_status' => get_post_status( (int) $published ) ) ) . "\\n";
+    }
+    $yseo_assert( $pass, 'Internal links inventory query with sort ' . $sort );
 }
 $wpdb->last_error = '';
 $orphaned = $links->orphanedPage( 1, 25 );
