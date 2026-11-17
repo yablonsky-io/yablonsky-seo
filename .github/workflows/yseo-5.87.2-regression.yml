@@ -2,10 +2,11 @@ name: Validate YSEO 5.87.2 prefix compatibility and reviewer compliance
 
 on:
   push:
-    branches: [fix/yseo-5.87.2-sql-date-guards]
+    branches: [fix/yseo-5.87.2-prefix-compatibility]
     paths:
       - ".github/workflows/yseo-5.87.2-regression.yml"
       - "tests/review-regression-smoke.php"
+      - "tests/prefix-compatibility-regression.php"
       - "src/**"
       - "yablonsky-seo.php"
       - "readme.txt"
