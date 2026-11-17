@@ -35,7 +35,10 @@ $testKeys = array(
 foreach ( $testKeys as $oldKey => $row ) {
     $newKey = $row[0];
     $expected = $row[1];
-    $assert( ! metadata_exists( 'post', $postId, $newKey ), "No accidental migration on activation: {$newKey}" );
+    // metadata_exists() calls get_post_metadata filters too; the legacy fallback
+    // intentionally makes the canonical name logically exist without a row copy.
+    $stored = get_post_meta( $postId );
+    $assert( ! array_key_exists( $newKey, $stored ), "No canonical row copied on activation: {$newKey}" );
     $assert( get_post_meta( $postId, $newKey, true ) === $expected, "Read legacy SEO meta through canonical {$newKey}" );
     $assert( get_post_meta( $postId, $oldKey, true ) === $expected, "Legacy SEO record preserved {$oldKey}" );
 }
