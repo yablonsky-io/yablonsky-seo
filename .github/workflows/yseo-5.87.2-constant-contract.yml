@@ -1,0 +1,63 @@
+name: YSEO 5.87.2 constant and legacy activation contract
+
+on:
+  push:
+    branches: [test/yseo-5.87.2-constant-contract]
+    paths:
+      - ".github/workflows/yseo-5.87.2-constant-contract.yml"
+      - "tests/legacy-constant-contract.php"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  constant-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Verify no plugin runtime code differs from published v5.87.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin tag v5.87.2
+          test -z "$(git diff --name-only v5.87.2 HEAD -- yablonsky-seo.php uninstall.php src assets data languages readme.txt)"
+          echo 'YSEO_DISTRIBUTION_SOURCE_UNCHANGED'
+      - name: Verify active identifiers and historical activation handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l tests/legacy-constant-contract.php
+          php tests/legacy-constant-contract.php
+      - name: Verify no old global declarations or active references
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,re
+          paths=[pathlib.Path('yablonsky-seo.php'),*pathlib.Path('src').rglob('*.php')]
+          used=[]
+          declared=[]
+          for p in paths:
+              text=p.read_text(encoding='utf-8')
+              for i,line in enumerate(text.splitlines(),1):
+                  if re.search(r'(?<![A-Za-z0-9_])YPS_(VERSION|FILE|DIR|URL)\b',line) and not line.lstrip().startswith(('*','//','#')):
+                      used.append((str(p),i,line.strip()))
+                  if re.search(r"\bdefine\s*\(\s*['\"]YPS_(?:VERSION|FILE|DIR|URL)['\"]",line):
+                      declared.append((str(p),i))
+          print('LEGACY_CONSTANT_USE',used)
+          print('LEGACY_CONSTANT_DECLARATIONS',declared)
+          if declared: raise SystemExit('Short-prefix global definition found')
+          if len(used)!=1 or used[0][0]!='yablonsky-seo.php' or "defined( 'YPS_FILE' )" not in used[0][2]:
+              raise SystemExit('Unexpected short-prefix constant reference')
+          print('YSEO_GLOBAL_PREFIX_CONTRACT_PASS')
+          PY
