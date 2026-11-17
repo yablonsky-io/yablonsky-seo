@@ -33,11 +33,23 @@ jobs:
         run: |
           set -euo pipefail
           cd "$GITHUB_WORKSPACE"
+          set +e
           phpcs --standard=WordPress --sniffs=WordPress.Security,WordPress.DB,WordPress.NamingConventions.PrefixAllGlobals \
             --extensions=php --report=json \
             --exclude=WordPress.DB.DirectDatabaseQuery.NoCaching \
             --ignore=.github,tests \
-            src yablonsky-seo.php uninstall.php > /tmp/yseo-wpcs.json || true
+            src yablonsky-seo.php uninstall.php > /tmp/yseo-wpcs.json 2> /tmp/yseo-wpcs.stderr
+          code=$?
+          set -e
+          echo "PHPCS exit status: $code; report bytes: $(wc -c </tmp/yseo-wpcs.json)"
+          if test -s /tmp/yseo-wpcs.stderr; then cat /tmp/yseo-wpcs.stderr; fi
+          if test "$code" -ne 0 && ! test -s /tmp/yseo-wpcs.json; then
+            echo 'PHPCS process failed without JSON report' >&2
+            exit 1
+          fi
+          if ! test -s /tmp/yseo-wpcs.json; then
+            printf '{"totals":{"errors":0,"warnings":0},"files":{}}' > /tmp/yseo-wpcs.json
+          fi
           python3 - <<'PY'
           import json,collections
           result=json.load(open('/tmp/yseo-wpcs.json'))
