@@ -1,0 +1,105 @@
+name: Publish verified YSEO 5.87.1 corrective release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/yseo-publish-v5.87.1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yseo-publish-v5.87.1
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout verified Git commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce gates, source identity and unchanged scope
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GH_REPO/actions/runs/43990143317" --jq .conclusion)" = success
+          test "$(gh api "repos/$GH_REPO/actions/runs/43990223057" --jq .conclusion)" = success
+          grep -Eq '^ \* Version: 5\.87\.1$' yablonsky-seo.php
+          grep -Fq "define( 'YSEO_VERSION', '5.87.1' );" yablonsky-seo.php
+          grep -Fxq 'Stable tag: 5.87.1' readme.txt
+          test "$(find . -path './.git' -prune -o -type f -name '*.php' ! -path './tests/*' -print | wc -l)" -eq 196
+          while IFS= read -r -d '' file; do php -l "$file" >/dev/null; done < <(find src -name '*.php' -type f -print0)
+          php -l yablonsky-seo.php >/dev/null
+          php -l uninstall.php >/dev/null
+          echo 'Required validation gates, scope and PHP lint PASS'
+      - name: Build installation ZIP from checked revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$(mktemp -d)"
+          mkdir -p "$stage/yablonsky-seo"
+          cp LICENSE readme.txt yablonsky-seo.php uninstall.php "$stage/yablonsky-seo/"
+          cp -a src assets data languages "$stage/yablonsky-seo/"
+          (
+            cd "$stage/yablonsky-seo"
+            {
+              echo '# YSEO v5.87.1 installation file checksums'
+              echo '# Reference: YABLONSKY_PRODUCT_VERSIONING_CANON_v1.0.0_2026-09-21.md'
+              find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's|  \./|  |'
+            } > SHA256SUMS.txt
+            tail -n +3 SHA256SUMS.txt | sha256sum -c --status
+          )
+          (cd "$stage" && zip -qr "$GITHUB_WORKSPACE/yablonsky-seo-5.87.1.zip" yablonsky-seo)
+          unzip -tq yablonsky-seo-5.87.1.zip >/dev/null
+          test "$(stat -c %s yablonsky-seo-5.87.1.zip)" -lt 10000000
+          sha256sum yablonsky-seo-5.87.1.zip
+      - name: Publish and verify GitHub assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if ! gh release view v5.87.1 --repo "$GH_REPO" >/dev/null 2>&1; then
+            cat > release-notes.txt <<'NOTES'
+          # Yablonsky SEO 5.87.1
+
+          Corrects strict MySQL DATETIME validation for inactive date filters in **Internal Links** and **404 Diagnostics**. Both report queries use fully prepared arguments; database schemas, storage contracts, existing metadata, and other runtime SEO behavior remain unchanged.
+
+          ## Regression evidence
+          - Upgrade from v5.86.6 to v5.87.1 on a clean WordPress + MySQL 8 test site with WP_DEBUG enabled.
+          - Validation of legacy SEO post meta, SQL report filtering and sorting, nonce/capability gates, public REST access controls, XML and FAQ output, activation/deactivation, and SQL error handling.
+          - PHP 7.4 syntax checks and WordPress Plugin Check: no errors.
+          - Targeted WPCS input sanitization and prepared SQL sniffs: 0 errors, 0 warnings.
+          - Installation archive checksums validated and kept under 10 MB.
+
+          Regression: https://github.com/yablonsky-io/yablonsky-seo/actions/runs/43990143317
+          WPCS: https://github.com/yablonsky-io/yablonsky-seo/actions/runs/43990223057
+
+          This source-controlled GitHub release does not itself constitute WordPress.org Directory reviewer approval. Approved product scope is preserved.
+          Product: https://yablonsky.io/seo/
+          NOTES
+            gh release create v5.87.1 yablonsky-seo-5.87.1.zip \
+              --repo "$GH_REPO" --target "$GITHUB_SHA" \
+              --title "Yablonsky SEO 5.87.1" --notes-file release-notes.txt --latest
+            cp yablonsky-seo-5.87.1.zip yablonsky-seo.zip
+            gh release upload v5.87.1 yablonsky-seo.zip --repo "$GH_REPO"
+          fi
+          test "$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)" = v5.87.1
+          temp="$(mktemp -d)"
+          gh release download v5.87.1 --repo "$GH_REPO" --dir "$temp" --pattern 'yablonsky-seo-5.87.1.zip'
+          gh release download v5.87.1 --repo "$GH_REPO" --dir "$temp" --pattern 'yablonsky-seo.zip'
+          cmp "$temp/yablonsky-seo-5.87.1.zip" "$temp/yablonsky-seo.zip"
+          unzip -tq "$temp/yablonsky-seo-5.87.1.zip" >/dev/null
+          test "$(unzip -p "$temp/yablonsky-seo-5.87.1.zip" yablonsky-seo/readme.txt | grep '^Stable tag:')" = 'Stable tag: 5.87.1'
+          unzip -p "$temp/yablonsky-seo-5.87.1.zip" yablonsky-seo/yablonsky-seo.php | grep -Fq "define( 'YSEO_VERSION', '5.87.1' );"
+          gh release view v5.87.1 --repo "$GH_REPO" --json url,tagName,assets --jq '{url:.url,tag:.tagName,assets:[.assets[].name]}'
