@@ -15,6 +15,12 @@ final class LegacyMetaBridge {
     /** @var bool */
     private static $inside = false;
 
+    /** Return a historical key for read-only compatibility queries. */
+    public static function legacyKeyFor( string $canonicalKey ): string {
+        if ( 0 !== strpos( $canonicalKey, '_yablseo_' ) ) { return ''; }
+        return '_yps_' . substr( $canonicalKey, strlen( '_yablseo_' ) );
+    }
+
     public static function register(): void {
         add_filter( 'get_post_metadata', array( __CLASS__, 'fallback' ), 10, 5 );
         add_filter( 'get_term_metadata', array( __CLASS__, 'fallback' ), 10, 5 );
