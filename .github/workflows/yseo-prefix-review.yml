@@ -1,0 +1,64 @@
+name: YSEO WordPress prefix compatibility inventory (read-only)
+
+on:
+  push:
+    branches: [audit/yseo-5.87.1-prefix-review]
+    paths:
+      - ".github/workflows/yseo-prefix-review.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory all legacy short identifiers without mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,collections
+          roots=[Path('src'),Path('data'),Path('assets'),Path('yablonsky-seo.php'),Path('uninstall.php')]
+          files=[]
+          for root in roots:
+              if root.is_file():files.append(root)
+              elif root.is_dir():files.extend(p for p in root.rglob('*') if p.is_file() and p.suffix in ('.php','.js','.css'))
+          pattern=re.compile(r'(?<![A-Za-z0-9_])_?yps_[A-Za-z0-9_]+|\bYPS_[A-Z0-9_]+\b')
+          write=re.compile(r'(add_option|update_option|delete_option|add_post_meta|update_post_meta|delete_post_meta|update_term_meta|add_user_meta|update_user_meta|set_transient|register_setting|register_post_meta|register_meta|set_site_transient|add_action|add_filter|add_shortcode|register_post_type|wp_enqueue_script|wp_enqueue_style|wp_localize_script|define\s*\()',re.I)
+          allmatches=[]
+          grouped=collections.Counter()
+          for file in sorted(files):
+              try: lines=file.read_text('utf-8').splitlines()
+              except (UnicodeDecodeError,OSError):continue
+              for n,line in enumerate(lines,1):
+                  matches=list(pattern.finditer(line))
+                  if not matches:continue
+                  val=[m.group(0) for m in matches]
+                  cat='OTHER'
+                  if re.search(r"\bdefine\s*\(\s*['\"]YPS_",line):cat='GLOBAL_DEFINE'
+                  elif re.search(r"\b(?:add|update|delete)_(?:post|term|user)_meta\s*\(",line):cat='META_API'
+                  elif re.search(r"\b(?:add|update|delete)_option\s*\(",line):cat='OPTION_API'
+                  elif re.search(r"\b(?:set|delete)_transient\s*\(",line):cat='TRANSIENT_API'
+                  elif re.search(r'\b(?:add_action|add_filter|add_shortcode|wp_localize_script|wp_enqueue_script|wp_enqueue_style|wp_register_script|register_rest_route|register_post_type|register_setting|register_meta)\s*\(',line):cat='PUBLIC_REGISTRATION'
+                  elif re.search(r"\bget_(?:option|post_meta|term_meta|user_meta|transient)\s*\(",line):cat='READ_ONLY_API'
+                  elif re.search(r'\bwp_(?:next|clear|schedule)_scheduled|wp_clear_scheduled_hook\s*\(',line):cat='CRON_COMPAT'
+                  elif re.search(r"\$wpdb->prefix\s*\.\s*['\"]yps_",line):cat='LEGACY_DB_TABLE'
+                  elif file.suffix in ('.js','.css'):cat='FRONTEND_CODE'
+                  grouped[(cat,str(file))]+=1
+                  allmatches.append((cat,str(file),n,val,line.strip()))
+          counts=collections.Counter(k for k,_,_,_,_ in allmatches)
+          print('AUDIT FILES:',len(files),'legacy matches:',len(allmatches))
+          print('CATEGORY COUNTS:',dict(counts))
+          for cat in ['GLOBAL_DEFINE','META_API','OPTION_API','TRANSIENT_API','PUBLIC_REGISTRATION','CRON_COMPAT','LEGACY_DB_TABLE','READ_ONLY_API','OTHER','FRONTEND_CODE']:
+              print('CATEGORY',cat,'total',counts[cat])
+              entries=[x for x in allmatches if x[0]==cat]
+              for _,file,n,val,line in entries[:75]:
+                  print(f'{file}:{n}: {val} || {line[:240]}')
+              if len(entries)>75:print('MORE',len(entries)-75)
+          print('END PREFIX AUDIT')
+          PY
