@@ -1,0 +1,113 @@
+name: Audit published YSEO 5.87.0 regression and reviewer requirements
+
+on:
+  push:
+    branches: [audit/yseo-5.87.0-full-review]
+    paths:
+      - ".github/workflows/yseo-5.87.0-full-review.yml"
+      - "tests/review-regression-smoke.php"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: isolated_ci_only
+          MYSQL_ROOT_PASSWORD: isolated_root_ci_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -pisolated_root_ci_only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - name: Checkout source and historical snapshot
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: PHP runtime 8.3 with database support
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, curl, mbstring, xml, zip
+          coverage: none
+
+      - name: Verify real published release ZIP and construct historical upgrade source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)" = v5.87.0
+          mkdir -p "$RUNNER_TEMP/zip"
+          gh release download v5.87.0 --repo "$GH_REPO" \
+            --pattern 'yablonsky-seo-5.87.0.zip' --dir "$RUNNER_TEMP/zip"
+          echo '0a309dd635a87b51d776aac7b8381cfbb32053395d68d9bc966f1a6cd16e022d  '"$RUNNER_TEMP/zip/yablonsky-seo-5.87.0.zip" | sha256sum -c --status
+          unzip -tq "$RUNNER_TEMP/zip/yablonsky-seo-5.87.0.zip" > /dev/null
+          legacy="$(mktemp -d)"
+          git archive --format=tar --prefix=yablonsky-seo/ 99d2609776c5e55c93886006e0f996e963e57e3a \
+            LICENSE readme.txt yablonsky-seo.php uninstall.php src assets data languages | tar -xf - -C "$legacy"
+          (cd "$legacy" && zip -qr "$RUNNER_TEMP/zip/yablonsky-seo-5.86.6.zip" yablonsky-seo)
+          unzip -tq "$RUNNER_TEMP/zip/yablonsky-seo-5.86.6.zip" > /dev/null
+          echo "Published release fingerprint and historical v5.86.6 source PASS"
+
+      - name: Setup WordPress WP_DEBUG and install old plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$RUNNER_TEMP/wp-cli.phar"
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          wp core download --path="$RUNNER_TEMP/wordpress"
+          wp config create --path="$RUNNER_TEMP/wordpress" \
+            --dbname=wordpress --dbuser=wp --dbpass=isolated_ci_only \
+            --dbhost=127.0.0.1 --skip-check
+          wp config set --path="$RUNNER_TEMP/wordpress" WP_DEBUG true --raw
+          wp config set --path="$RUNNER_TEMP/wordpress" WP_DEBUG_LOG true --raw
+          wp config set --path="$RUNNER_TEMP/wordpress" WP_DEBUG_DISPLAY false --raw
+          wp core install --path="$RUNNER_TEMP/wordpress" \
+            --url=http://localhost:8080 --title='YSEO Isolated Review' \
+            --admin_user=admin --admin_password=only-for-ci --admin_email=ci@example.invalid --skip-email
+          wp plugin install "$RUNNER_TEMP/zip/yablonsky-seo-5.86.6.zip" \
+            --activate --path="$RUNNER_TEMP/wordpress"
+          wp plugin get yablonsky-seo --field=version --path="$RUNNER_TEMP/wordpress" | grep -Fx '5.86.6'
+          wp eval --path="$RUNNER_TEMP/wordpress" \
+            '$id=wp_insert_post(array("post_type"=>"post","post_title"=>"Legacy audit post","post_status"=>"publish")); update_post_meta($id,"_yps_seo_title","Preserved SEO Title 5.86.6"); update_option("yseo_ci_seed_post_id",$id); update_option("yps_ci_legacy_preservation_marker","preserve-me");'
+          echo "Baseline 5.86.6 seed PASS"
+
+      - name: Upgrade from 5.86.6 to exact published v5.87.0 ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          wp plugin install "$RUNNER_TEMP/zip/yablonsky-seo-5.87.0.zip" \
+            --force --activate --path="$RUNNER_TEMP/wordpress"
+          wp plugin is-active yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          wp plugin get yablonsky-seo --field=version --path="$RUNNER_TEMP/wordpress" | grep -Fx '5.87.0'
+          echo "Upgrade and reactivation PASS"
+
+      - name: Execute isolated functional and security regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          wp eval-file tests/review-regression-smoke.php --path="$RUNNER_TEMP/wordpress"
+          wp plugin deactivate yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          wp plugin activate yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          wp plugin is-active yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          if [ -f "$RUNNER_TEMP/wordpress/wp-content/debug.log" ]; then
+            if grep -Ei 'PHP Fatal error|PHP Parse error|Uncaught Error|PHP Warning:.*yablonsky-seo' "$RUNNER_TEMP/wordpress/wp-content/debug.log"; then
+              echo "Plugin-specific WP_DEBUG issue" >&2
+              exit 1
+            fi
+          fi
+          echo "WP_DEBUG fatal/warning gate PASS"
