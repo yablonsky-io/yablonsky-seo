@@ -1,0 +1,51 @@
+name: Apply YSEO 5.87.2 prefix compliance patch
+
+on:
+  push:
+    branches: [fix/yseo-5.87.2-prefix-compatibility]
+    paths:
+      - ".github/workflows/yseo-5.87.2-apply.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout explicit corrective branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/yseo-5.87.2-prefix-compatibility
+          fetch-depth: 0
+      - name: Apply bounded metadata key rewrite (no database changes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/release/yseo_5872_meta_prefix.py
+          git diff --check
+          git diff --stat
+          test "$(git diff --name-only | grep -c '^src/')" -ge 20
+          if git diff --name-only | grep -Ev '^(src/|data/)' ; then
+            echo "Source rewrite escaped its allowed directories" >&2
+            exit 1
+          fi
+      - name: PHP 7.4 syntax for rewritten code
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "7.4"
+          coverage: none
+      - name: Syntax check and commit to review branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do php -l "$file" > /dev/null; done < <(find src data -name '*.php' -type f -print0)
+          php -l yablonsky-seo.php >/dev/null
+          git add src data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(meta): canonicalize YSEO-owned metadata references without deleting legacy rows"
+          git push origin HEAD:fix/yseo-5.87.2-prefix-compatibility
+          echo "YSEO_5872_SOURCE_PATCH_PASS"
