@@ -1,0 +1,117 @@
+name: Publish YSEO 5.86.9 from verified Git source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/yseo-publish-v5.86.9.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yseo-publish-v5.86.9
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout committed source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify source version and syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '^[[:space:]]*\*[[:space:]]*Version: 5\.86\.9$' yablonsky-seo.php
+          grep -Eq "^Stable tag: 5\.86\.9$" readme.txt
+          grep -Fq "define( 'YSEO_VERSION', '5.86.9' );" yablonsky-seo.php
+          test -f LICENSE
+          test -f uninstall.php
+          test -d src
+          test -d assets
+          test -d data
+          test -d languages
+          test "$(find . -path './.git' -prune -o -name '*.php' -type f -print | wc -l)" -eq 196
+          if ! command -v php >/dev/null 2>&1; then
+            echo "PHP CLI required for syntax gate" >&2
+            exit 1
+          fi
+          while IFS= read -r -d '' file; do
+            php -l "$file" > /dev/null
+          done < <(find . -path './.git' -prune -o -name '*.php' -type f -print0)
+          python3 - <<'PY'
+          import json, pathlib
+          for p in pathlib.Path('data').glob('*.json'):
+              json.loads(p.read_text(encoding='utf-8'))
+          PY
+
+      - name: Build and inspect the installable ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$(mktemp -d)"
+          mkdir -p "$stage/yablonsky-seo"
+          cp LICENSE readme.txt yablonsky-seo.php uninstall.php "$stage/yablonsky-seo/"
+          cp -a assets data languages src "$stage/yablonsky-seo/"
+          (
+            cd "$stage/yablonsky-seo"
+            {
+              echo "# Yablonsky SEO 5.86.9 package content SHA256 (excluding this manifest)"
+              echo "# Release canon: YABLONSKY_PRODUCT_VERSIONING_CANON_v1.0.0_2026-09-21.md"
+              find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's|  \./|  |'
+            } > SHA256SUMS.txt
+            tail -n +3 SHA256SUMS.txt | sha256sum -c --status
+          )
+          (
+            cd "$stage"
+            zip -qr "$GITHUB_WORKSPACE/yablonsky-seo-5.86.9.zip" yablonsky-seo
+          )
+          unzip -tq "yablonsky-seo-5.86.9.zip" > /dev/null
+          echo "Verified release package:"
+          ls -lh "yablonsky-seo-5.86.9.zip"
+          sha256sum "yablonsky-seo-5.86.9.zip"
+
+      - name: Publish GitHub release and canonical download
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view v5.86.9 --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "Release v5.86.9 already exists; refusing to overwrite release assets"
+            exit 1
+          fi
+          cat > release-notes.txt <<'NOTES'
+          # Yablonsky SEO 5.86.9
+
+          GitHub source history has been restored through v5.86.9 as separately traceable commits, including v5.86.6, v5.86.7, v5.86.8 and v5.86.9.
+
+          This installable ZIP is built from the tagged Git source, not from an independent local development archive.
+
+          ## Validation
+          - Source version, WordPress readme Stable tag and release tag are aligned.
+          - PHP files passed syntax checks; JSON data validated.
+          - Package ZIP integrity and per-file SHA256 manifest checked.
+          - No business logic changes were introduced by source-history recovery.
+
+          WordPress.org review and full WordPress runtime regression acceptance are separate from this GitHub source publication. This release does not assert completion of those checks.
+
+          Documentation and product: https://yablonsky.io/seo/
+          NOTES
+          gh release create v5.86.9 "yablonsky-seo-5.86.9.zip" \
+            --repo "$GH_REPO" \
+            --target "$GITHUB_SHA" \
+            --title "Yablonsky SEO 5.86.9" \
+            --notes-file release-notes.txt \
+            --latest
+          cp "yablonsky-seo-5.86.9.zip" yablonsky-seo.zip
+          gh release upload v5.86.9 yablonsky-seo.zip --repo "$GH_REPO"
+          gh release view v5.86.9 --repo "$GH_REPO" --json url,tagName,isLatest,assets \
+            --jq '{url:.url,tag:.tagName,latest:.isLatest,assets:[.assets[].name]}'
