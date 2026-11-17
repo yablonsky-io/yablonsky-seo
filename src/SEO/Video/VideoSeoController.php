@@ -2,6 +2,7 @@
 namespace Yablonsky\PerformanceSEO\SEO\Video;
 
 use Yablonsky\PerformanceSEO\SEO\Sitemap\SitemapPresentation;
+use Yablonsky\PerformanceSEO\Core\LegacyMetaBridge;
 use Yablonsky\PerformanceSEO\SEO\Sitemap\SitemapEligibilityPolicy;
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -222,9 +223,15 @@ final class VideoSeoController {
         if ( empty( $types ) ) { return array(); }
         $limit = min( self::MAX_ITEMS, max( 1, $limit ) );
         $typePlaceholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-        $sql = "SELECT DISTINCT p.ID FROM %i p INNER JOIN %i pm ON pm.post_id=p.ID WHERE p.post_status='publish' AND p.post_type IN ({$typePlaceholders}) AND pm.meta_key IN (%s,%s) ORDER BY p.post_modified_gmt DESC,p.ID DESC LIMIT %d";
-        $args = array_merge( array( $wpdb->posts, $wpdb->postmeta ), $types, array( '_yablseo_video_content_url', '_yablseo_video_detected_url', $limit ) );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fixed meta keys plus registered public post types are prepared; bounded query replaces slow OR meta_query scans.
+        $sql = "SELECT DISTINCT p.ID FROM %i p INNER JOIN %i pm ON pm.post_id=p.ID WHERE p.post_status='publish' AND p.post_type IN ({$typePlaceholders}) AND pm.meta_key IN (%s,%s,%s,%s) ORDER BY p.post_modified_gmt DESC,p.ID DESC LIMIT %d";
+        $args = array_merge( array( $wpdb->posts, $wpdb->postmeta ), $types, array(
+            '_yablseo_video_content_url',
+            '_yablseo_video_detected_url',
+            LegacyMetaBridge::legacyKeyFor( '_yablseo_video_content_url' ),
+            LegacyMetaBridge::legacyKeyFor( '_yablseo_video_detected_url' ),
+            $limit,
+        ) );
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Canonical and read-only historical video meta keys, plus public post types, are prepared; bounded query retains pre-5.87.2 videos.
         $ids = array_values( array_filter( array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, $args ) ) ) ) );
         if ( ! empty( $ids ) ) { update_meta_cache( 'post', $ids ); }
         return $ids;
