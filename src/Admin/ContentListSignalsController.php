@@ -175,20 +175,20 @@ final class ContentListSignalsController {
         $resourceType = 'product' === $post->post_type ? 'product' : 'post';
         $resource = new ResourceIdentity( $resourceType, $postId, (string) $post->post_type, '', $permalink );
         $resolver = new TemplateResolver();
-        $rawSeoTitle = (string) get_post_meta( $postId, '_yps_seo_title', true );
-        $rawMetaDescription = (string) get_post_meta( $postId, '_yps_meta_description', true );
+        $rawSeoTitle = (string) get_post_meta( $postId, '_yablseo_seo_title', true );
+        $rawMetaDescription = (string) get_post_meta( $postId, '_yablseo_meta_description', true );
         $values = array(
-            'focus_keyphrase' => (string) get_post_meta( $postId, '_yps_focus_keyphrase', true ),
-            'focus_keyphrases' => get_post_meta( $postId, '_yps_focus_keyphrases_json', true ),
+            'focus_keyphrase' => (string) get_post_meta( $postId, '_yablseo_focus_keyphrase', true ),
+            'focus_keyphrases' => get_post_meta( $postId, '_yablseo_focus_keyphrases_json', true ),
             'seo_title' => $rawSeoTitle,
             'effective_seo_title' => '' !== trim( $rawSeoTitle ) ? $resolver->resolve( $rawSeoTitle, $resource ) : '',
             'meta_description' => $rawMetaDescription,
             'effective_meta_description' => '' !== trim( $rawMetaDescription ) ? $resolver->resolve( $rawMetaDescription, $resource ) : '',
-            'noindex' => (string) get_post_meta( $postId, '_yps_robots_noindex', true ),
-            'og_image' => (string) get_post_meta( $postId, '_yps_og_image', true ),
-            'schema_entity_name' => (string) get_post_meta( $postId, '_yps_schema_entity_name', true ),
-            'schema_entity_type' => (string) get_post_meta( $postId, '_yps_schema_entity_type', true ),
-            'schema_page_type' => (string) get_post_meta( $postId, '_yps_schema_page_type', true ),
+            'noindex' => (string) get_post_meta( $postId, '_yablseo_robots_noindex', true ),
+            'og_image' => (string) get_post_meta( $postId, '_yablseo_og_image', true ),
+            'schema_entity_name' => (string) get_post_meta( $postId, '_yablseo_schema_entity_name', true ),
+            'schema_entity_type' => (string) get_post_meta( $postId, '_yablseo_schema_entity_type', true ),
+            'schema_page_type' => (string) get_post_meta( $postId, '_yablseo_schema_page_type', true ),
         );
         $this->analysisCache[ $postId ] = ( new ContentOptimizationAnalyzer() )->analyzePost( $post, $values );
         return $this->analysisCache[ $postId ];

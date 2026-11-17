@@ -67,7 +67,7 @@ final class PortableMetadataReader {
     private function portableMappedValue( string $targetKey, string $source ): string {
         $source = trim( $source );
         if ( '' === $source ) { return ''; }
-        if ( '_yps_is_cornerstone' === $targetKey ) { return $this->truthy( $source ) ? '1' : ''; }
+        if ( '_yablseo_is_cornerstone' === $targetKey ) { return $this->truthy( $source ) ? '1' : ''; }
 
         // Full provider template-language translation is intentionally outside
         // preserve-only portability. Skip templated values rather than leaking
@@ -93,25 +93,25 @@ final class PortableMetadataReader {
         if ( 'rank-math' === $this->profile->id() ) {
             $robots = $getMeta( $type, $id, 'rank_math_robots' );
             $robots = is_array( $robots ) ? array_map( 'strval', $robots ) : array();
-            if ( in_array( 'noindex', $robots, true ) ) { $values['_yps_robots_noindex'] = '1'; }
-            if ( in_array( 'nofollow', $robots, true ) ) { $values['_yps_robots_nofollow'] = '1'; }
+            if ( in_array( 'noindex', $robots, true ) ) { $values['_yablseo_robots_noindex'] = '1'; }
+            if ( in_array( 'nofollow', $robots, true ) ) { $values['_yablseo_robots_nofollow'] = '1'; }
             return $values;
         }
 
         if ( 'surerank' === $this->profile->id() ) {
-            if ( $this->truthy( $getMeta( $type, $id, 'surerank_settings_post_no_index' ) ) ) { $values['_yps_robots_noindex'] = '1'; }
-            if ( $this->truthy( $getMeta( $type, $id, 'surerank_settings_post_no_follow' ) ) ) { $values['_yps_robots_nofollow'] = '1'; }
-            if ( $this->truthy( $getMeta( $type, $id, 'surerank_settings_post_no_archive' ) ) ) { $values['_yps_robots_advanced'] = 'noarchive'; }
+            if ( $this->truthy( $getMeta( $type, $id, 'surerank_settings_post_no_index' ) ) ) { $values['_yablseo_robots_noindex'] = '1'; }
+            if ( $this->truthy( $getMeta( $type, $id, 'surerank_settings_post_no_follow' ) ) ) { $values['_yablseo_robots_nofollow'] = '1'; }
+            if ( $this->truthy( $getMeta( $type, $id, 'surerank_settings_post_no_archive' ) ) ) { $values['_yablseo_robots_advanced'] = 'noarchive'; }
             return $values;
         }
 
         if ( 'seopress' === $this->profile->id() ) {
-            if ( $this->truthy( $getMeta( $type, $id, '_seopress_robots_index' ) ) ) { $values['_yps_robots_noindex'] = '1'; }
-            if ( $this->truthy( $getMeta( $type, $id, '_seopress_robots_follow' ) ) ) { $values['_yps_robots_nofollow'] = '1'; }
+            if ( $this->truthy( $getMeta( $type, $id, '_seopress_robots_index' ) ) ) { $values['_yablseo_robots_noindex'] = '1'; }
+            if ( $this->truthy( $getMeta( $type, $id, '_seopress_robots_follow' ) ) ) { $values['_yablseo_robots_nofollow'] = '1'; }
             $advanced = array();
             if ( $this->truthy( $getMeta( $type, $id, '_seopress_robots_snippet' ) ) ) { $advanced[] = 'nosnippet'; }
             if ( $this->truthy( $getMeta( $type, $id, '_seopress_robots_imageindex' ) ) ) { $advanced[] = 'noimageindex'; }
-            if ( ! empty( $advanced ) ) { $values['_yps_robots_advanced'] = implode( ',', $advanced ); }
+            if ( ! empty( $advanced ) ) { $values['_yablseo_robots_advanced'] = implode( ',', $advanced ); }
         }
         return $values;
     }
@@ -120,10 +120,10 @@ final class PortableMetadataReader {
     private function slimValues( $raw ): array {
         $raw = is_array( $raw ) ? $raw : array();
         $map = array(
-            'title'       => '_yps_seo_title',
-            'description' => '_yps_meta_description',
-            'canonical'   => '_yps_canonical',
-            'noindex'     => '_yps_robots_noindex',
+            'title'       => '_yablseo_seo_title',
+            'description' => '_yablseo_meta_description',
+            'canonical'   => '_yablseo_canonical',
+            'noindex'     => '_yablseo_robots_noindex',
         );
         $values = array();
         foreach ( $map as $sourceKey => $targetKey ) {
@@ -188,26 +188,26 @@ final class PortableMetadataReader {
     private function aioseoRowValues( array $row ): array {
         if ( empty( $row ) ) { return array(); }
         $values = array();
-        $this->addText( $values, '_yps_seo_title', $this->aioPortableText( $row['title'] ?? '' ) );
-        $this->addText( $values, '_yps_meta_description', $this->aioPortableText( $row['description'] ?? '' ) );
-        $this->addText( $values, '_yps_canonical', $this->aioPortableText( $row['canonical_url'] ?? '' ) );
-        $this->addText( $values, '_yps_og_title', $this->aioPortableText( $row['og_title'] ?? '' ) );
-        $this->addText( $values, '_yps_og_description', $this->aioPortableText( $row['og_description'] ?? '' ) );
-        if ( 'custom_image' === (string) ( $row['og_image_type'] ?? '' ) ) { $this->addText( $values, '_yps_og_image', $row['og_image_custom_url'] ?? '' ); }
-        $this->addText( $values, '_yps_twitter_title', $this->aioPortableText( $row['twitter_title'] ?? '' ) );
-        $this->addText( $values, '_yps_twitter_description', $this->aioPortableText( $row['twitter_description'] ?? '' ) );
-        if ( 'custom_image' === (string) ( $row['twitter_image_type'] ?? '' ) ) { $this->addText( $values, '_yps_twitter_image', $row['twitter_image_custom_url'] ?? '' ); }
-        if ( $this->truthy( $row['pillar_content'] ?? false ) ) { $values['_yps_is_cornerstone'] = '1'; }
-        $this->addText( $values, '_yps_focus_keyphrase', $this->aioFocusKeyphrase( $row['keyphrases'] ?? null ) );
+        $this->addText( $values, '_yablseo_seo_title', $this->aioPortableText( $row['title'] ?? '' ) );
+        $this->addText( $values, '_yablseo_meta_description', $this->aioPortableText( $row['description'] ?? '' ) );
+        $this->addText( $values, '_yablseo_canonical', $this->aioPortableText( $row['canonical_url'] ?? '' ) );
+        $this->addText( $values, '_yablseo_og_title', $this->aioPortableText( $row['og_title'] ?? '' ) );
+        $this->addText( $values, '_yablseo_og_description', $this->aioPortableText( $row['og_description'] ?? '' ) );
+        if ( 'custom_image' === (string) ( $row['og_image_type'] ?? '' ) ) { $this->addText( $values, '_yablseo_og_image', $row['og_image_custom_url'] ?? '' ); }
+        $this->addText( $values, '_yablseo_twitter_title', $this->aioPortableText( $row['twitter_title'] ?? '' ) );
+        $this->addText( $values, '_yablseo_twitter_description', $this->aioPortableText( $row['twitter_description'] ?? '' ) );
+        if ( 'custom_image' === (string) ( $row['twitter_image_type'] ?? '' ) ) { $this->addText( $values, '_yablseo_twitter_image', $row['twitter_image_custom_url'] ?? '' ); }
+        if ( $this->truthy( $row['pillar_content'] ?? false ) ) { $values['_yablseo_is_cornerstone'] = '1'; }
+        $this->addText( $values, '_yablseo_focus_keyphrase', $this->aioFocusKeyphrase( $row['keyphrases'] ?? null ) );
 
         if ( array_key_exists( 'robots_default', $row ) && ! $this->truthy( $row['robots_default'] ) ) {
-            if ( $this->truthy( $row['robots_noindex'] ?? false ) ) { $values['_yps_robots_noindex'] = '1'; }
-            if ( $this->truthy( $row['robots_nofollow'] ?? false ) ) { $values['_yps_robots_nofollow'] = '1'; }
+            if ( $this->truthy( $row['robots_noindex'] ?? false ) ) { $values['_yablseo_robots_noindex'] = '1'; }
+            if ( $this->truthy( $row['robots_nofollow'] ?? false ) ) { $values['_yablseo_robots_nofollow'] = '1'; }
             $advanced = array();
             foreach ( array( 'noarchive' => 'robots_noarchive', 'noimageindex' => 'robots_noimageindex', 'nosnippet' => 'robots_nosnippet', 'notranslate' => 'robots_notranslate' ) as $directive => $column ) {
                 if ( $this->truthy( $row[ $column ] ?? false ) ) { $advanced[] = $directive; }
             }
-            if ( ! empty( $advanced ) ) { $values['_yps_robots_advanced'] = implode( ',', $advanced ); }
+            if ( ! empty( $advanced ) ) { $values['_yablseo_robots_advanced'] = implode( ',', $advanced ); }
         }
         return $values;
     }

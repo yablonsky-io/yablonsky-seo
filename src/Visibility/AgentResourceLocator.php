@@ -86,7 +86,7 @@ final class AgentResourceLocator {
 
     public function preferredImageUrl( string $type, int $objectId ): string {
         if ( 'post' === $type ) {
-            $url = trim( (string) get_post_meta( $objectId, '_yps_og_image', true ) );
+            $url = trim( (string) get_post_meta( $objectId, '_yablseo_og_image', true ) );
             if ( '' === $url && has_post_thumbnail( $objectId ) ) {
                 $featured = get_the_post_thumbnail_url( $objectId, 'full' );
                 $url = is_string( $featured ) ? $featured : '';
@@ -148,7 +148,7 @@ final class AgentResourceLocator {
         $post = get_post( $postId );
         $object = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : null;
         if ( ! $post instanceof \WP_Post || 'publish' !== $post->post_status || 'attachment' === $post->post_type || ! $object || ! is_post_type_viewable( $object ) || '' !== (string) $post->post_password ) { return ''; }
-        if ( '1' === (string) get_post_meta( $postId, '_yps_robots_noindex', true ) ) { return ''; }
+        if ( '1' === (string) get_post_meta( $postId, '_yablseo_robots_noindex', true ) ) { return ''; }
         $url = $this->canonicalPostUrl( $postId, $canonical );
         if ( '' === $url || false !== strpos( $url, '?' ) ) { return ''; }
         $frontId = (int) get_option( 'page_on_front', 0 );
@@ -160,14 +160,14 @@ final class AgentResourceLocator {
         $term = get_term( $termId );
         if ( ! $term instanceof \WP_Term ) { return ''; }
         $taxonomy = get_taxonomy( $term->taxonomy );
-        if ( ! $taxonomy || empty( $taxonomy->public ) || '1' === (string) get_term_meta( $termId, '_yps_robots_noindex', true ) ) { return ''; }
+        if ( ! $taxonomy || empty( $taxonomy->public ) || '1' === (string) get_term_meta( $termId, '_yablseo_robots_noindex', true ) ) { return ''; }
         $url = $this->canonicalTermUrl( $termId, $canonical );
         return '' !== $url && false === strpos( $url, '?' ) ? untrailingslashit( $url ) . '.md' : '';
     }
 
     private function authorMarkdownUrl( int $userId, string $canonical = '' ): string {
         $user = get_userdata( $userId );
-        if ( ! $user instanceof \WP_User || '1' === (string) get_user_meta( $userId, '_yps_author_robots_noindex', true ) ) { return ''; }
+        if ( ! $user instanceof \WP_User || '1' === (string) get_user_meta( $userId, '_yablseo_author_robots_noindex', true ) ) { return ''; }
         $publicTypes = array_values( get_post_types( array( 'public' => true ), 'names' ) );
         if ( count_user_posts( $userId, $publicTypes, true ) <= 0 ) { return ''; }
         $url = $this->canonicalAuthorUrl( $userId, $canonical );

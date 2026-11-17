@@ -1560,7 +1560,7 @@ untimeException $error ) {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Editing this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        delete_post_meta( $postId, '_yps_ai_metadata_draft' );
+        delete_post_meta( $postId, '_yablseo_ai_metadata_draft' );
         wp_send_json_success( array( 'message' => esc_html__( 'AI review draft discarded. Saved SEO metadata remains unchanged.', 'yablonsky-seo' ) ) );
     }
 
@@ -1626,13 +1626,13 @@ untimeException $error ) {
         <div class="yps-profile-seo-surface">
         <h2><?php echo esc_html__( 'Yablonsky SEO', 'yablonsky-seo' ); ?></h2>
         <table class="form-table yps-profile-seo-table" role="presentation">
-            <tr><th><label for="yps-author-title"><?php echo esc_html__( 'Author SEO title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-title" name="yablseo_author_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_seo_title', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-description"><?php echo esc_html__( 'Author meta description', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-description" name="yablseo_author_description"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_meta_description', true ) ); ?></textarea></td></tr>
-            <tr><th><label for="yps-author-job-title"><?php echo esc_html__( 'Job title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-job-title" name="yablseo_author_job_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_job_title', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-image-url"><?php echo esc_html__( 'Person image URL', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" type="url" id="yps-author-image-url" name="yablseo_author_image_url" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_image_url', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-same-as"><?php echo esc_html__( 'External sameAs URLs', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-same-as" name="yablseo_author_same_as"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_same_as', true ) ); ?></textarea><p class="description"><?php echo esc_html__( 'One URL per line. Migrated Yoast social profile fields are also included automatically.', 'yablonsky-seo' ); ?></p></td></tr>
-            <tr><th><label for="yps-author-knows-about"><?php echo esc_html__( 'knowsAbout topics', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-knows-about" name="yablseo_author_knows_about"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_knows_about', true ) ); ?></textarea></td></tr>
-            <tr><th><?php echo esc_html__( 'Indexability', 'yablonsky-seo' ); ?></th><td><label><input type="checkbox" name="yablseo_author_noindex" value="1" <?php checked( '1', (string) get_user_meta( $user->ID, '_yps_author_robots_noindex', true ) ); ?> /> <?php echo esc_html__( 'Noindex this author archive', 'yablonsky-seo' ); ?></label></td></tr>
+            <tr><th><label for="yps-author-title"><?php echo esc_html__( 'Author SEO title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-title" name="yablseo_author_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yablseo_author_seo_title', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-description"><?php echo esc_html__( 'Author meta description', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-description" name="yablseo_author_description"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yablseo_author_meta_description', true ) ); ?></textarea></td></tr>
+            <tr><th><label for="yps-author-job-title"><?php echo esc_html__( 'Job title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-job-title" name="yablseo_author_job_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yablseo_author_job_title', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-image-url"><?php echo esc_html__( 'Person image URL', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" type="url" id="yps-author-image-url" name="yablseo_author_image_url" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yablseo_author_image_url', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-same-as"><?php echo esc_html__( 'External sameAs URLs', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-same-as" name="yablseo_author_same_as"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yablseo_author_same_as', true ) ); ?></textarea><p class="description"><?php echo esc_html__( 'One URL per line. Migrated Yoast social profile fields are also included automatically.', 'yablonsky-seo' ); ?></p></td></tr>
+            <tr><th><label for="yps-author-knows-about"><?php echo esc_html__( 'knowsAbout topics', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-knows-about" name="yablseo_author_knows_about"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yablseo_author_knows_about', true ) ); ?></textarea></td></tr>
+            <tr><th><?php echo esc_html__( 'Indexability', 'yablonsky-seo' ); ?></th><td><label><input type="checkbox" name="yablseo_author_noindex" value="1" <?php checked( '1', (string) get_user_meta( $user->ID, '_yablseo_author_robots_noindex', true ) ); ?> /> <?php echo esc_html__( 'Noindex this author archive', 'yablonsky-seo' ); ?></label></td></tr>
         </table>
         </div>
         <?php
@@ -1647,74 +1647,74 @@ untimeException $error ) {
         if ( ! wp_verify_nonce( $nonce, self::USER_NONCE ) || ! current_user_can( 'edit_user', $userId ) ) {
             return;
         }
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_seo_title', $this->postedText( 'yablseo_author_title' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_meta_description', $this->postedTextarea( 'yablseo_author_description' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_job_title', $this->postedText( 'yablseo_author_job_title' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_image_url', esc_url_raw( $this->postedText( 'yablseo_author_image_url' ), array( 'http', 'https' ) ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_same_as', $this->postedTextarea( 'yablseo_author_same_as' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_knows_about', $this->postedTextarea( 'yablseo_author_knows_about' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_robots_noindex', filter_has_var( INPUT_POST, 'yablseo_author_noindex' ) ? '1' : '' );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_seo_title', $this->postedText( 'yablseo_author_title' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_meta_description', $this->postedTextarea( 'yablseo_author_description' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_job_title', $this->postedText( 'yablseo_author_job_title' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_image_url', esc_url_raw( $this->postedText( 'yablseo_author_image_url' ), array( 'http', 'https' ) ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_same_as', $this->postedTextarea( 'yablseo_author_same_as' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_knows_about', $this->postedTextarea( 'yablseo_author_knows_about' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yablseo_author_robots_noindex', filter_has_var( INPUT_POST, 'yablseo_author_noindex' ) ? '1' : '' );
     }
 
     /** @return array<string,array{meta:string,label:string,type:string}> */
     private function postFieldDefinitions(): array {
         return array(
-            'seo_title'           => array( 'meta' => '_yps_seo_title', 'label' => __( 'SEO title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'meta_description'    => array( 'meta' => '_yps_meta_description', 'label' => __( 'Meta description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'canonical'           => array( 'meta' => '_yps_canonical', 'label' => __( 'Canonical URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'noindex'             => array( 'meta' => '_yps_robots_noindex', 'label' => __( 'Noindex', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'nofollow'            => array( 'meta' => '_yps_robots_nofollow', 'label' => __( 'Nofollow', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'robots_advanced'     => array( 'meta' => '_yps_robots_advanced', 'label' => __( 'Advanced robots directives', 'yablonsky-seo' ), 'type' => 'text' ),
-            'apple_ai_answer_opt_out' => array( 'meta' => '_yps_apple_ai_answer_opt_out', 'label' => __( 'Exclude from Apple AI answer context', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'focus_keyphrase'     => array( 'meta' => '_yps_focus_keyphrase', 'label' => __( 'Focus keyphrase', 'yablonsky-seo' ), 'type' => 'text' ),
-            'og_title'            => array( 'meta' => '_yps_og_title', 'label' => __( 'Open Graph title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'og_description'      => array( 'meta' => '_yps_og_description', 'label' => __( 'Open Graph description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'og_image'            => array( 'meta' => '_yps_og_image', 'label' => __( 'Open Graph image URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'og_type'             => array( 'meta' => '_yps_og_type', 'label' => __( 'Open Graph type', 'yablonsky-seo' ), 'type' => 'og_type' ),
-            'twitter_title'       => array( 'meta' => '_yps_twitter_title', 'label' => __( 'Twitter/X title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'twitter_description' => array( 'meta' => '_yps_twitter_description', 'label' => __( 'Twitter/X description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'twitter_image'       => array( 'meta' => '_yps_twitter_image', 'label' => __( 'Twitter/X image URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'redirect_target'     => array( 'meta' => '_yps_redirect_target', 'label' => __( '301 redirect target (same site)', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_page_type'    => array( 'meta' => '_yps_schema_page_type', 'label' => __( 'Schema page type', 'yablonsky-seo' ), 'type' => 'schema_page' ),
-            'schema_article_type' => array( 'meta' => '_yps_schema_article_type', 'label' => __( 'Schema article type', 'yablonsky-seo' ), 'type' => 'schema_article' ),
-            'schema_entity_type'  => array( 'meta' => '_yps_schema_entity_type', 'label' => __( 'Primary entity', 'yablonsky-seo' ), 'type' => 'schema_entity' ),
-            'schema_entity_name'  => array( 'meta' => '_yps_schema_entity_name', 'label' => __( 'Entity name', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_entity_description' => array( 'meta' => '_yps_schema_entity_description', 'label' => __( 'Entity description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'schema_person_job_title' => array( 'meta' => '_yps_schema_person_job_title', 'label' => __( 'Person job title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_person_image_url' => array( 'meta' => '_yps_schema_person_image_url', 'label' => __( 'Person image URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'schema_person_same_as' => array( 'meta' => '_yps_schema_person_same_as', 'label' => __( 'Person external sameAs URLs', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'schema_person_knows_about' => array( 'meta' => '_yps_schema_person_knows_about', 'label' => __( 'Person knowsAbout topics', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'schema_service_type' => array( 'meta' => '_yps_schema_service_type', 'label' => __( 'Service type', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_area_served'  => array( 'meta' => '_yps_schema_area_served', 'label' => __( 'Area served', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_application_category' => array( 'meta' => '_yps_schema_application_category', 'label' => __( 'Application category', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_operating_system' => array( 'meta' => '_yps_schema_operating_system', 'label' => __( 'Operating system / platform', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_offer_price'  => array( 'meta' => '_yps_schema_offer_price', 'label' => __( 'Offer price', 'yablonsky-seo' ), 'type' => 'text' ),
-            'schema_offer_currency' => array( 'meta' => '_yps_schema_offer_currency', 'label' => __( 'Offer currency (ISO 4217)', 'yablonsky-seo' ), 'type' => 'text' ),
-            'is_cornerstone'       => array( 'meta' => '_yps_is_cornerstone', 'label' => __( 'Cornerstone / pillar content', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'video_exclude'        => array( 'meta' => '_yps_video_exclude', 'label' => __( 'Exclude this resource from Video SEO', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'video_content_url'    => array( 'meta' => '_yps_video_content_url', 'label' => __( 'Primary video URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'video_kind'           => array( 'meta' => '_yps_video_kind', 'label' => __( 'Video URL type', 'yablonsky-seo' ), 'type' => 'video_kind' ),
-            'video_title'          => array( 'meta' => '_yps_video_title', 'label' => __( 'Video title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'video_description'    => array( 'meta' => '_yps_video_description', 'label' => __( 'Video description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'video_thumbnail'      => array( 'meta' => '_yps_video_thumbnail', 'label' => __( 'Video thumbnail URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'video_duration'       => array( 'meta' => '_yps_video_duration', 'label' => __( 'Video duration in seconds', 'yablonsky-seo' ), 'type' => 'text' ),
-            'news_enabled'         => array( 'meta' => '_yps_news_enabled', 'label' => __( 'Include in News SEO', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'news_exclude'         => array( 'meta' => '_yps_news_exclude', 'label' => __( 'Exclude from Google News sitemap', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'news_stock_tickers'   => array( 'meta' => '_yps_news_stock_tickers', 'label' => __( 'News stock tickers', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'schema_access_restricted' => array( 'meta' => '_yps_schema_access_restricted', 'label' => __( 'Access restricted / paywalled content', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'seo_title'           => array( 'meta' => '_yablseo_seo_title', 'label' => __( 'SEO title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'meta_description'    => array( 'meta' => '_yablseo_meta_description', 'label' => __( 'Meta description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'canonical'           => array( 'meta' => '_yablseo_canonical', 'label' => __( 'Canonical URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'noindex'             => array( 'meta' => '_yablseo_robots_noindex', 'label' => __( 'Noindex', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'nofollow'            => array( 'meta' => '_yablseo_robots_nofollow', 'label' => __( 'Nofollow', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'robots_advanced'     => array( 'meta' => '_yablseo_robots_advanced', 'label' => __( 'Advanced robots directives', 'yablonsky-seo' ), 'type' => 'text' ),
+            'apple_ai_answer_opt_out' => array( 'meta' => '_yablseo_apple_ai_answer_opt_out', 'label' => __( 'Exclude from Apple AI answer context', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'focus_keyphrase'     => array( 'meta' => '_yablseo_focus_keyphrase', 'label' => __( 'Focus keyphrase', 'yablonsky-seo' ), 'type' => 'text' ),
+            'og_title'            => array( 'meta' => '_yablseo_og_title', 'label' => __( 'Open Graph title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'og_description'      => array( 'meta' => '_yablseo_og_description', 'label' => __( 'Open Graph description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'og_image'            => array( 'meta' => '_yablseo_og_image', 'label' => __( 'Open Graph image URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'og_type'             => array( 'meta' => '_yablseo_og_type', 'label' => __( 'Open Graph type', 'yablonsky-seo' ), 'type' => 'og_type' ),
+            'twitter_title'       => array( 'meta' => '_yablseo_twitter_title', 'label' => __( 'Twitter/X title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'twitter_description' => array( 'meta' => '_yablseo_twitter_description', 'label' => __( 'Twitter/X description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'twitter_image'       => array( 'meta' => '_yablseo_twitter_image', 'label' => __( 'Twitter/X image URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'redirect_target'     => array( 'meta' => '_yablseo_redirect_target', 'label' => __( '301 redirect target (same site)', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_page_type'    => array( 'meta' => '_yablseo_schema_page_type', 'label' => __( 'Schema page type', 'yablonsky-seo' ), 'type' => 'schema_page' ),
+            'schema_article_type' => array( 'meta' => '_yablseo_schema_article_type', 'label' => __( 'Schema article type', 'yablonsky-seo' ), 'type' => 'schema_article' ),
+            'schema_entity_type'  => array( 'meta' => '_yablseo_schema_entity_type', 'label' => __( 'Primary entity', 'yablonsky-seo' ), 'type' => 'schema_entity' ),
+            'schema_entity_name'  => array( 'meta' => '_yablseo_schema_entity_name', 'label' => __( 'Entity name', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_entity_description' => array( 'meta' => '_yablseo_schema_entity_description', 'label' => __( 'Entity description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'schema_person_job_title' => array( 'meta' => '_yablseo_schema_person_job_title', 'label' => __( 'Person job title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_person_image_url' => array( 'meta' => '_yablseo_schema_person_image_url', 'label' => __( 'Person image URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'schema_person_same_as' => array( 'meta' => '_yablseo_schema_person_same_as', 'label' => __( 'Person external sameAs URLs', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'schema_person_knows_about' => array( 'meta' => '_yablseo_schema_person_knows_about', 'label' => __( 'Person knowsAbout topics', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'schema_service_type' => array( 'meta' => '_yablseo_schema_service_type', 'label' => __( 'Service type', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_area_served'  => array( 'meta' => '_yablseo_schema_area_served', 'label' => __( 'Area served', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_application_category' => array( 'meta' => '_yablseo_schema_application_category', 'label' => __( 'Application category', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_operating_system' => array( 'meta' => '_yablseo_schema_operating_system', 'label' => __( 'Operating system / platform', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_offer_price'  => array( 'meta' => '_yablseo_schema_offer_price', 'label' => __( 'Offer price', 'yablonsky-seo' ), 'type' => 'text' ),
+            'schema_offer_currency' => array( 'meta' => '_yablseo_schema_offer_currency', 'label' => __( 'Offer currency (ISO 4217)', 'yablonsky-seo' ), 'type' => 'text' ),
+            'is_cornerstone'       => array( 'meta' => '_yablseo_is_cornerstone', 'label' => __( 'Cornerstone / pillar content', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'video_exclude'        => array( 'meta' => '_yablseo_video_exclude', 'label' => __( 'Exclude this resource from Video SEO', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'video_content_url'    => array( 'meta' => '_yablseo_video_content_url', 'label' => __( 'Primary video URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'video_kind'           => array( 'meta' => '_yablseo_video_kind', 'label' => __( 'Video URL type', 'yablonsky-seo' ), 'type' => 'video_kind' ),
+            'video_title'          => array( 'meta' => '_yablseo_video_title', 'label' => __( 'Video title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'video_description'    => array( 'meta' => '_yablseo_video_description', 'label' => __( 'Video description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'video_thumbnail'      => array( 'meta' => '_yablseo_video_thumbnail', 'label' => __( 'Video thumbnail URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'video_duration'       => array( 'meta' => '_yablseo_video_duration', 'label' => __( 'Video duration in seconds', 'yablonsky-seo' ), 'type' => 'text' ),
+            'news_enabled'         => array( 'meta' => '_yablseo_news_enabled', 'label' => __( 'Include in News SEO', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'news_exclude'         => array( 'meta' => '_yablseo_news_exclude', 'label' => __( 'Exclude from Google News sitemap', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'news_stock_tickers'   => array( 'meta' => '_yablseo_news_stock_tickers', 'label' => __( 'News stock tickers', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'schema_access_restricted' => array( 'meta' => '_yablseo_schema_access_restricted', 'label' => __( 'Access restricted / paywalled content', 'yablonsky-seo' ), 'type' => 'checkbox' ),
         );
     }
 
     /** @return array<string,array{meta:string,label:string,type:string}> */
     private function termFieldDefinitions(): array {
         return array(
-            'seo_title'        => array( 'meta' => '_yps_seo_title', 'label' => __( 'SEO title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'meta_description' => array( 'meta' => '_yps_meta_description', 'label' => __( 'Meta description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'canonical'        => array( 'meta' => '_yps_canonical', 'label' => __( 'Canonical URL', 'yablonsky-seo' ), 'type' => 'url' ),
-            'noindex'          => array( 'meta' => '_yps_robots_noindex', 'label' => __( 'Noindex', 'yablonsky-seo' ), 'type' => 'checkbox' ),
-            'og_title'         => array( 'meta' => '_yps_og_title', 'label' => __( 'Open Graph title', 'yablonsky-seo' ), 'type' => 'text' ),
-            'og_description'   => array( 'meta' => '_yps_og_description', 'label' => __( 'Open Graph description', 'yablonsky-seo' ), 'type' => 'textarea' ),
-            'og_image'         => array( 'meta' => '_yps_og_image', 'label' => __( 'Open Graph image URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'seo_title'        => array( 'meta' => '_yablseo_seo_title', 'label' => __( 'SEO title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'meta_description' => array( 'meta' => '_yablseo_meta_description', 'label' => __( 'Meta description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'canonical'        => array( 'meta' => '_yablseo_canonical', 'label' => __( 'Canonical URL', 'yablonsky-seo' ), 'type' => 'url' ),
+            'noindex'          => array( 'meta' => '_yablseo_robots_noindex', 'label' => __( 'Noindex', 'yablonsky-seo' ), 'type' => 'checkbox' ),
+            'og_title'         => array( 'meta' => '_yablseo_og_title', 'label' => __( 'Open Graph title', 'yablonsky-seo' ), 'type' => 'text' ),
+            'og_description'   => array( 'meta' => '_yablseo_og_description', 'label' => __( 'Open Graph description', 'yablonsky-seo' ), 'type' => 'textarea' ),
+            'og_image'         => array( 'meta' => '_yablseo_og_image', 'label' => __( 'Open Graph image URL', 'yablonsky-seo' ), 'type' => 'url' ),
         );
     }
 
@@ -1883,7 +1883,7 @@ untimeException $error ) {
 
     /** @return array<string,string> */
     private function readAiMetadataDraft( int $postId ): array {
-        $raw = get_post_meta( $postId, '_yps_ai_metadata_draft', true );
+        $raw = get_post_meta( $postId, '_yablseo_ai_metadata_draft', true );
         if ( ! is_string( $raw ) || '' === $raw ) { return array(); }
         $data = json_decode( $raw, true );
         if ( ! is_array( $data ) || ! isset( $data['values'] ) || ! is_array( $data['values'] ) ) { return array(); }
@@ -1924,7 +1924,7 @@ untimeException $error ) {
 
     /** @return array<int,string> */
     private function relatedKeyphrasesForPost( int $postId, string $primary = '' ): array {
-        $raw = get_post_meta( $postId, '_yps_focus_keyphrases_json', true );
+        $raw = get_post_meta( $postId, '_yablseo_focus_keyphrases_json', true );
         $items = array();
         if ( is_string( $raw ) && '' !== trim( $raw ) ) {
             $decoded = json_decode( $raw, true );
@@ -1976,7 +1976,7 @@ untimeException $error ) {
     private function saveRelatedKeyphrases( int $postId ): void {
         $raw = filter_input( INPUT_POST, 'yablseo_focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
         $raw = is_string( $raw ) ? $raw : '';
-        $primary = (string) get_post_meta( $postId, '_yps_focus_keyphrase', true );
+        $primary = (string) get_post_meta( $postId, '_yablseo_focus_keyphrase', true );
         $primaryKey = $this->normalizedKeyphraseKey( $primary );
         $parts = preg_split( '/[\r\n,;]+/u', $raw, -1, PREG_SPLIT_NO_EMPTY ) ?: array();
         $clean = array();
@@ -1990,8 +1990,8 @@ untimeException $error ) {
             $clean[] = function_exists( 'mb_substr' ) ? mb_substr( $value, 0, 200, 'UTF-8' ) : substr( $value, 0, 200 );
             if ( count( $clean ) >= 4 ) { break; }
         }
-        if ( empty( $clean ) ) { delete_post_meta( $postId, '_yps_focus_keyphrases_json' ); return; }
-        update_post_meta( $postId, '_yps_focus_keyphrases_json', wp_json_encode( array_values( $clean ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
+        if ( empty( $clean ) ) { delete_post_meta( $postId, '_yablseo_focus_keyphrases_json' ); return; }
+        update_post_meta( $postId, '_yablseo_focus_keyphrases_json', wp_json_encode( array_values( $clean ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
     }
 
     private function normalizedKeyphraseKey( string $value ): string {

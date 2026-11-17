@@ -190,7 +190,7 @@ final class PublicSeoController {
     public function filterPostSitemapEntry( array $entry, $post = null, string $postType = '' ): array {
         if ( '' !== $postType && ! ( new DiscoverySettings() )->familyEnabled( 'post', $postType ) ) { return array(); }
         if ( $post instanceof \WP_Post ) {
-            if ( $this->metaBool( get_post_meta( (int) $post->ID, '_yps_robots_noindex', true ) ) ) { return array(); }
+            if ( $this->metaBool( get_post_meta( (int) $post->ID, '_yablseo_robots_noindex', true ) ) ) { return array(); }
             $url = isset( $entry['loc'] ) ? (string) $entry['loc'] : (string) get_permalink( (int) $post->ID );
             $eligibility = ( new SitemapEligibilityPolicy() )->evaluatePost( $post, $url );
             if ( empty( $eligibility['eligible'] ) ) { return array(); }
@@ -202,7 +202,7 @@ final class PublicSeoController {
     public function filterTermSitemapEntry( array $entry, int $termId = 0, string $taxonomy = '', $term = null ): array {
         unset( $term );
         if ( '' !== $taxonomy && ! ( new DiscoverySettings() )->familyEnabled( 'term', $taxonomy ) ) { return array(); }
-        if ( $termId > 0 && $this->metaBool( get_term_meta( $termId, '_yps_robots_noindex', true ) ) ) {
+        if ( $termId > 0 && $this->metaBool( get_term_meta( $termId, '_yablseo_robots_noindex', true ) ) ) {
             return array();
         }
         return $entry;
@@ -211,7 +211,7 @@ final class PublicSeoController {
     /** @param array<string,string> $entry @return array<string,string> */
     public function filterUserSitemapEntry( array $entry, $user = null ): array {
         if ( ! ( new DiscoverySettings() )->familyEnabled( 'author', 'author' ) ) { return array(); }
-        if ( is_object( $user ) && isset( $user->ID ) && $this->metaBool( get_user_meta( (int) $user->ID, '_yps_author_robots_noindex', true ) ) ) {
+        if ( is_object( $user ) && isset( $user->ID ) && $this->metaBool( get_user_meta( (int) $user->ID, '_yablseo_author_robots_noindex', true ) ) ) {
             return array();
         }
         return $entry;
@@ -522,64 +522,64 @@ final class PublicSeoController {
         $id = $resource->objectId();
         if ( $id > 0 && in_array( $resource->type(), array( 'post', 'product', 'posts_page', 'home' ), true ) ) {
             $map = array(
-                'title'               => '_yps_seo_title',
-                'description'         => '_yps_meta_description',
-                'canonical'           => '_yps_canonical',
-                'noindex'             => '_yps_robots_noindex',
-                'nofollow'            => '_yps_robots_nofollow',
-                'robots_advanced'     => '_yps_robots_advanced',
-                'apple_ai_answer_opt_out' => '_yps_apple_ai_answer_opt_out',
-                'redirect'            => '_yps_redirect_target',
-                'og_title'            => '_yps_og_title',
-                'og_description'      => '_yps_og_description',
-                'og_image'            => '_yps_og_image',
-                'og_image_id'         => '_yps_og_image_id',
-                'og_type'             => '_yps_og_type',
-                'twitter_title'       => '_yps_twitter_title',
-                'twitter_description' => '_yps_twitter_description',
-                'twitter_image'       => '_yps_twitter_image',
-                'twitter_image_id'    => '_yps_twitter_image_id',
-                'schema_page_type'    => '_yps_schema_page_type',
-                'schema_article_type' => '_yps_schema_article_type',
-                'schema_entity_type'  => '_yps_schema_entity_type',
-                'schema_entity_name'  => '_yps_schema_entity_name',
-                'schema_entity_description' => '_yps_schema_entity_description',
-                'schema_person_job_title' => '_yps_schema_person_job_title',
-                'schema_person_image_url' => '_yps_schema_person_image_url',
-                'schema_person_same_as' => '_yps_schema_person_same_as',
-                'schema_person_knows_about' => '_yps_schema_person_knows_about',
-                'schema_service_type' => '_yps_schema_service_type',
-                'schema_area_served'  => '_yps_schema_area_served',
-                'schema_application_category' => '_yps_schema_application_category',
-                'schema_operating_system' => '_yps_schema_operating_system',
-                'schema_offer_price'  => '_yps_schema_offer_price',
-                'schema_offer_currency' => '_yps_schema_offer_currency',
-                'schema_access_restricted' => '_yps_schema_access_restricted',
+                'title'               => '_yablseo_seo_title',
+                'description'         => '_yablseo_meta_description',
+                'canonical'           => '_yablseo_canonical',
+                'noindex'             => '_yablseo_robots_noindex',
+                'nofollow'            => '_yablseo_robots_nofollow',
+                'robots_advanced'     => '_yablseo_robots_advanced',
+                'apple_ai_answer_opt_out' => '_yablseo_apple_ai_answer_opt_out',
+                'redirect'            => '_yablseo_redirect_target',
+                'og_title'            => '_yablseo_og_title',
+                'og_description'      => '_yablseo_og_description',
+                'og_image'            => '_yablseo_og_image',
+                'og_image_id'         => '_yablseo_og_image_id',
+                'og_type'             => '_yablseo_og_type',
+                'twitter_title'       => '_yablseo_twitter_title',
+                'twitter_description' => '_yablseo_twitter_description',
+                'twitter_image'       => '_yablseo_twitter_image',
+                'twitter_image_id'    => '_yablseo_twitter_image_id',
+                'schema_page_type'    => '_yablseo_schema_page_type',
+                'schema_article_type' => '_yablseo_schema_article_type',
+                'schema_entity_type'  => '_yablseo_schema_entity_type',
+                'schema_entity_name'  => '_yablseo_schema_entity_name',
+                'schema_entity_description' => '_yablseo_schema_entity_description',
+                'schema_person_job_title' => '_yablseo_schema_person_job_title',
+                'schema_person_image_url' => '_yablseo_schema_person_image_url',
+                'schema_person_same_as' => '_yablseo_schema_person_same_as',
+                'schema_person_knows_about' => '_yablseo_schema_person_knows_about',
+                'schema_service_type' => '_yablseo_schema_service_type',
+                'schema_area_served'  => '_yablseo_schema_area_served',
+                'schema_application_category' => '_yablseo_schema_application_category',
+                'schema_operating_system' => '_yablseo_schema_operating_system',
+                'schema_offer_price'  => '_yablseo_schema_offer_price',
+                'schema_offer_currency' => '_yablseo_schema_offer_currency',
+                'schema_access_restricted' => '_yablseo_schema_access_restricted',
             );
             foreach ( $map as $key => $metaKey ) {
                 $values[ $key ] = get_post_meta( $id, $metaKey, true );
             }
         } elseif ( 'term' === $resource->type() && $id > 0 ) {
             $map = array(
-                'title'           => '_yps_seo_title',
-                'description'     => '_yps_meta_description',
-                'canonical'       => '_yps_canonical',
-                'noindex'         => '_yps_robots_noindex',
-                'og_title'        => '_yps_og_title',
-                'og_description'  => '_yps_og_description',
-                'og_image'        => '_yps_og_image',
-                'og_image_id'     => '_yps_og_image_id',
-                'twitter_title'   => '_yps_twitter_title',
-                'twitter_description' => '_yps_twitter_description',
-                'twitter_image'   => '_yps_twitter_image',
+                'title'           => '_yablseo_seo_title',
+                'description'     => '_yablseo_meta_description',
+                'canonical'       => '_yablseo_canonical',
+                'noindex'         => '_yablseo_robots_noindex',
+                'og_title'        => '_yablseo_og_title',
+                'og_description'  => '_yablseo_og_description',
+                'og_image'        => '_yablseo_og_image',
+                'og_image_id'     => '_yablseo_og_image_id',
+                'twitter_title'   => '_yablseo_twitter_title',
+                'twitter_description' => '_yablseo_twitter_description',
+                'twitter_image'   => '_yablseo_twitter_image',
             );
             foreach ( $map as $key => $metaKey ) {
                 $values[ $key ] = get_term_meta( $id, $metaKey, true );
             }
         } elseif ( 'author_archive' === $resource->type() && $id > 0 ) {
-            $values['title']       = get_user_meta( $id, '_yps_author_seo_title', true );
-            $values['description'] = get_user_meta( $id, '_yps_author_meta_description', true );
-            $values['noindex']     = get_user_meta( $id, '_yps_author_robots_noindex', true );
+            $values['title']       = get_user_meta( $id, '_yablseo_author_seo_title', true );
+            $values['description'] = get_user_meta( $id, '_yablseo_author_meta_description', true );
+            $values['noindex']     = get_user_meta( $id, '_yablseo_author_robots_noindex', true );
         }
         return $values;
     }
@@ -1066,18 +1066,18 @@ final class PublicSeoController {
         );
         $description = trim( wp_strip_all_tags( (string) get_the_author_meta( 'description', $authorId ), true ) );
         if ( '' !== $description ) { $author['description'] = $description; }
-        $jobTitle = trim( wp_strip_all_tags( (string) get_user_meta( $authorId, '_yps_author_job_title', true ), true ) );
+        $jobTitle = trim( wp_strip_all_tags( (string) get_user_meta( $authorId, '_yablseo_author_job_title', true ), true ) );
         if ( '' !== $jobTitle ) { $author['jobTitle'] = $jobTitle; }
-        $image = $this->normalizePublicUrl( (string) get_user_meta( $authorId, '_yps_author_image_url', true ) );
+        $image = $this->normalizePublicUrl( (string) get_user_meta( $authorId, '_yablseo_author_image_url', true ) );
         if ( '' !== $image ) { $author['image'] = array( '@type' => 'ImageObject', 'url' => $image ); }
-        $sameAs = $this->urlList( (string) get_user_meta( $authorId, '_yps_author_same_as', true ) );
+        $sameAs = $this->urlList( (string) get_user_meta( $authorId, '_yablseo_author_same_as', true ) );
         foreach ( array( 'facebook','instagram','linkedin','pinterest','twitter','youtube','wikipedia','mastodon' ) as $network ) {
-            $url = $this->normalizePublicUrl( (string) get_user_meta( $authorId, '_yps_author_social_' . $network, true ) );
+            $url = $this->normalizePublicUrl( (string) get_user_meta( $authorId, '_yablseo_author_social_' . $network, true ) );
             if ( '' !== $url ) { $sameAs[] = $url; }
         }
         $sameAs = array_values( array_unique( $sameAs ) );
         if ( ! empty( $sameAs ) ) { $author['sameAs'] = $sameAs; }
-        $knowsAbout = $this->textList( (string) get_user_meta( $authorId, '_yps_author_knows_about', true ) );
+        $knowsAbout = $this->textList( (string) get_user_meta( $authorId, '_yablseo_author_knows_about', true ) );
         if ( ! empty( $knowsAbout ) ) { $author['knowsAbout'] = $knowsAbout; }
         return $author;
     }

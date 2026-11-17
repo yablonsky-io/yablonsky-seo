@@ -320,13 +320,13 @@ final class BulkMetadataService {
 
     /** @param array<int,string> $selected @return array<string,string> */
     private function fieldMap( array $selected = array() ): array {
-        $map = array( 'focus_keyphrase' => '_yps_focus_keyphrase', 'seo_title' => '_yps_seo_title', 'meta_description' => '_yps_meta_description' );
+        $map = array( 'focus_keyphrase' => '_yablseo_focus_keyphrase', 'seo_title' => '_yablseo_seo_title', 'meta_description' => '_yablseo_meta_description' );
         return empty( $selected ) ? $map : array_intersect_key( $map, array_fill_keys( $selected, true ) );
     }
 
     /** @param array<int,string> $selected @return array<int,string> */
     private function draftFieldsForPost( int $postId, array $selected ): array {
-        $raw = get_post_meta( $postId, '_yps_ai_metadata_draft', true );
+        $raw = get_post_meta( $postId, '_yablseo_ai_metadata_draft', true );
         if ( ! is_string( $raw ) || '' === $raw ) { return array(); }
         $data = json_decode( $raw, true );
         if ( ! is_array( $data ) || ! isset( $data['values'] ) || ! is_array( $data['values'] ) ) { return array(); }
@@ -336,16 +336,16 @@ final class BulkMetadataService {
 
     /** @param array<string,string> $values */
     private function mergeAiDraft( int $postId, string $policy, array $values ): void {
-        $raw = get_post_meta( $postId, '_yps_ai_metadata_draft', true );
+        $raw = get_post_meta( $postId, '_yablseo_ai_metadata_draft', true );
         $data = is_string( $raw ) && '' !== $raw ? json_decode( $raw, true ) : array();
         $existing = is_array( $data ) && isset( $data['values'] ) && is_array( $data['values'] ) ? $data['values'] : array();
         foreach ( $values as $field => $value ) { $existing[ sanitize_key( $field ) ] = (string) $value; }
-        update_post_meta( $postId, '_yps_ai_metadata_draft', wp_json_encode( array( 'schema' => 'yseo.ai-metadata-draft.v1', 'policy' => $policy, 'values' => $existing, 'generated_at' => gmdate( 'c' ) ) ) );
+        update_post_meta( $postId, '_yablseo_ai_metadata_draft', wp_json_encode( array( 'schema' => 'yseo.ai-metadata-draft.v1', 'policy' => $policy, 'values' => $existing, 'generated_at' => gmdate( 'c' ) ) ) );
     }
 
     /** @param array<int,string> $selected @return array<int,string> */
     private function aiGeneratedFieldsForPost( int $postId, array $selected ): array {
-        $raw = get_post_meta( $postId, '_yps_ai_metadata_provenance', true );
+        $raw = get_post_meta( $postId, '_yablseo_ai_metadata_provenance', true );
         if ( ! is_string( $raw ) || '' === $raw ) { return array(); }
         $data = json_decode( $raw, true );
         if ( ! is_array( $data ) || ! isset( $data['fields'], $data['value_hashes'] ) || ! is_array( $data['fields'] ) || ! is_array( $data['value_hashes'] ) ) { return array(); }
@@ -358,6 +358,6 @@ final class BulkMetadataService {
     private function mergeAiProvenance( int $postId, string $policy, array $written ): void {
         $map = $this->fieldMap(); $existingFields = $this->aiGeneratedFieldsForPost( $postId, array_keys( $map ) ); $fields = array_values( array_unique( array_merge( $existingFields, $written ) ) ); $hashes = array();
         foreach ( $fields as $field ) { if ( isset( $map[ $field ] ) ) { $hashes[ $field ] = hash( 'sha256', (string) get_post_meta( $postId, $map[ $field ], true ) ); } }
-        update_post_meta( $postId, '_yps_ai_metadata_provenance', wp_json_encode( array( 'schema' => 'yseo.ai-metadata.v1', 'policy' => $policy, 'fields' => $fields, 'value_hashes' => $hashes, 'generated_at' => gmdate( 'c' ) ) ) );
+        update_post_meta( $postId, '_yablseo_ai_metadata_provenance', wp_json_encode( array( 'schema' => 'yseo.ai-metadata.v1', 'policy' => $policy, 'fields' => $fields, 'value_hashes' => $hashes, 'generated_at' => gmdate( 'c' ) ) ) );
     }
 }

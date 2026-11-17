@@ -20,7 +20,7 @@ $admin = get_user_by( 'login', 'admin' );
 $yseo_assert( $admin instanceof WP_User, 'Test administrator exists' );
 wp_set_current_user( $admin->ID );
 
-$yseo_assert( defined( 'YSEO_VERSION' ) && YSEO_VERSION === '5.87.1', 'Installed version matches GitHub release' );
+$yseo_assert( defined( 'YSEO_VERSION' ) && YSEO_VERSION === '5.87.2', 'Installed version matches GitHub release' );
 $yseo_assert( is_plugin_active( 'yablonsky-seo/yablonsky-seo.php' ), 'Plugin active' );
 $yseo_assert( get_post_meta( (int ) get_option( 'yseo_ci_seed_post_id' ), '_yps_seo_title', true ) === 'Preserved SEO Title 5.86.6', 'Pre-upgrade YPS SEO title survived' );
 $yseo_assert( get_option( 'yps_ci_legacy_preservation_marker' ) === 'preserve-me', 'Pre-upgrade YPS option survived' );
@@ -74,18 +74,20 @@ $local = new \Yablonsky\PerformanceSEO\SEO\Local\LocalSeoController();
 $location = wp_insert_post( array( 'post_type' => 'yseo_location', 'post_status' => 'draft', 'post_title' => 'YSEO audit location' ), true );
 $yseo_assert( ! is_wp_error( $location ) && get_post_type( (int) $location ) === 'yseo_location', 'Location post type registered' );
 update_post_meta( (int) $location, '_yps_local_business_name', 'Before Nonce' );
+$yseo_assert( get_post_meta( (int) $location, '_yablseo_local_business_name', true ) === 'Before Nonce', 'Legacy location metadata fallback works' );
 $_POST = array( 'yseo_local_business_name' => 'Unauthorized Overwrite' );
 $local->saveMeta( (int) $location, get_post( (int) $location ) );
-$yseo_assert( get_post_meta( (int) $location, '_yps_local_business_name', true ) === 'Before Nonce', 'Local SEO write denied without nonce' );
+$yseo_assert( get_post_meta( (int) $location, '_yablseo_local_business_name', true ) === 'Before Nonce', 'Local SEO write denied without nonce' );
 $_POST['yseo_location_nonce'] = wp_create_nonce( 'yseo_location_meta_save' );
 wp_set_current_user( 0 );
 $local->saveMeta( (int) $location, get_post( (int) $location ) );
-$yseo_assert( get_post_meta( (int) $location, '_yps_local_business_name', true ) === 'Before Nonce', 'Local SEO write denied without capability' );
+$yseo_assert( get_post_meta( (int) $location, '_yablseo_local_business_name', true ) === 'Before Nonce', 'Local SEO write denied without capability' );
 wp_set_current_user( $admin->ID );
 $_POST['yseo_location_nonce'] = wp_create_nonce( 'yseo_location_meta_save' );
 $_POST['yseo_local_business_name'] = 'Authorized Location';
 $local->saveMeta( (int) $location, get_post( (int) $location ) );
-$yseo_assert( get_post_meta( (int) $location, '_yps_local_business_name', true ) === 'Authorized Location', 'Local SEO authorized save preserved legacy meta contract' );
+$yseo_assert( get_post_meta( (int) $location, '_yablseo_local_business_name', true ) === 'Authorized Location', 'Local SEO authorized save writes canonical meta without overwriting legacy' );
+$yseo_assert( get_post_meta( (int) $location, '_yps_local_business_name', true ) === 'Before Nonce', 'Legacy location data remains intact for rollback' );
 $_POST = array();
 
 $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.org/?a=1&amp;b=2</loc></url></urlset>';
@@ -102,7 +104,7 @@ $health = rest_do_request( new WP_REST_Request( 'GET', '/yablonsky-seo/v1/health
 $yseo_assert( $health instanceof WP_REST_Response && $health->get_status() === 200, 'Public read-only REST health route responds' );
 if ( $health instanceof WP_REST_Response ) {
     $payload = $health->get_data();
-    $yseo_assert( isset( $payload['plugin_version'] ) && $payload['plugin_version'] === '5.87.1', 'REST health advertises correct version' );
+    $yseo_assert( isset( $payload['plugin_version'] ) && $payload['plugin_version'] === '5.87.2', 'REST health advertises correct version' );
 }
 $contract = rest_do_request( new WP_REST_Request( 'GET', '/yablonsky-seo/v1/contract' ) );
 $yseo_assert( $contract instanceof WP_REST_Response && $contract->get_status() === 200, 'Public API contract route responds' );

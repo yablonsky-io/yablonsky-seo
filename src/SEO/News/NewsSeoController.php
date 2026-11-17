@@ -39,7 +39,7 @@ final class NewsSeoController {
         $resolver = new ResourceLanguageResolver();
         foreach ( (array) $latest as $candidateId ) {
             $candidateId = (int) $candidateId;
-            if ( $candidateId <= 0 || '1' !== (string) get_post_meta( $candidateId, '_yps_news_enabled', true ) || '1' === (string) get_post_meta( $candidateId, '_yps_news_exclude', true ) || '1' === (string) get_post_meta( $candidateId, '_yps_robots_noindex', true ) ) { continue; }
+            if ( $candidateId <= 0 || '1' !== (string) get_post_meta( $candidateId, '_yablseo_news_enabled', true ) || '1' === (string) get_post_meta( $candidateId, '_yablseo_news_exclude', true ) || '1' === (string) get_post_meta( $candidateId, '_yablseo_robots_noindex', true ) ) { continue; }
             $language = $resolver->forPost( $candidateId );
             $lang = isset( $language['language_key'] ) ? (string) $language['language_key'] : 'auto';
             if ( '' === $lang || 'auto' === $lang ) { continue; }
@@ -61,7 +61,7 @@ final class NewsSeoController {
     public function augmentSchema( array $graph, array $document, $resource ): array {
         if ( ! is_object( $resource ) || ! method_exists( $resource, 'objectId' ) ) { return $graph; }
         $postId = (int) $resource->objectId();
-        if ( $postId <= 0 || '1' !== (string) get_post_meta( $postId, '_yps_news_enabled', true ) || '1' === (string) get_post_meta( $postId, '_yps_news_exclude', true ) ) { return $graph; }
+        if ( $postId <= 0 || '1' !== (string) get_post_meta( $postId, '_yablseo_news_enabled', true ) || '1' === (string) get_post_meta( $postId, '_yablseo_news_exclude', true ) ) { return $graph; }
         if ( empty( $graph['@graph'] ) || ! is_array( $graph['@graph'] ) ) { return $graph; }
         foreach ( $graph['@graph'] as &$piece ) {
             if ( is_array( $piece ) && isset( $piece['@id'] ) && false !== strpos( (string) $piece['@id'], '#article' ) ) {
@@ -94,7 +94,7 @@ final class NewsSeoController {
         $resolver = new ResourceLanguageResolver();
         $publication = trim( wp_strip_all_tags( (string) get_bloginfo( 'name' ), true ) );
         foreach ( $posts as $post ) {
-            if ( ! $post instanceof \WP_Post || '' !== (string) $post->post_password || '1' !== (string) get_post_meta( (int) $post->ID, '_yps_news_enabled', true ) || '1' === (string) get_post_meta( (int) $post->ID, '_yps_news_exclude', true ) || '1' === (string) get_post_meta( (int) $post->ID, '_yps_robots_noindex', true ) ) { continue; }
+            if ( ! $post instanceof \WP_Post || '' !== (string) $post->post_password || '1' !== (string) get_post_meta( (int) $post->ID, '_yablseo_news_enabled', true ) || '1' === (string) get_post_meta( (int) $post->ID, '_yablseo_news_exclude', true ) || '1' === (string) get_post_meta( (int) $post->ID, '_yablseo_robots_noindex', true ) ) { continue; }
             $language = $resolver->forPost( (int) $post->ID );
             $lang = isset( $language['language_key'] ) ? (string) $language['language_key'] : 'auto';
             if ( 'auto' === $lang || '' === $lang ) { continue; }
@@ -102,7 +102,7 @@ final class NewsSeoController {
             if ( ! is_string( $url ) || '' === $url ) { continue; }
             $title = trim( wp_strip_all_tags( (string) get_the_title( $post ), true ) );
             $date = get_post_time( 'c', true, $post );
-            $tickers = $this->stockTickers( (string) get_post_meta( (int) $post->ID, '_yps_news_stock_tickers', true ) );
+            $tickers = $this->stockTickers( (string) get_post_meta( (int) $post->ID, '_yablseo_news_stock_tickers', true ) );
             echo '<url><loc>' . esc_url( $url ) . '</loc><news:news>';
             echo '<news:publication><news:name>' . esc_html( $publication ) . '</news:name><news:language>' . esc_html( $this->newsLanguage( $lang ) ) . '</news:language></news:publication>';
             echo '<news:publication_date>' . esc_html( (string) $date ) . '</news:publication_date><news:title>' . esc_html( $title ) . '</news:title>';

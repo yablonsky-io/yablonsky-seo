@@ -237,10 +237,10 @@ final class MetadataMirrorService {
     private function targetAllowed( string $target, string $scope ): bool {
         if ( MetadataMirrorState::SCOPE_ALL === $scope ) { return true; }
         return in_array( $target, array(
-            '_yps_focus_keyphrase', '_yps_focus_keyphrases_json', '_yps_keyphrase_synonyms_json',
-            '_yps_seo_title', '_yps_meta_description', '_yps_canonical',
-            '_yps_robots_noindex', '_yps_robots_nofollow', '_yps_robots_advanced',
-            '_yps_author_seo_title', '_yps_author_meta_description', '_yps_author_robots_noindex',
+            '_yablseo_focus_keyphrase', '_yablseo_focus_keyphrases_json', '_yablseo_keyphrase_synonyms_json',
+            '_yablseo_seo_title', '_yablseo_meta_description', '_yablseo_canonical',
+            '_yablseo_robots_noindex', '_yablseo_robots_nofollow', '_yablseo_robots_advanced',
+            '_yablseo_author_seo_title', '_yablseo_author_meta_description', '_yablseo_author_robots_noindex',
         ), true );
     }
 

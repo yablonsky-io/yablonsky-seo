@@ -23,13 +23,13 @@ final class InternalLinkSuggestionService {
         $rows = array();
         foreach ( $boundedCandidateIds as $candidateId ) {
             if ( $candidateId === $postId || in_array( $candidateId, $already, true ) ) { continue; }
-            if ( '1' === (string) get_post_meta( $candidateId, '_yps_robots_noindex', true ) ) { continue; }
+            if ( '1' === (string) get_post_meta( $candidateId, '_yablseo_robots_noindex', true ) ) { continue; }
             $candidate = get_post( $candidateId );
             if ( ! $candidate instanceof \WP_Post || 'publish' !== $candidate->post_status ) { continue; }
             $candidateTerms = isset( $termMap[ $candidateId ] ) ? $termMap[ $candidateId ] : array();
             $sharedTerms = count( array_intersect( $sourceTerms, $candidateTerms ) );
             $sharedWords = count( array_intersect( $sourceTokens, $this->titleTokens( get_the_title( $candidate ) ) ) );
-            $score = ( $sharedTerms * 10 ) + ( $sharedWords * 3 ) + ( $candidate->post_type === $source->post_type ? 2 : 0 ) + ( '1' === (string) get_post_meta( $candidateId, '_yps_is_cornerstone', true ) ? 5 : 0 );
+            $score = ( $sharedTerms * 10 ) + ( $sharedWords * 3 ) + ( $candidate->post_type === $source->post_type ? 2 : 0 ) + ( '1' === (string) get_post_meta( $candidateId, '_yablseo_is_cornerstone', true ) ? 5 : 0 );
             if ( $score <= 0 ) { continue; }
             $rows[] = array(
                 'post_id' => $candidateId,

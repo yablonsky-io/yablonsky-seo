@@ -187,8 +187,8 @@ final class ReadinessAudit {
             $checks[] = $this->check( 'indexnow', __( 'IndexNow freshness push', 'yablonsky-seo' ), $label, 'rejected' === $state ? 'attention' : 'good', $detail );
         }
 
-        $appleOptOuts = $this->countPostMetaFlag( '_yps_apple_ai_answer_opt_out' );
-        $restrictedPages = $this->countPostMetaFlag( '_yps_schema_access_restricted' );
+        $appleOptOuts = $this->countPostMetaFlag( '_yablseo_apple_ai_answer_opt_out' );
+        $restrictedPages = $this->countPostMetaFlag( '_yablseo_schema_access_restricted' );
         /* translators: 1: pages with Apple AI answer opt-out, 2: pages marked access restricted. */
         $appleDetail = sprintf( __( 'Apple Search, AI-answer context and foundation-model training are separate controls. The bounded local audit sampled up to 100 recent public resources for each policy and found %1$d Apple AI answer-context opt-outs and %2$d access-restricted resources with page-level structured data.', 'yablonsky-seo' ), $appleOptOuts, $restrictedPages );
         $checks[] = $this->check( 'apple-ai-policy', __( 'Apple AI usage policy', 'yablonsky-seo' ), __( 'Supported', 'yablonsky-seo' ), 'good', $appleDetail );

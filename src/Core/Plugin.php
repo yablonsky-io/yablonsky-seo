@@ -69,6 +69,8 @@ final class Plugin {
             return;
         }
         self::$booted = true;
+        // Read historical post/user/term meta without reintroducing short-prefix writes.
+        LegacyMetaBridge::register();
         add_action( 'init', array( __CLASS__, 'loadTranslations' ), 1 );
         add_action( 'plugins_loaded', array( __CLASS__, 'initialize' ), 50 );
     }

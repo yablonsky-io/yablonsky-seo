@@ -3,7 +3,7 @@
  * Plugin Name: Yablonsky SEO — GEO & AEO
  * Plugin URI: https://yablonsky.io/seo/
  * Description: SEO, GEO & AEO for search and AI discovery. Prepare your site for Google Search, AI Overviews, AI Mode and answer engines.
- * Version: 5.87.1
+ * Version: 5.87.2
  * Requires at least: 6.8
  * Requires PHP: 7.4
  * Author: Yablonsky.io
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'YSEO_VERSION', '5.87.1' );
+define( 'YSEO_VERSION', '5.87.2' );
 define( 'YSEO_FILE', __FILE__ );
 define( 'YSEO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'YSEO_URL', plugin_dir_url( __FILE__ ) );
@@ -89,15 +89,8 @@ function yseo_render_boot_failure_notice(): void {
     echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'Yablonsky SEO trapped a boot-time error and paused part of its startup so the site stays reachable.', 'yablonsky-seo' ) . '</strong></p><p>' . esc_html( $summary ) . '</p></div>';
 }
 
-// Backward-compatible internal aliases. Stored data/hooks/meta remain YPS-prefixed.
-// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Historical YPS compatibility alias retained for stored hooks/data.
-if ( ! defined( 'YPS_VERSION' ) ) { define( 'YPS_VERSION', YSEO_VERSION ); }
-// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Historical YPS compatibility alias retained for stored hooks/data.
-if ( ! defined( 'YPS_FILE' ) ) { define( 'YPS_FILE', YSEO_FILE ); }
-// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Historical YPS compatibility alias retained for stored hooks/data.
-if ( ! defined( 'YPS_DIR' ) ) { define( 'YPS_DIR', YSEO_DIR ); }
-// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Historical YPS compatibility alias retained for stored hooks/data.
-if ( ! defined( 'YPS_URL' ) ) { define( 'YPS_URL', YSEO_URL ); }
+// Historical YPS_FILE remains readable for the separate legacy-plugin
+// activation handoff; this plugin no longer defines short-prefix globals.
 
 try {
     require_once YSEO_DIR . 'src/Autoloader.php';

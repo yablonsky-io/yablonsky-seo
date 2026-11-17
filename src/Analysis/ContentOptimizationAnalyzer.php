@@ -60,8 +60,8 @@ final class ContentOptimizationAnalyzer {
 
         $structure = $this->inspectHtml( $content, $aeoPolicy->paragraphWordLimit() );
         $authorId = (int) $post->post_author;
-        $authorSameAs = trim( (string) get_user_meta( $authorId, '_yps_author_same_as', true ) );
-        $authorJobTitle = trim( (string) get_user_meta( $authorId, '_yps_author_job_title', true ) );
+        $authorSameAs = trim( (string) get_user_meta( $authorId, '_yablseo_author_same_as', true ) );
+        $authorJobTitle = trim( (string) get_user_meta( $authorId, '_yablseo_author_job_title', true ) );
         $authorDescription = trim( (string) get_user_meta( $authorId, 'description', true ) );
         $ownerSameAs = trim( (string) ( $settings['owner_same_as'] ?? '' ) );
         $ownerName = trim( (string) ( $settings['owner_name'] ?? '' ) );

@@ -204,10 +204,10 @@ final class MetadataSuggestionService {
     /** @param array<int,string> $fields @return array<string,string> */
     private function currentMetadata( int $postId, array $fields ): array {
         $map = array(
-            'focus_keyphrase' => '_yps_focus_keyphrase',
-            'focus_keyphrases' => '_yps_focus_keyphrases_json',
-            'seo_title' => '_yps_seo_title',
-            'meta_description' => '_yps_meta_description',
+            'focus_keyphrase' => '_yablseo_focus_keyphrase',
+            'focus_keyphrases' => '_yablseo_focus_keyphrases_json',
+            'seo_title' => '_yablseo_seo_title',
+            'meta_description' => '_yablseo_meta_description',
         );
         $current = array();
         foreach ( $fields as $field ) {

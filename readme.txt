@@ -4,7 +4,7 @@ Tags: seo, aeo, geo, schema, woocommerce
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.87.1
+Stable tag: 5.87.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,6 +179,10 @@ Terms: https://policies.google.com/terms
 The platform-directory `setup_url` and `docs_url` entries (such as Prisjakt and Skroutz) are documentation links presented to administrators who choose a marketplace. Merely opening an SEO or commerce page does not transmit site data to those documentation services. The administrator may follow a documentation link manually, at which point their browser communicates directly with that destination under its own policies. Commerce feeds and submissions require separately configured workflows.
 
 == Changelog ==
+
+= 5.87.2 =
+* WordPress.org prefix compliance: canonical metadata writes use distinctive Yablonsky SEO keys. Existing YPS metadata is preserved and readable through compatibility fallback; deprecated global aliases are no longer exported. No existing SEO data is deleted.
+
 
 = 5.87.1 =
 * Correct inactive date-filter placeholders in Internal Links and 404 Diagnostics for strict MySQL DATETIME validation. Preserve prepared SQL queries, filtering, and existing data.

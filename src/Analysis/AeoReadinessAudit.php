@@ -56,15 +56,15 @@ final class AeoReadinessAudit {
         foreach ( $posts as $post ) {
             if ( ! $post instanceof \WP_Post ) { continue; }
             $values = array(
-                'focus_keyphrase' => (string) get_post_meta( $post->ID, '_yps_focus_keyphrase', true ),
-                'focus_keyphrases' => get_post_meta( $post->ID, '_yps_focus_keyphrases_json', true ),
-                'seo_title' => (string) get_post_meta( $post->ID, '_yps_seo_title', true ),
-                'meta_description' => (string) get_post_meta( $post->ID, '_yps_meta_description', true ),
-                'noindex' => (string) get_post_meta( $post->ID, '_yps_robots_noindex', true ),
-                'schema_page_type' => (string) get_post_meta( $post->ID, '_yps_schema_page_type', true ),
-                'schema_entity_type' => (string) get_post_meta( $post->ID, '_yps_schema_entity_type', true ),
-                'schema_entity_name' => (string) get_post_meta( $post->ID, '_yps_schema_entity_name', true ),
-                'og_image' => (string) get_post_meta( $post->ID, '_yps_og_image', true ),
+                'focus_keyphrase' => (string) get_post_meta( $post->ID, '_yablseo_focus_keyphrase', true ),
+                'focus_keyphrases' => get_post_meta( $post->ID, '_yablseo_focus_keyphrases_json', true ),
+                'seo_title' => (string) get_post_meta( $post->ID, '_yablseo_seo_title', true ),
+                'meta_description' => (string) get_post_meta( $post->ID, '_yablseo_meta_description', true ),
+                'noindex' => (string) get_post_meta( $post->ID, '_yablseo_robots_noindex', true ),
+                'schema_page_type' => (string) get_post_meta( $post->ID, '_yablseo_schema_page_type', true ),
+                'schema_entity_type' => (string) get_post_meta( $post->ID, '_yablseo_schema_entity_type', true ),
+                'schema_entity_name' => (string) get_post_meta( $post->ID, '_yablseo_schema_entity_name', true ),
+                'og_image' => (string) get_post_meta( $post->ID, '_yablseo_og_image', true ),
             );
             $analysis = $analyzer->analyzePost( $post, $values );
             $dimension = isset( $analysis['dimensions']['answer'] ) && is_array( $analysis['dimensions']['answer'] ) ? $analysis['dimensions']['answer'] : array();

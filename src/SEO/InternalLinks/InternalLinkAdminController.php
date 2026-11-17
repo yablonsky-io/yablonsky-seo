@@ -69,8 +69,8 @@ final class InternalLinkAdminController {
         $count = 0;
         foreach ( $ids as $id ) {
             if ( ! current_user_can( 'edit_post', $id ) ) { continue; }
-            if ( 'cornerstone' === $action ) { update_post_meta( $id, '_yps_is_cornerstone', '1' ); }
-            if ( 'uncornerstone' === $action ) { delete_post_meta( $id, '_yps_is_cornerstone' ); }
+            if ( 'cornerstone' === $action ) { update_post_meta( $id, '_yablseo_is_cornerstone', '1' ); }
+            if ( 'uncornerstone' === $action ) { delete_post_meta( $id, '_yablseo_is_cornerstone' ); }
             if ( $this->indexer->indexPost( $id, true ) || in_array( $action, array( 'cornerstone', 'uncornerstone' ), true ) ) { ++$count; }
         }
         $this->backToReferer( 'bulk-' . $action . '-' . $count );

@@ -42,7 +42,7 @@ final class TemplateResolver {
         $tags = $this->taxonomyNamesForPost( $objectId, 'post_tag' );
         $archiveTitle = $this->archiveTitle( $resource );
         $termDescription = $this->termDescription( $resource );
-        $focusKeyphrase = $objectId > 0 ? trim( (string) get_post_meta( $objectId, '_yps_focus_keyphrase', true ) ) : '';
+        $focusKeyphrase = $objectId > 0 ? trim( (string) get_post_meta( $objectId, '_yablseo_focus_keyphrase', true ) ) : '';
         $parentTitle = $this->parentTitle( $objectId );
         $caption = 'attachment' === $type && $objectId > 0 ? trim( wp_strip_all_tags( (string) wp_get_attachment_caption( $objectId ), true ) ) : '';
 
@@ -241,7 +241,7 @@ final class TemplateResolver {
 
     private function primaryCategory( int $postId ): string {
         if ( $postId < 1 || ! is_object_in_taxonomy( (string) get_post_type( $postId ), 'category' ) ) { return ''; }
-        $primary = (int) get_post_meta( $postId, '_yps_primary_category', true );
+        $primary = (int) get_post_meta( $postId, '_yablseo_primary_category', true );
         if ( $primary > 0 ) {
             $term = get_term( $primary, 'category' );
             if ( $term && ! is_wp_error( $term ) ) { return trim( wp_strip_all_tags( (string) $term->name, true ) ); }
