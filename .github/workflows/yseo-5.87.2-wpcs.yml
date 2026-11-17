@@ -1,0 +1,86 @@
+name: YSEO 5.87.2 WordPress security and prefix WPCS
+
+on:
+  push:
+    branches: [fix/yseo-5.87.2-prefix-compatibility]
+    paths:
+      - ".github/workflows/yseo-5.87.2-wpcs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2, phpcs
+          coverage: none
+      - name: Install official WordPress Coding Standards
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require wp-coding-standards/wpcs:^3.3 --no-interaction --no-progress
+          phpcs -i
+      - name: Enforce prefix global and reviewer-specific input/SQL sniffs
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          phpcs --standard=WordPress \
+            --sniffs=WordPress.Security.ValidatedSanitizedInput,WordPress.DB.PreparedSQLPlaceholders,WordPress.NamingConventions.PrefixAllGlobals \
+            --extensions=php --report=json \
+            src yablonsky-seo.php uninstall.php data/commerce-countries.php data/commerce-platforms.php \
+            > "$RUNNER_TEMP/yseo-wpcs.json" 2> "$RUNNER_TEMP/yseo-wpcs.stderr"
+          status=$?
+          set -e
+          echo "PHPCS exit $status, report bytes $(wc -c <"$RUNNER_TEMP/yseo-wpcs.json")"
+          if test -s "$RUNNER_TEMP/yseo-wpcs.stderr"; then cat "$RUNNER_TEMP/yseo-wpcs.stderr"; fi
+          python3 - <<'PY'
+          import json, os, collections
+          p=os.path.join(os.environ['RUNNER_TEMP'],'yseo-wpcs.json')
+          raw=open(p,encoding='utf-8').read()
+          try: data=json.loads(raw)
+          except Exception:
+              print('Invalid PHPCS report (possible configuration error)',repr(raw[:1500]))
+              raise
+          counter=collections.Counter()
+          examples={}
+          for path,f in data.get('files',{}).items():
+              for m in f.get('messages',[]):
+                  code=m.get('source','unknown')
+                  counter[code]+=1
+                  examples.setdefault(code,[]).append((path,m.get('line'),m.get('message','')[:120]))
+          print('WPCS_SUMMARY',data['totals'])
+          for code,n in counter.most_common(40):print('WPCS_DETAIL',code,n,examples[code][:4])
+          if data['totals'].get('errors',0):raise SystemExit('WPCS has error findings')
+          if counter.get('WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound',0):raise SystemExit('Unprefixed global constant')
+          PY
+      - name: Prove no active legacy short-prefix writes or globals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          code=[*Path('src').rglob('*.php'),*Path('data').rglob('*.php'),Path('yablonsky-seo.php'),Path('uninstall.php')]
+          active=[]
+          for p in code:
+              text=p.read_text('utf-8')
+              if p.name=='LegacyMetaBridge.php':continue
+              for n,line in enumerate(text.splitlines(),1):
+                  if re.search(r'(?<![A-Za-z0-9_])_yps_[A-Za-z0-9_]+',line):
+                      active.append(f'{p}:{n}:{line[:130]}')
+                  if re.search(r'\bdefine\s*\(\s*[\'"]YPS_[A-Z0-9_]+',line):
+                      active.append(f'{p}:{n}:{line[:130]}')
+          print('ACTIVE_LEGACY_MATCHES',len(active))
+          for item in active[:30]:print(item)
+          if active:raise SystemExit('Active legacy names remain')
+          PY
+          echo 'YSEO_PREFIX_CONTRACT_PASS'
