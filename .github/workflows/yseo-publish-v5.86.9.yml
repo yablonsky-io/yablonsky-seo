@@ -84,10 +84,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if gh release view v5.86.9 --repo "$GH_REPO" >/dev/null 2>&1; then
-            echo "Release v5.86.9 already exists; refusing to overwrite release assets"
-            exit 1
-          fi
           cat > release-notes.txt <<'NOTES'
           # Yablonsky SEO 5.86.9
 
@@ -105,13 +101,25 @@ jobs:
 
           Documentation and product: https://yablonsky.io/seo/
           NOTES
-          gh release create v5.86.9 "yablonsky-seo-5.86.9.zip" \
-            --repo "$GH_REPO" \
-            --target "$GITHUB_SHA" \
-            --title "Yablonsky SEO 5.86.9" \
-            --notes-file release-notes.txt \
-            --latest
-          cp "yablonsky-seo-5.86.9.zip" yablonsky-seo.zip
-          gh release upload v5.86.9 yablonsky-seo.zip --repo "$GH_REPO"
-          gh release view v5.86.9 --repo "$GH_REPO" --json url,tagName,isLatest,assets \
-            --jq '{url:.url,tag:.tagName,latest:.isLatest,assets:[.assets[].name]}'
+          if gh release view v5.86.9 --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "Release exists; verifying rather than replacing previously published bytes"
+          else
+            gh release create v5.86.9 "yablonsky-seo-5.86.9.zip" \
+              --repo "$GH_REPO" \
+              --target "$GITHUB_SHA" \
+              --title "Yablonsky SEO 5.86.9" \
+              --notes-file release-notes.txt \
+              --latest
+            cp "yablonsky-seo-5.86.9.zip" yablonsky-seo.zip
+            gh release upload v5.86.9 yablonsky-seo.zip --repo "$GH_REPO"
+          fi
+          test "$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)" = "v5.86.9"
+          verify_dir="$(mktemp -d)"
+          gh release download v5.86.9 --repo "$GH_REPO" --dir "$verify_dir" --pattern 'yablonsky-seo-*.zip'
+          gh release download v5.86.9 --repo "$GH_REPO" --dir "$verify_dir" --pattern 'yablonsky-seo.zip'
+          test -s "$verify_dir/yablonsky-seo-5.86.9.zip"
+          cmp "$verify_dir/yablonsky-seo-5.86.9.zip" "$verify_dir/yablonsky-seo.zip"
+          unzip -tq "$verify_dir/yablonsky-seo-5.86.9.zip" >/dev/null
+          test "$(unzip -p "$verify_dir/yablonsky-seo-5.86.9.zip" yablonsky-seo/readme.txt | grep '^Stable tag:' | head -1)" = "Stable tag: 5.86.9"
+          gh release view v5.86.9 --repo "$GH_REPO" --json url,tagName,assets \
+            --jq '{url:.url,tag:.tagName,assets:[.assets[].name]}'
