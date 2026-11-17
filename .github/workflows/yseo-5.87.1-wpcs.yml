@@ -1,0 +1,58 @@
+name: YSEO 5.87.1 WPCS targeted security audit
+
+on:
+  push:
+    branches: [fix/yseo-5.87.1-sql-date-guards]
+    paths:
+      - ".github/workflows/yseo-5.87.1-wpcs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wpcs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2, phpcs
+          coverage: none
+      - name: Install WPCS and run targeted review sniffs
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require wp-coding-standards/wpcs:^3.3 --no-interaction --no-progress
+          phpcs -i
+          set +e
+          phpcs --standard=WordPress --sniffs=WordPress.Security.ValidatedSanitizedInput,WordPress.DB.PreparedSQLPlaceholders --extensions=php --report=json \
+            src/Admin/Bulk/BulkSeoEditorController.php \
+            src/SEO/InternalLinks/InternalLinkRepository.php \
+            src/SEO/NotFound/NotFoundRepository.php > "$RUNNER_TEMP/wpcs.json" 2> "$RUNNER_TEMP/wpcs.stderr"
+          code=$?
+          set -e
+          echo "PHPCS return code: $code"
+          if test -s "$RUNNER_TEMP/wpcs.stderr";then cat "$RUNNER_TEMP/wpcs.stderr";fi
+          python3 - <<'PY'
+          import json,os,collections
+          p=os.environ["RUNNER_TEMP"]+"/wpcs.json"
+          raw=open(p).read()
+          try:
+              data=json.loads(raw)
+          except ValueError:
+              print('WPCS CLI issue: ',repr(raw[:1800]))
+              raise
+          print('WPCS targeted totals:', data['totals'])
+          counter=collections.Counter()
+          for file,info in data.get('files',{}).items():
+              for item in info.get('messages',[]):
+                  code=item.get('source','unknown')
+                  counter[code]+=1
+                  print(file, item.get('line'), item.get('type'), code, item.get('message','')[:150])
+          print('Warning distribution:',dict(counter))
+          if data['totals'].get('errors',0):raise SystemExit('WPCS error findings')
+          PY

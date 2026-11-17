@@ -274,8 +274,8 @@ final class InternalLinkRepository {
             'cornerstone' === $view ? 0 : 1, $cutoff,
             '' === $postType ? 1 : 0, $postType,
             '' === $language ? 1 : 0, $language,
-            '' === $dateFrom ? 1 : 0, '' === $dateFrom ? '' : $dateFrom . ' 00:00:00',
-            '' === $dateTo ? 1 : 0, $dateEnd,
+            '' === $dateFrom ? 1 : 0, '' === $dateFrom ? '1000-01-01 00:00:00' : $dateFrom . ' 00:00:00',
+            '' === $dateTo ? 1 : 0, '' === $dateTo ? '9999-12-31 23:59:59' : $dateEnd,
             '' === $search ? 1 : 0, '%' . $wpdb->esc_like( $search ) . '%',
         );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- live plugin-owned admin diagnostic report with prepared array arguments; intentionally no cache behavior change
