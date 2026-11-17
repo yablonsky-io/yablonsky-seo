@@ -64,15 +64,15 @@ final class LocalSeoController {
     }
 
     public function registerAssets(): void {
-        wp_register_style( 'yseo-local', YPS_URL . 'assets/local.css', array(), YPS_VERSION );
-        wp_register_script( 'yseo-local', YPS_URL . 'assets/local.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_register_style( 'yseo-local', YSEO_URL . 'assets/local.css', array(), YSEO_VERSION );
+        wp_register_script( 'yseo-local', YSEO_URL . 'assets/local.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function adminAssets(): void {
         $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
         if ( ! $screen instanceof \WP_Screen || self::POST_TYPE !== (string) $screen->post_type ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function locationOnboarding(): void {
@@ -164,16 +164,34 @@ final class LocalSeoController {
 
     public function saveMeta( int $postId, \WP_Post $post ): void {
         unset( $post );
-        if ( wp_is_post_revision( $postId ) || wp_is_post_autosave( $postId ) || ! current_user_can( 'edit_post', $postId ) ) { return; }
-        $rawNonce = filter_input( INPUT_POST, 'yseo_location_nonce', FILTER_UNSAFE_RAW );
-        if ( ! is_string( $rawNonce ) || ! wp_verify_nonce( sanitize_text_field( $rawNonce ), self::NONCE ) ) { return; }
+        // Every mutation must prove its form origin before reading metadata.
+        // Skip autosaves/revisions, which do not submit our metabox nonce.
+        if ( wp_is_post_revision( $postId ) || wp_is_post_autosave( $postId ) ) { return; }
+        if ( ! isset( $_POST['yseo_location_nonce'] ) || ! is_string( $_POST['yseo_location_nonce'] ) ) { return; }
+        $nonce = sanitize_text_field( wp_unslash( $_POST['yseo_location_nonce'] ) );
+        if ( ! wp_verify_nonce( $nonce, self::NONCE ) ) { return; }
+        if ( ! current_user_can( 'edit_post', $postId ) ) { return; }
+
         foreach ( $this->fieldDefinitions() as $key => $field ) {
-            $raw = filter_input( INPUT_POST, 'yseo_local_' . $key, FILTER_UNSAFE_RAW );
-            $value = is_string( $raw ) ? $raw : '';
-            if ( 'url' === (string) $field['type'] ) { $value = esc_url_raw( $value, array( 'http', 'https' ) ); }
-            elseif ( in_array( $key, array( 'latitude', 'longitude' ), true ) ) { $value = $this->coordinate( $value, 'latitude' === $key ); }
-            elseif ( 'textarea' === (string) $field['type'] ) { $value = sanitize_textarea_field( $value ); }
-            else { $value = sanitize_text_field( $value ); }
+            $inputKey = 'yseo_local_' . $key;
+            if ( ! isset( $_POST[ $inputKey ] ) || ! is_string( $_POST[ $inputKey ] ) ) { continue; }
+            // Sanitize at the input boundary with the proper field-specific
+            // function. Do not strip URL percent-encodings or textarea newlines.
+            if ( 'url' === (string) $field['type'] ) {
+                $value = esc_url_raw( wp_unslash( $_POST[ $inputKey ] ), array( 'http', 'https' ) );
+            } elseif ( 'textarea' === (string) $field['type'] ) {
+                $value = sanitize_textarea_field( wp_unslash( $_POST[ $inputKey ] ) );
+            } else {
+                $value = sanitize_text_field( wp_unslash( $_POST[ $inputKey ] ) );
+            }
+            if ( strlen( $value ) > 1048576 ) { continue; }
+            if ( in_array( $key, array( 'latitude', 'longitude' ), true ) ) {
+                $value = $this->coordinate( $value, 'latitude' === $key );
+            } elseif ( 'select' === (string) $field['type'] && ! array_key_exists( $value, (array) $field['options'] ) ) {
+                continue;
+            }
+            // _yps_local_* is existing stored WordPress metadata: preserve it for
+            // compatibility with verified Yoast-to-YSEO migrations.
             if ( '' === $value ) { delete_post_meta( $postId, '_yps_local_' . $key ); }
             else { update_post_meta( $postId, '_yps_local_' . $key, $value ); }
         }

@@ -43,6 +43,10 @@ final class YoastUserFieldMap {
             // state here (which introductions a user has seen). It is not public
             // SEO/profile output and must not become YPS author metadata.
             '_yoast_wpseo_introductions',
+            // Admin-only notification and guided-tour acknowledgement flags.
+            'wpseo_seen_llm_txt_opt_in_notification',
+            '_yoast_wpseo_task_list_opt_in_notification_seen',
+            '_yoast_wpseo_bulk_editor_tour_opt_in_notification_seen',
         );
     }
 

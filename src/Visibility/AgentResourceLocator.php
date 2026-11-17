@@ -15,19 +15,19 @@ final class AgentResourceLocator {
     public const SITEMAP_NAMESPACE = 'https://yablonsky.io/ns/agent-sitemap/1.0';
 
     public function enabled(): bool {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         return '1' === (string) get_option( 'blog_public', '1' ) && is_array( $settings ) && ! empty( $settings['agent_markdown_enabled'] );
     }
 
     public function scopedLlmsEnabled(): bool {
         if ( ! $this->enabled() ) { return false; }
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         return is_array( $settings ) && ! empty( $settings['agent_scoped_llms_enabled'] );
     }
 
     public function sitemapExtensionEnabled(): bool {
         if ( ! $this->enabled() ) { return false; }
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         return is_array( $settings ) && ! empty( $settings['agent_sitemap_extension_enabled'] );
     }
 

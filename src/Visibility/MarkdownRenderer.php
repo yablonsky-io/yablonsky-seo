@@ -244,7 +244,7 @@ final class MarkdownRenderer {
     }
 
     public function renderSiteIndex(): string {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $name = trim( (string) ( $settings['site_display_name'] ?? '' ) );
         if ( '' === $name ) { $name = trim( (string) get_bloginfo( 'name' ) ); }

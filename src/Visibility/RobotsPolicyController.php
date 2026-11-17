@@ -14,7 +14,7 @@ final class RobotsPolicyController {
 
     public function filterRobotsTxt( string $output, bool $public ): string {
         unset( $public );
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         if ( empty( $settings['ai_crawler_policy_enabled'] ) ) { return $output; }
 

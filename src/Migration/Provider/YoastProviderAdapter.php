@@ -17,7 +17,7 @@ final class YoastProviderAdapter implements MigrationProviderAdapterInterface {
         if ( 'yoast' !== $provider->id() ) {
             return AdapterCompatibility::UNSUPPORTED;
         }
-        if ( in_array( $provider->version(), array( '26.8', '28.4' ), true ) ) {
+        if ( in_array( $provider->version(), array( '26.8', '28.3', '28.4' ), true ) ) {
             return AdapterCompatibility::VERIFIED;
         }
         if ( '' === $provider->version() ) {

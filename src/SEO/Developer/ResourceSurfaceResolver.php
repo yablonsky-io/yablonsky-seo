@@ -51,6 +51,26 @@ final class ResourceSurfaceResolver {
     public function forAuthor( int $userId ): ?ResourceIdentity {
         $user = get_userdata( $userId );
         if ( ! $user instanceof \WP_User ) { return null; }
+        // A public, unauthenticated SEO endpoint must not enumerate profiles
+        // for administrators/subscribers without published, searchable work.
+        // This matches the existing author-sitemap eligibility boundary.
+        $publicTypes = array_values( get_post_types( array( 'public' => true, 'exclude_from_search' => false ), 'names' ) );
+        if ( empty( $publicTypes ) ) { return null; }
+        // count_user_posts() also counts password-protected published posts.
+        // A public, anonymous API must only expose author archives backed by
+        // at least one truly public, searchable post.
+        $publicPosts = get_posts( array(
+            'author' => $userId,
+            'post_type' => $publicTypes,
+            'post_status' => 'publish',
+            'has_password' => false,
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            // Honor query filters (including multilingual visibility policies).
+            'suppress_filters' => false,
+        ) );
+        if ( empty( $publicPosts ) ) { return null; }
         $url = (string) get_author_posts_url( $userId );
         $authority = $this->language->resolve( 'author_archive', $userId, $url, false );
         return new ResourceIdentity( 'author_archive', $userId, 'author', (string) $authority['language_key'], $url );

@@ -33,6 +33,17 @@ final class YoastGlobalSettingsNormalizer {
                 $classification = $mapped['classification'];
                 $transform = $mapped['transform'];
 
+                // Yoast 28.3 Schema Aggregator is an optional independent HTTP
+                // endpoint. An explicitly disabled endpoint has no public output
+                // to transfer. An enabled endpoint MUST remain unsupported until
+                // YSEO can prove equivalent endpoint behavior before takeover.
+                if ( 'wpseo' === $optionName && 'enable_schema_aggregation_endpoint' === $key
+                    && ( false === $value || 0 === $value || '0' === $value ) ) {
+                    $classification = FieldClassification::DEFAULT_EQUIVALENT;
+                    $transform = 'disabled-optional-schema-aggregator';
+                }
+
+
                 // An unknown source key with no effective value carries no semantic
                 // state that can be lost. Keep it in the audit trail, but classify it
                 // as default-equivalent rather than blocking an otherwise lossless

@@ -119,11 +119,11 @@ final class SitemapTransportProbe {
             'Accept'        => 'application/xml,text/xml;q=0.9,*/*;q=0.1',
             'Cache-Control' => 'no-cache',
             'Pragma'        => 'no-cache',
-            'User-Agent'    => 'YablonskySEO-SitemapTransportProbe/' . YPS_VERSION,
+            'User-Agent'    => 'YablonskySEO-SitemapTransportProbe/' . YSEO_VERSION,
         );
         if ( 'browser' === $profile ) {
             $headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
-            $headers['User-Agent'] = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152 Safari/537.36 YSEO-Browser-Differential/' . YPS_VERSION;
+            $headers['User-Agent'] = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152 Safari/537.36 YSEO-Browser-Differential/' . YSEO_VERSION;
         }
         $response = wp_remote_get(
             $url,

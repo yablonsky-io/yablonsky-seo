@@ -37,16 +37,16 @@ final class SitemapsAdminController {
 
     public function enqueueAssets( string $hook ): void {
         if ( 'yablonsky-seo_page_' . self::PAGE !== $hook ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function save(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing sitemaps requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::SAVE_ACTION );
         $before = $this->settings->all();
-        $rawPosted = filter_input( INPUT_POST, 'yseo_sitemap', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
-        $posted = is_array( $rawPosted ) ? map_deep( $rawPosted, 'sanitize_text_field' ) : array();
+        $posted = isset( $_POST['yseo_sitemap'] ) && is_array( $_POST['yseo_sitemap'] )
+            ? map_deep( wp_unslash( $_POST['yseo_sitemap'] ), 'sanitize_text_field' ) : array();
         $this->settings->saveSitemapSection( $posted );
         $after = $this->settings->all();
         $beforeSitemap = isset( $before['sitemap'] ) && is_array( $before['sitemap'] ) ? $before['sitemap'] : array();
@@ -55,7 +55,7 @@ final class SitemapsAdminController {
         $afterFamilies = isset( $afterSitemap['families'] ) && is_array( $afterSitemap['families'] ) ? $afterSitemap['families'] : array();
         if ( wp_json_encode( $beforeFamilies ) !== wp_json_encode( $afterFamilies ) ) {
             $this->repository->truncateAndReset();
-            if ( ! wp_next_scheduled( 'yps_sitemap_backfill' ) ) { wp_schedule_single_event( time() + 5, 'yps_sitemap_backfill' ); }
+            if ( ! wp_next_scheduled( 'yablseo_sitemap_backfill' ) ) { wp_schedule_single_event( time() + 5, 'yablseo_sitemap_backfill' ); }
         } elseif ( wp_json_encode( $beforeSitemap['payload'] ?? array() ) !== wp_json_encode( $afterSitemap['payload'] ?? array() ) ) {
             ( new SitemapPageCacheCompatibility( $this->repository ) )->flushAllKnown();
         }
@@ -86,7 +86,7 @@ final class SitemapsAdminController {
         <div class="wrap yps-wrap yseo-sitemaps-page">
             <header class="yps-product-header">
                 <div class="yps-product-title"><h1><?php echo esc_html__( 'Sitemaps', 'yablonsky-seo' ); ?></h1><p><?php echo esc_html__( 'Publish only intentional search inventory, keep XML lean, and copy or inspect every live sitemap from one workspace.', 'yablonsky-seo' ); ?></p></div>
-                <div class="yps-product-actions"><span class="yps-pill">v<?php echo esc_html( YPS_VERSION ); ?></span></div>
+                <div class="yps-product-actions"><span class="yps-pill">v<?php echo esc_html( YSEO_VERSION ); ?></span></div>
             </header>
             <?php if ( '1' === $saved ) : ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'Sitemap settings saved. Membership rebuild is queued when required.', 'yablonsky-seo' ); ?></p></div><?php endif; ?>
 

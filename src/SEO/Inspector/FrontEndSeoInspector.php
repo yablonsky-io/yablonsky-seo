@@ -41,8 +41,8 @@ final class FrontEndSeoInspector {
         if ( ! $this->eligible() ) { return; }
         $resource = $this->resolver->resolve();
         if ( null === $resource ) { return; }
-        wp_enqueue_style( 'yseo-inspector', YPS_URL . 'assets/inspector.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yseo-inspector', YPS_URL . 'assets/inspector.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yseo-inspector', YSEO_URL . 'assets/inspector.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yseo-inspector', YSEO_URL . 'assets/inspector.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
         wp_localize_script(
             'yseo-inspector',
             'YSEO_INSPECTOR',
@@ -86,7 +86,7 @@ final class FrontEndSeoInspector {
         wp_send_json_success(
             array(
                 'resource' => array( 'type' => $resource->type(), 'subtype' => $resource->subtype(), 'id' => $resource->objectId(), 'url' => $resource->url(), 'language' => $resource->languageKey() ),
-                'authority' => sanitize_key( (string) get_option( 'yps_output_authority', 'active' ) ),
+                'authority' => sanitize_key( (string) get_option( 'yablseo_output_authority', 'active' ) ),
                 'projection' => $projection,
                 'evidence' => $this->evidence( $resource, $projection ),
                 'schema_types' => $this->schemaTypes( $projection ),
@@ -99,7 +99,13 @@ final class FrontEndSeoInspector {
     }
 
     private function resourceFromRequest(): ?ResourceIdentity {
-        $raw = filter_input( INPUT_POST, 'resource', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+        // Nonce and editor capability were verified in ajaxInspect(). Read
+        // unslashed input through bounded scalar validation, then apply the
+        // type-specific sanitizers and same-origin checks below.
+        $raw = filter_input( INPUT_POST, 'resource', FILTER_CALLBACK, array(
+            'flags' => FILTER_REQUIRE_ARRAY,
+            'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ),
+        ) );
         if ( ! is_array( $raw ) ) { return null; }
         $type = sanitize_key( (string) ( $raw['type'] ?? '' ) );
         $id = absint( $raw['id'] ?? 0 );

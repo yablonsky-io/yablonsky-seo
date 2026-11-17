@@ -254,6 +254,8 @@ final class SchemaAggregatorController {
     private function sendXml( string $xml ): void {
         SitemapPresentation::sendXmlHeaders();
         status_header( 200 );
-        echo $xml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML fragments are escaped during deterministic construction.
+        $safeXml = \Yablonsky\PerformanceSEO\SEO\Sitemap\SitemapXml::verifiedDocument( $xml );
+        if ( '' === $safeXml ) { status_header( 500 ); return; }
+        echo $safeXml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Verified XML document with individually XML-escaped nodes.
     }
 }

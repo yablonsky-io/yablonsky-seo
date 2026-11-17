@@ -38,7 +38,13 @@ final class BreadcrumbsController {
     }
 
     public function render(): void {
-        echo $this->shortcode(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- shortcode() escapes every dynamic component.
+        // The shortcode builds a restricted nav/anchor/span fragment. Escape
+        // its final HTML at the render boundary using a strict allowlist.
+        echo wp_kses( $this->shortcode(), array(
+            'nav' => array( 'class' => true, 'aria-label' => true ),
+            'span' => array( 'class' => true, 'aria-current' => true, 'aria-hidden' => true ),
+            'a' => array( 'href' => true ),
+        ) );
     }
 
     /** @return array<int,array{name:string,url:string}> */

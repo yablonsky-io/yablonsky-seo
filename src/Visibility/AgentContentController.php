@@ -155,7 +155,7 @@ final class AgentContentController {
     }
 
     public function maybeClearCachesForOption( string $option ): void {
-        if ( in_array( $option, array( 'yps_public_settings', 'page_on_front', 'show_on_front', 'blogname', 'blogdescription', 'permalink_structure', 'home', 'siteurl' ), true ) ) {
+        if ( in_array( $option, array( 'yablseo_public_settings', 'page_on_front', 'show_on_front', 'blogname', 'blogdescription', 'permalink_structure', 'home', 'siteurl' ), true ) ) {
             $this->store->purgeAll();
         }
     }
@@ -208,8 +208,8 @@ final class AgentContentController {
     }
 
     private function serveRootLlms(): void {
-        $settings = get_option( 'yps_public_settings', array() );
-        $fingerprint = YPS_VERSION . '|' . hash( 'sha256', wp_json_encode( array( 'settings' => is_array( $settings ) ? $settings : array(), 'front' => get_option( 'page_on_front', 0 ) ) ) ?: '' );
+        $settings = get_option( 'yablseo_public_settings', array() );
+        $fingerprint = YSEO_VERSION . '|' . hash( 'sha256', wp_json_encode( array( 'settings' => is_array( $settings ) ? $settings : array(), 'front' => get_option( 'page_on_front', 0 ) ) ) ?: '' );
         $result = $this->store->remember( 'llms:root', $fingerprint, function (): string { return $this->renderRootLlms(); }, 10 * MINUTE_IN_SECONDS );
         $this->sendText( $result, 'text/plain', '<' . esc_url_raw( home_url( '/' ) ) . '>; rel="canonical"' );
     }
@@ -226,7 +226,7 @@ final class AgentContentController {
     }
 
     private function renderRootLlms(): string {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $siteName = trim( (string) ( $settings['site_display_name'] ?? '' ) );
         if ( '' === $siteName ) { $siteName = (string) get_bloginfo( 'name' ); }
@@ -488,8 +488,8 @@ final class AgentContentController {
     private function resourceFingerprint( string $type, int $id, string $canonical = '' ): string {
         if ( 'post' === $type ) {
             $post = get_post( $id );
-            if ( ! $post instanceof \WP_Post ) { return YPS_VERSION . '|post|' . $id; }
-            $bits = array( YPS_VERSION, 'post', $id, $this->freshness->postLastmod( $id ), get_post_meta( $id, '_yps_meta_description', true ), get_post_meta( $id, '_yps_og_image', true ), get_post_thumbnail_id( $id ) );
+            if ( ! $post instanceof \WP_Post ) { return YSEO_VERSION . '|post|' . $id; }
+            $bits = array( YSEO_VERSION, 'post', $id, $this->freshness->postLastmod( $id ), get_post_meta( $id, '_yps_meta_description', true ), get_post_meta( $id, '_yps_og_image', true ), get_post_thumbnail_id( $id ) );
             if ( 'product' === $post->post_type ) {
                 $bits[] = get_post_meta( $id, '_sku', true );
                 $bits[] = get_post_meta( $id, '_price', true );
@@ -502,22 +502,22 @@ final class AgentContentController {
         }
         if ( 'term' === $type ) {
             $term = get_term( $id );
-            $bits = $term instanceof \WP_Term ? array( YPS_VERSION, 'term', $id, $term->name, $term->description, $term->parent, $this->freshness->termLastmod( $id, (string) $term->taxonomy ) ) : array( YPS_VERSION, 'term', $id );
+            $bits = $term instanceof \WP_Term ? array( YSEO_VERSION, 'term', $id, $term->name, $term->description, $term->parent, $this->freshness->termLastmod( $id, (string) $term->taxonomy ) ) : array( YSEO_VERSION, 'term', $id );
             return hash( 'sha256', wp_json_encode( $bits ) ?: '' );
         }
         if ( 'author' === $type ) {
             $user = get_userdata( $id );
-            $bits = $user instanceof \WP_User ? array( YPS_VERSION, 'author', $id, $user->display_name, get_user_meta( $id, 'description', true ), $this->freshness->authorLastmod( $id ) ) : array( YPS_VERSION, 'author', $id );
+            $bits = $user instanceof \WP_User ? array( YSEO_VERSION, 'author', $id, $user->display_name, get_user_meta( $id, 'description', true ), $this->freshness->authorLastmod( $id ) ) : array( YSEO_VERSION, 'author', $id );
             return hash( 'sha256', wp_json_encode( $bits ) ?: '' );
         }
         if ( 'post_type_archive' === $type ) {
             $postType = $this->locator->resolvePostTypeArchiveByUrl( $canonical );
-            return hash( 'sha256', YPS_VERSION . '|archive|' . $postType . '|' . $this->freshness->postTypeArchiveLastmod( $postType ) );
+            return hash( 'sha256', YSEO_VERSION . '|archive|' . $postType . '|' . $this->freshness->postTypeArchiveLastmod( $postType ) );
         }
         if ( 'site' === $type ) {
-            return hash( 'sha256', YPS_VERSION . '|site|' . (string) get_option( 'blogname', '' ) . '|' . (string) get_option( 'blogdescription', '' ) . '|' . $this->freshness->siteLastmod() );
+            return hash( 'sha256', YSEO_VERSION . '|site|' . (string) get_option( 'blogname', '' ) . '|' . (string) get_option( 'blogdescription', '' ) . '|' . $this->freshness->siteLastmod() );
         }
-        return hash( 'sha256', YPS_VERSION . '|' . $type . '|' . $id );
+        return hash( 'sha256', YSEO_VERSION . '|' . $type . '|' . $id );
     }
 
     /** @param array{body:string,etag:string,mtime:int,cache:string} $document */
@@ -528,12 +528,15 @@ final class AgentContentController {
         $this->sendCommonHeaders( $mime, $etag, $mtime, $linkHeader, (string) $document['cache'] );
         if ( $this->notModified( $etag, $mtime ) ) { status_header( 304 ); exit; }
         status_header( 200 );
-        echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Body is locally generated Markdown/plain text from sanitized public WordPress resources, not HTML.
+        // Strip HTML markup at the final plain-text response boundary while
+        // preserving Markdown characters, Unicode and line breaks.
+        echo wp_kses( $body, array() );
         exit;
     }
 
     private function sendCommonHeaders( string $mime, string $etag, int $mtime, string $linkHeader, string $cacheState ): void {
         header( 'Content-Type: ' . $mime . '; charset=' . get_bloginfo( 'charset' ), true );
+        header( 'X-Content-Type-Options: nosniff', true );
         header( 'X-Robots-Tag: noindex, follow', true );
         header( 'Cache-Control: public, max-age=600, s-maxage=3600, stale-while-revalidate=86400', true );
         header( 'ETag: ' . $etag, true );
@@ -543,9 +546,9 @@ final class AgentContentController {
     }
 
     private function notModified( string $etag, int $mtime ): bool {
-        $ifNoneMatch = filter_input( INPUT_SERVER, 'HTTP_IF_NONE_MATCH', FILTER_UNSAFE_RAW );
+        $ifNoneMatch = filter_input( INPUT_SERVER, 'HTTP_IF_NONE_MATCH', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $ifNoneMatch ) && '' !== trim( $ifNoneMatch ) && trim( $ifNoneMatch ) === $etag ) { return true; }
-        $ifModifiedSince = filter_input( INPUT_SERVER, 'HTTP_IF_MODIFIED_SINCE', FILTER_UNSAFE_RAW );
+        $ifModifiedSince = filter_input( INPUT_SERVER, 'HTTP_IF_MODIFIED_SINCE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $ifModifiedSince ) && '' !== trim( $ifModifiedSince ) ) {
             $since = strtotime( $ifModifiedSince );
             if ( false !== $since && $since >= $mtime ) { return true; }
@@ -554,12 +557,12 @@ final class AgentContentController {
     }
 
     private function requestMethod(): string {
-        $method = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_UNSAFE_RAW );
+        $method = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         return is_string( $method ) ? strtoupper( sanitize_text_field( $method ) ) : '';
     }
 
     private function relativeRequestPath(): string {
-        $request = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_UNSAFE_RAW );
+        $request = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
         if ( ! is_string( $request ) || '' === $request ) { return ''; }
         $path = wp_parse_url( $request, PHP_URL_PATH );
         $path = is_string( $path ) ? $path : '';

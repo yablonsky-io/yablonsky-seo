@@ -45,11 +45,11 @@ final class SitemapIndexer {
         add_action( 'deleted_user_meta', array( $this, 'maybeSyncUserMeta' ), 30, 4 );
         add_action( 'updated_option', array( $this, 'maybeRebuildForOption' ), 30, 3 );
         add_action( 'yablonsky_seo_sitemap_rebuild_v1', array( $this, 'forceRebuild' ) );
-        add_action( 'yps_sitemap_backfill', array( $this, 'runBackfill' ) );
+        add_action( 'yablseo_sitemap_backfill', array( $this, 'runBackfill' ) );
         add_action( 'shutdown', array( $this, 'flushPendingSemanticPosts' ), 20 );
-        $event = wp_get_scheduled_event( 'yps_sitemap_backfill' );
-        if ( $event && ! empty( $event->schedule ) ) { wp_clear_scheduled_hook( 'yps_sitemap_backfill' ); $event = false; }
-        if ( ! $this->repository->isReady() && ! $event ) { wp_schedule_single_event( time() + 15, 'yps_sitemap_backfill' ); }
+        $event = wp_get_scheduled_event( 'yablseo_sitemap_backfill' );
+        if ( $event && ! empty( $event->schedule ) ) { wp_clear_scheduled_hook( 'yablseo_sitemap_backfill' ); $event = false; }
+        if ( ! $this->repository->isReady() && ! $event ) { wp_schedule_single_event( time() + 15, 'yablseo_sitemap_backfill' ); }
     }
 
     public function runBackfill( int $limit = 200 ): void {
@@ -98,7 +98,7 @@ final class SitemapIndexer {
                 }
             }
             $this->repository->saveBackfillState( array( 'phase' => $phase, 'cursor' => $cursor, 'complete' => false ) );
-            if ( ! wp_next_scheduled( 'yps_sitemap_backfill' ) ) { wp_schedule_single_event( time() + 15, 'yps_sitemap_backfill' ); }
+            if ( ! wp_next_scheduled( 'yablseo_sitemap_backfill' ) ) { wp_schedule_single_event( time() + 15, 'yablseo_sitemap_backfill' ); }
         } finally {
             $this->repository->releaseBackfillLock( $lock );
         }
@@ -342,10 +342,10 @@ final class SitemapIndexer {
 
     public function maybeRebuildForOption( string $option, $oldValue, $value ): void {
         unset( $oldValue, $value );
-        if ( in_array( $option, array( 'permalink_structure', 'home', 'siteurl', 'yps_shadow_global_settings' ), true ) ) { $this->forceRebuild(); }
+        if ( in_array( $option, array( 'permalink_structure', 'home', 'siteurl', 'yablseo_shadow_global_settings' ), true ) ) { $this->forceRebuild(); }
     }
 
-    public function forceRebuild(): void { $this->languageMap = array(); $this->repository->truncateAndReset(); if ( ! wp_next_scheduled( 'yps_sitemap_backfill' ) ) { wp_schedule_single_event( time() + 5, 'yps_sitemap_backfill' ); } }
+    public function forceRebuild(): void { $this->languageMap = array(); $this->repository->truncateAndReset(); if ( ! wp_next_scheduled( 'yablseo_sitemap_backfill' ) ) { wp_schedule_single_event( time() + 5, 'yablseo_sitemap_backfill' ); } }
 
     private function ensureEligibilityPolicyVersion(): void {
         $current = (string) get_option( self::OPTION_ELIGIBILITY_POLICY, '' );
@@ -356,7 +356,7 @@ final class SitemapIndexer {
     }
 
     private function globalNoindex( string $type, string $subtype ): bool {
-        $globals = get_option( 'yps_shadow_global_settings', array() );
+        $globals = get_option( 'yablseo_shadow_global_settings', array() );
         if ( ! is_array( $globals ) ) { return false; }
         $key = 'author' === $type ? 'robots.author.noindex' : 'robots.' . $subtype . '.noindex';
         return isset( $globals[ $key ] ) && $this->truthy( $globals[ $key ] );

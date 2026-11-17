@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * exposes field locators and short fingerprints rather than metadata values.
  */
 final class MigrationConflictInspector {
-    private const GLOBAL_TARGET_OPTION = 'yps_shadow_global_settings';
+    private const GLOBAL_TARGET_OPTION = 'yablseo_shadow_global_settings';
     private const MAX_DETAILS = 20;
 
     /** @return array<string,mixed> */

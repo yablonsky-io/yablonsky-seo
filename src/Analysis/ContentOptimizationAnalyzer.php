@@ -30,7 +30,7 @@ final class ContentOptimizationAnalyzer {
         $contentSource = sanitize_key( (string) apply_filters( 'yablonsky_seo_analysis_content_source_v1', 'wordpress', $post ) );
         $plain = $this->normalizeWhitespace( wp_strip_all_tags( strip_shortcodes( $content ), true ) );
         $wordCount = $this->wordCount( $plain );
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $aeoPolicy = AeoPolicy::fromSettings( $settings );
         $title = trim( wp_strip_all_tags( (string) $post->post_title, true ) );
@@ -503,7 +503,7 @@ final class ContentOptimizationAnalyzer {
         }
         $preferredImage = trim( (string) ( $seoValues['og_image'] ?? '' ) );
         $checks[] = $this->check( 'ai_preferred_image', '' !== $preferredImage ? 'good' : 'attention', __( 'Preferred page image', 'yablonsky-seo' ), '' !== $preferredImage ? __( 'A preferred Search/Social image is configured for Open Graph and structured-data image signals.', 'yablonsky-seo' ) : __( 'A preferred Search/Social image is optional. Add a representative high-quality image when it strengthens machine understanding and presentation.', 'yablonsky-seo' ), 6 );
-        $publicSettings = get_option( 'yps_public_settings', array() );
+        $publicSettings = get_option( 'yablseo_public_settings', array() );
         $agentMarkdown = is_array( $publicSettings ) && ! empty( $publicSettings['agent_markdown_enabled'] );
         $scopedLlms = $agentMarkdown && ! empty( $publicSettings['agent_scoped_llms_enabled'] );
         $agentSitemap = $agentMarkdown && ! empty( $publicSettings['agent_sitemap_extension_enabled'] );

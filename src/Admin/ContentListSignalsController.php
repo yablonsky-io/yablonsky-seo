@@ -98,7 +98,7 @@ final class ContentListSignalsController {
         if ( $this->hasMultilingualOwner() ) { return; }
         $object = get_post_type_object( $postType );
         if ( ! $object || empty( $object->public ) ) { return; }
-        $selected = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language_filter', FILTER_UNSAFE_RAW ) );
+        $selected = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $index = new ResourceLanguageIndex();
         echo '<select name="yseo_language_filter" aria-label="' . esc_attr__( 'Content language', 'yablonsky-seo' ) . '" data-yps-search-select data-yps-search-placeholder="' . esc_attr__( 'Search languages…', 'yablonsky-seo' ) . '">';
         echo '<option value="">' . esc_html__( 'All content languages', 'yablonsky-seo' ) . '</option>';
@@ -110,7 +110,7 @@ final class ContentListSignalsController {
 
     public function applyLanguageFilter( \WP_Query $query ): void {
         if ( ! is_admin() || ! $query->is_main_query() ) { return; }
-        $language = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language_filter', FILTER_UNSAFE_RAW ) );
+        $language = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         if ( '' === $language ) { return; }
         $catalog = ( new ResourceLanguageIndex() )->catalog( true );
         if ( ! isset( $catalog[ $language ] ) ) { return; }
@@ -122,13 +122,13 @@ final class ContentListSignalsController {
 
     public function enqueueAssets( string $hook ): void {
         if ( 'edit.php' !== $hook ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function adminBar( \WP_Admin_Bar $bar ): void {
         if ( ! is_admin() || ! current_user_can( 'edit_posts' ) ) { return; }
-        $authority = 'active' === (string) get_option( 'yps_output_authority', 'active' );
+        $authority = 'active' === (string) get_option( 'yablseo_output_authority', 'active' );
         $title = 'YSEO · ' . ( $authority ? __( 'LIVE', 'yablonsky-seo' ) : __( 'SHADOW', 'yablonsky-seo' ) );
         $bar->add_node(
             array(

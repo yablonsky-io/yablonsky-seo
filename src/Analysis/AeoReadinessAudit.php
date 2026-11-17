@@ -17,7 +17,7 @@ final class AeoReadinessAudit {
 
     /** @return array<string,int|string> */
     public function report(): array {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $policy = AeoPolicy::fromSettings( $settings );
         $fingerprint = md5( implode( '|', array( $policy->profile(), $policy->questionHeadingGuidance() ? '1' : '0', $policy->compactStructureGuidance() ? '1' : '0', $policy->faqGuardrail() ? '1' : '0', (string) get_lastpostmodified( 'GMT' ) ) ) );

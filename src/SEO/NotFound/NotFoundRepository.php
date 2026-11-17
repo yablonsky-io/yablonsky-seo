@@ -229,33 +229,91 @@ final class NotFoundRepository {
         $sort = in_array( $sort, array( 'hits', 'recent', 'oldest', 'first_seen' ), true ) ? $sort : 'hits';
         $signal = in_array( $signal, array( 'seo', 'access', 'technical', 'probe', 'all' ), true ) ? $signal : 'seo';
 
-        $where = array( '1=1' );
-        $values = array();
-        if ( 'all' !== $signal ) { $where[] = 'signal_kind=%s'; $values[] = $signal; }
-        if ( '' !== $search ) { $where[] = 'path LIKE %s'; $values[] = '%' . $wpdb->esc_like( $search ) . '%'; }
-        if ( '' !== $language ) { $where[] = 'language_key=%s'; $values[] = $language; }
-        if ( '' !== $dateFrom ) { $where[] = 'last_seen_gmt>=%s'; $values[] = $dateFrom . ' 00:00:00'; }
-        if ( '' !== $dateTo ) { $where[] = 'last_seen_gmt<%s'; $values[] = gmdate( 'Y-m-d H:i:s', strtotime( $dateTo . ' +1 day' ) ); }
-        if ( $minHits > 0 ) { $where[] = 'hits>=%d'; $values[] = $minHits; }
-        $whereSql = implode( ' AND ', $where );
-        $orders = array(
-            'hits' => 'hits DESC,last_seen_gmt DESC,id DESC',
-            'recent' => 'last_seen_gmt DESC,hits DESC,id DESC',
-            'oldest' => 'last_seen_gmt ASC,id ASC',
-            'first_seen' => 'first_seen_gmt DESC,id DESC',
+        // Identical bound filters for count and items. Query templates are literal
+        // strings so both reviewers and static checks can verify every SQL clause.
+        $dateEnd = '' !== $dateTo ? gmdate( 'Y-m-d H:i:s', strtotime( $dateTo . ' +1 day' ) ) : '';
+        $whereArgs = array(
+            0 !== strcmp( $signal, 'all' ) ? 0 : 1, $signal,
+            '' === $search ? 1 : 0, '%' . $wpdb->esc_like( $search ) . '%',
+            '' === $language ? 1 : 0, $language,
+            '' === $dateFrom ? 1 : 0, '' === $dateFrom ? '' : $dateFrom . ' 00:00:00',
+            '' === $dateTo ? 1 : 0, $dateEnd,
+            0 === $minHits ? 1 : 0, $minHits,
         );
-        $orderSql = $orders[ $sort ];
-        $countSql = "SELECT COUNT(*) FROM %i WHERE {$whereSql}";
-        $countArgs = array_merge( array( $this->table ), $values );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Clauses/order come from fixed allowlists; all user-controlled values and table identifier are prepared.
-        $total = (int) $wpdb->get_var( $wpdb->prepare( $countSql, $countArgs ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Indexed count is a bounded report over plugin-owned data.
+        // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            'SELECT COUNT(*) FROM %i
+             WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)',
+            array_merge( array( $this->table ), $whereArgs )
+        ) );
         $pages = max( 1, (int) ceil( $total / $perPage ) );
         $page = min( $page, $pages );
         $offset = ( $page - 1 ) * $perPage;
-        $sql = "SELECT * FROM %i WHERE {$whereSql} ORDER BY {$orderSql} LIMIT %d OFFSET %d";
-        $args = array_merge( array( $this->table ), $values, array( $perPage, $offset ) );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Clauses/order come from fixed allowlists; all user-controlled values and table identifier are prepared; result is bounded.
-        $items = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
+        $args = array_merge( array( $this->table ), $whereArgs, array( $perPage, $offset ) );
+        // Only the hardcoded ORDER BY changes. Index-assisted sorting is preserved.
+        if ( 'recent' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY last_seen_gmt DESC,hits DESC,id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } elseif ( 'oldest' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY last_seen_gmt ASC,id ASC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } elseif ( 'first_seen' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY first_seen_gmt DESC,id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY hits DESC,last_seen_gmt DESC,id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        }
         return array( 'items' => $items, 'total' => $total, 'page' => $page, 'pages' => $pages, 'per_page' => $perPage );
     }
 

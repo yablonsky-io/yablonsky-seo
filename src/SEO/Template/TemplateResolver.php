@@ -276,7 +276,7 @@ final class TemplateResolver {
     }
 
     private function separator(): string {
-        $globals = get_option( 'yps_shadow_global_settings', array() );
+        $globals = get_option( 'yablseo_shadow_global_settings', array() );
         $raw = is_array( $globals ) && isset( $globals['templates.separator'] ) ? trim( (string) $globals['templates.separator'] ) : '';
         if ( '' === $raw ) { return '-'; }
 

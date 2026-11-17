@@ -37,15 +37,15 @@ final class SearchPerformanceController {
 
     public function enqueueAssets( string $hook ): void {
         if ( false === strpos( $hook, self::PAGE ) ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
-        wp_enqueue_script( 'yseo-performance-charts', YPS_URL . 'assets/performance-charts.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_script( 'yseo-performance-charts', YSEO_URL . 'assets/performance-charts.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function render(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Viewing search performance requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         $range = $this->reportRangeFromRequest();
-        $refresh = '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'load', FILTER_UNSAFE_RAW ) );
+        $refresh = '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'load', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         $snapshot = $this->snapshot();
         $report = isset( $snapshot['report'] ) && is_array( $snapshot['report'] ) ? $snapshot['report'] : array();
         $refreshMessages = array();
@@ -181,12 +181,12 @@ final class SearchPerformanceController {
 
     /** @return array{preset:string,start:string,end:string,days:int} */
     private function reportRangeFromRequest(): array {
-        $preset = sanitize_key( (string) filter_input( INPUT_GET, 'range', FILTER_UNSAFE_RAW ) );
+        $preset = sanitize_key( (string) filter_input( INPUT_GET, 'range', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         if ( ! in_array( $preset, array( '7d', '28d', '90d', '180d', 'custom' ), true ) ) { $preset = '28d'; }
         $end = gmdate( 'Y-m-d' );
         if ( 'custom' === $preset ) {
-            $customStart = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_from', FILTER_UNSAFE_RAW ) );
-            $customEnd = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_to', FILTER_UNSAFE_RAW ) );
+            $customStart = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+            $customEnd = $this->normalizeDate( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
             if ( '' !== $customStart && '' !== $customEnd && $customStart <= $customEnd ) {
                 $endTs = strtotime( $customEnd . ' 00:00:00 UTC' );
                 $startTs = strtotime( $customStart . ' 00:00:00 UTC' );
@@ -238,7 +238,7 @@ final class SearchPerformanceController {
     public function toggleNativeSignals(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Changing search signal collection requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( 'yseo_native_search_signals_toggle' );
-        $enabled = '1' === sanitize_text_field( (string) filter_input( INPUT_POST, 'enabled', FILTER_UNSAFE_RAW ) ) ? '1' : '0';
+        $enabled = '1' === sanitize_text_field( (string) filter_input( INPUT_POST, 'enabled', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ? '1' : '0';
         update_option( 'yseo_native_search_signals_enabled', $enabled, false );
         wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE ) );
         exit;
@@ -392,8 +392,7 @@ final class SearchPerformanceController {
             }
             echo '<div class="yseo-performance-bar-row"><div class="yseo-performance-bar-label"><strong>';
             if ( '' !== $url ) { echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $label ) . '</a>'; } else { echo esc_html( $label ); }
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- languageMarkup is assembled from esc_attr()/esc_html() only.
-            echo $languageMarkup;
+            echo wp_kses( $languageMarkup, array( 'span' => array( 'class' => true, 'title' => true ) ) );
             /* translators: %d: organic landing entrance count. */
             echo '</strong><span>' . esc_html( sprintf( _n( '%d organic entrance', '%d organic entrances', $count, 'yablonsky-seo' ), $count ) ) . '</span></div><div class="yseo-performance-bar-track" aria-hidden="true"><i style="width:' . esc_attr( number_format( $width, 1, '.', '' ) ) . '%"></i></div></div>';
         }

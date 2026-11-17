@@ -20,7 +20,7 @@ final class ProductLocaleRegistry {
         if ( is_array( self::$data ) ) {
             return self::$data;
         }
-        $path = YPS_DIR . 'data/product-locales.json';
+        $path = YSEO_DIR . 'data/product-locales.json';
         if ( ! is_readable( $path ) ) {
             self::$data = array( 'schema' => 'yablonsky.product-locales.v1', 'version' => '', 'locales' => array() );
             return self::$data;
@@ -64,7 +64,7 @@ final class ProductLocaleRegistry {
     /** @return array<string,mixed> */
     public static function translationStatusData(): array {
         if ( is_array( self::$translationStatus ) ) { return self::$translationStatus; }
-        $path = YPS_DIR . 'data/product-translation-status.json';
+        $path = YSEO_DIR . 'data/product-translation-status.json';
         if ( ! is_readable( $path ) ) {
             self::$translationStatus = array( 'schema' => 'yablonsky.product-translation-status.v1', 'locales' => array() );
             return self::$translationStatus;

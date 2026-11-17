@@ -33,7 +33,7 @@ final class ReleaseReadinessAudit {
         $this->add( $checks, 'memory', $memoryOk, __( 'Admin PHP memory', 'yablonsky-seo' ), $memoryLabel, __( '128 MB or more is recommended for control-plane tasks such as large plugin checks and migrations.', 'yablonsky-seo' ) );
         $permalinks = '' !== (string) get_option( 'permalink_structure', '' );
         $this->add( $checks, 'permalinks', $permalinks, __( 'Pretty permalinks', 'yablonsky-seo' ), $permalinks ? __( 'Configured', 'yablonsky-seo' ) : __( 'Plain', 'yablonsky-seo' ), __( 'Pretty permalinks provide the expected canonical route surface for production SEO.', 'yablonsky-seo' ) );
-        $manifest = is_readable( YPS_DIR . 'SHA256SUMS.txt' );
+        $manifest = is_readable( YSEO_DIR . 'SHA256SUMS.txt' );
         $this->add( $checks, 'manifest', $manifest, __( 'Package manifest', 'yablonsky-seo' ), $manifest ? __( 'Present', 'yablonsky-seo' ) : __( 'Attention needed', 'yablonsky-seo' ), __( 'The packaged SHA256 manifest should be present for support/release provenance.', 'yablonsky-seo' ) );
         $legacy = trailingslashit( WP_PLUGIN_DIR ) . 'yablonsky-performance-seo/yablonsky-performance-seo.php';
         $legacyClear = ! file_exists( $legacy );

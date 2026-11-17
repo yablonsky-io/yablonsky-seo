@@ -132,7 +132,7 @@ final class SettingsPortability {
 
     /** @return array<string,mixed> */
     public function currentPortablePayload(): array {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $ai = ( new AiSettings() )->all();
 
@@ -294,7 +294,7 @@ final class SettingsPortability {
     private function applyPayload( array $payload, array $before, bool $restore = false ): array {
         // Import may only touch whitelisted portable keys. Preserve any other
         // site-specific/third-party values already stored in the same option.
-        $public = get_option( 'yps_public_settings', array() );
+        $public = get_option( 'yablseo_public_settings', array() );
         $public = is_array( $public ) ? $public : array();
         $incomingPublic = isset( $payload['public_settings'] ) && is_array( $payload['public_settings'] ) ? $this->sanitizePublicSettings( $payload['public_settings'] ) : array();
         if ( $restore ) {
@@ -305,10 +305,10 @@ final class SettingsPortability {
             }
         }
         $public = array_merge( $public, $incomingPublic );
-        update_option( 'yps_public_settings', $public, false );
+        update_option( 'yablseo_public_settings', $public, false );
         // update_option() returning false can mean "unchanged" or "SQL failed".
         // Confirm the actual stored value rather than relying on that boolean.
-        if ( get_option( 'yps_public_settings', array() ) !== $public ) {
+        if ( get_option( 'yablseo_public_settings', array() ) !== $public ) {
             throw new \RuntimeException( 'write-failed' );
         }
 

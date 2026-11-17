@@ -264,7 +264,7 @@ final class IndexNowController {
     }
 
     private function enabled(): bool {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         return is_array( $settings ) && ! empty( $settings['indexnow_enabled'] );
     }
 

@@ -41,7 +41,7 @@ final class SocialTemplateSuggestionService {
 
         $language = $this->languageResolver->normalize( (string) get_bloginfo( 'language' ) );
         if ( '' === $language || 'auto' === $language || 'x-default' === $language ) { $language = 'en'; }
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $row = isset( $settings['social_templates'][ $family['group'] ][ $family['key'] ] ) && is_array( $settings['social_templates'][ $family['group'] ][ $family['key'] ] )
             ? $settings['social_templates'][ $family['group'] ][ $family['key'] ] : array();

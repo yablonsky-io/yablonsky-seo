@@ -31,7 +31,7 @@ final class CrawlerInteroperabilityAudit {
     }
 
     private static function serverHeader( string $key ): string {
-        $value = filter_input( INPUT_SERVER, $key, FILTER_UNSAFE_RAW );
+        $value = filter_input( INPUT_SERVER, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $value ) && isset( $_SERVER[ $key ] ) && is_string( $_SERVER[ $key ] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below; server evidence only.
             $value = wp_unslash( $_SERVER[ $key ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below; server evidence only.
         }

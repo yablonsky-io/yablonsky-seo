@@ -38,11 +38,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class SeoEditorController {
     private const SETTINGS_PAGE = 'yablonsky-seo-settings';
-    private const SETTINGS_OPTION = 'yps_public_settings';
-    private const SETTINGS_NONCE = 'yps_public_settings_save';
-    private const POST_NONCE = 'yps_seo_post_meta_save';
-    private const TERM_NONCE = 'yps_seo_term_meta_save';
-    private const USER_NONCE = 'yps_seo_user_meta_save';
+    private const SETTINGS_OPTION = 'yablseo_public_settings';
+    private const SETTINGS_NONCE = 'yablseo_public_settings_save';
+    private const POST_NONCE = 'yablseo_seo_post_meta_save';
+    private const TERM_NONCE = 'yablseo_seo_term_meta_save';
+    private const USER_NONCE = 'yablseo_seo_user_meta_save';
     private const EDITOR_AJAX_NONCE = 'yseo_editor_assist';
 
     /** @var ProviderDetector */
@@ -55,7 +55,7 @@ final class SeoEditorController {
     public function register(): void {
         add_action( 'admin_menu', array( $this, 'registerSettingsPage' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueueSettingsAssets' ) );
-        add_action( 'admin_post_yps_save_public_settings', array( $this, 'saveSettings' ) );
+        add_action( 'admin_post_yablseo_save_public_settings', array( $this, 'saveSettings' ) );
         add_action( 'admin_post_yseo_localization_export', array( $this, 'exportLocalizationEvidence' ) );
         add_action( 'admin_post_yseo_settings_export', array( $this, 'exportPortableSettings' ) );
         add_action( 'admin_post_yseo_settings_import', array( $this, 'importPortableSettings' ) );
@@ -90,16 +90,16 @@ final class SeoEditorController {
         if ( ! $isSettings && ! $isEditor && ! $isTermUi && ! $isUserUi ) {
             return;
         }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
         if ( $isSettings || $isEditor ) {
             wp_enqueue_media();
-            wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
-            wp_localize_script( 'yps-admin-editor', 'YPS_MEDIA', array( 'title' => esc_html__( 'Select image', 'yablonsky-seo' ), 'button' => esc_html__( 'Use image', 'yablonsky-seo' ) ) );
+            wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+            wp_localize_script( 'yablseo-admin-editor', 'YABLSEO_MEDIA', array( 'title' => esc_html__( 'Select image', 'yablonsky-seo' ), 'button' => esc_html__( 'Use image', 'yablonsky-seo' ) ) );
         }
         if ( $isSettings ) {
             wp_localize_script(
-                'yps-admin-editor',
-                'YPS_AI_SETTINGS',
+                'yablseo-admin-editor',
+                'YABLSEO_AI_SETTINGS',
                 array(
                     'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                     'nonce' => wp_create_nonce( 'yseo_ai_settings' ),
@@ -124,8 +124,8 @@ final class SeoEditorController {
         if ( $isEditor ) {
             $ai = new MetadataSuggestionService();
             wp_localize_script(
-                'yps-admin-editor',
-                'YPS_EDITOR',
+                'yablseo-admin-editor',
+                'YABLSEO_EDITOR',
                 array(
                     'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                     'nonce' => wp_create_nonce( self::EDITOR_AJAX_NONCE ),
@@ -193,7 +193,7 @@ final class SeoEditorController {
             wp_die( esc_html__( 'Changing these settings requires the corresponding WordPress capability.', 'yablonsky-seo' ) );
         }
         check_admin_referer( 'yseo_settings_import' );
-        $raw = filter_input( INPUT_POST, 'yseo_settings_json', FILTER_UNSAFE_RAW );
+        $raw = filter_input( INPUT_POST, 'yseo_settings_json', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'json' ) ) );
         if ( ! is_string( $raw ) ) {
             $this->redirectPortability( 'invalid' );
         }
@@ -249,8 +249,8 @@ final class SeoEditorController {
         $aeoPolicy = AeoPolicy::fromSettings( $settings );
         $aeoAudit = ( new AeoReadinessAudit() )->report();
         $providers = $this->detector->detectActiveProviders();
-        $authority = (string) get_option( 'yps_output_authority', 'active' );
-        $updatedFlag = filter_input( INPUT_GET, 'updated', FILTER_UNSAFE_RAW );
+        $authority = (string) get_option( 'yablseo_output_authority', 'active' );
+        $updatedFlag = filter_input( INPUT_GET, 'updated', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $localeStatus = ProductLocaleRegistry::currentStatus();
         $localeCoverage = ProductLocaleRegistry::coverage();
         $localeAudit = ProductLocalePackAudit::report();
@@ -259,7 +259,7 @@ final class SeoEditorController {
         $localeRegisteredReady = max( 0, (int) ( $localeAudit['registered_ready'] ?? 0 ) );
         $localeProgressPercent = $localeRegisteredTotal > 0 ? round( min( 100, ( $localeRegisteredReady / $localeRegisteredTotal ) * 100 ), 1 ) : 0.0;
         $portability = new SettingsPortability();
-        $portabilityStatus = filter_input( INPUT_GET, 'portability', FILTER_UNSAFE_RAW );
+        $portabilityStatus = filter_input( INPUT_GET, 'portability', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $portabilityStatus = is_string( $portabilityStatus ) ? sanitize_key( $portabilityStatus ) : '';
         $portabilityChangedRaw = filter_input( INPUT_GET, 'changed', FILTER_VALIDATE_INT );
         $portabilityChanged = is_int( $portabilityChangedRaw ) ? max( 0, $portabilityChangedRaw ) : 0;
@@ -275,7 +275,7 @@ final class SeoEditorController {
         $crawlerInterop = CrawlerInteroperabilityAudit::build( $settings );
         $crawlerPermission = CrawlerPermissionPolicy::fromSettings( $settings );
         try {
-            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YPS_DIR . 'data/ai-crawlers.json' );
+            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YSEO_DIR . 'data/ai-crawlers.json' );
             $crawlerRegistryRows = $crawlerRegistry->all();
             $crawlerRegistryVersion = $crawlerRegistry->version();
         } catch ( \RuntimeException $error ) {
@@ -307,16 +307,16 @@ final class SeoEditorController {
                 </div>
                 <div class="yps-product-actions">
                     <a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo' ) ); ?>"><?php echo esc_html__( 'Back to Dashboard', 'yablonsky-seo' ); ?></a>
-                    <span class="yps-pill">v<?php echo esc_html( YPS_VERSION ); ?></span>
+                    <span class="yps-pill">v<?php echo esc_html( YSEO_VERSION ); ?></span>
                 </div>
             </header>
             <?php if ( is_string( $updatedFlag ) && '1' === sanitize_text_field( $updatedFlag ) ) : ?>
                 <div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'SEO settings saved.', 'yablonsky-seo' ); ?></p></div>
             <?php endif; ?>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                <input type="hidden" name="action" value="yps_save_public_settings" />
+                <input type="hidden" name="action" value="yablseo_save_public_settings" />
                 <?php wp_nonce_field( self::SETTINGS_NONCE ); ?>
-                <input type="hidden" id="yps-settings-active-tab" name="yps_settings_tab" value="general" />
+                <input type="hidden" id="yps-settings-active-tab" name="yablseo_settings_tab" value="general" />
                 <nav class="yps-settings-nav" aria-label="<?php echo esc_attr__( 'Yablonsky SEO settings sections', 'yablonsky-seo' ); ?>">
                     <button type="button" class="yps-settings-nav-item is-active" data-yps-settings-tab="general" aria-selected="true" aria-controls="yps-settings-panel-general"><?php echo esc_html__( 'General', 'yablonsky-seo' ); ?></button>
                     <button type="button" class="yps-settings-nav-item is-seo" data-yps-settings-tab="search" aria-selected="false" aria-controls="yps-settings-panel-search"><?php echo esc_html__( 'SEO', 'yablonsky-seo' ); ?></button>
@@ -802,10 +802,10 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         check_admin_referer( self::SETTINGS_NONCE );
 
         $providers = $this->detector->detectActiveProviders();
-        $rawAuthority = filter_input( INPUT_POST, 'output_authority', FILTER_UNSAFE_RAW );
+        $rawAuthority = filter_input( INPUT_POST, 'output_authority', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $requestedAuthority = is_string( $rawAuthority ) ? sanitize_key( $rawAuthority ) : 'shadow';
         $authority = empty( $providers ) && 'active' === $requestedAuthority ? 'active' : 'shadow';
-        update_option( 'yps_output_authority', $authority, false );
+        update_option( 'yablseo_output_authority', $authority, false );
 
         $agentPolicy = $this->postedPolicy( 'ai_agent_access', 'allow' );
         $answersPolicy = $this->postedPolicy( 'ai_answers_access', 'inherit' );
@@ -838,71 +838,76 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
             'home_twitter_description' => $this->postedTextarea( 'home_twitter_description' ),
             'home_twitter_image' => esc_url_raw( $this->postedText( 'home_twitter_image' ), array( 'http', 'https' ) ),
             'aeo_analysis_profile' => in_array( $this->postedKey( 'aeo_analysis_profile' ), array( 'balanced', 'concise', 'extended' ), true ) ? $this->postedKey( 'aeo_analysis_profile' ) : AeoPolicy::DEFAULT_PROFILE,
-            'aeo_question_heading_guidance' => null !== filter_input( INPUT_POST, 'aeo_question_heading_guidance', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'aeo_compact_structure_guidance' => null !== filter_input( INPUT_POST, 'aeo_compact_structure_guidance', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'aeo_faq_guardrail' => null !== filter_input( INPUT_POST, 'aeo_faq_guardrail', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'ai_crawler_policy_enabled' => null !== filter_input( INPUT_POST, 'ai_crawler_policy_enabled', FILTER_UNSAFE_RAW ) ? '1' : '',
+            'aeo_question_heading_guidance' => filter_has_var( INPUT_POST, 'aeo_question_heading_guidance' ) ? '1' : '',
+            'aeo_compact_structure_guidance' => filter_has_var( INPUT_POST, 'aeo_compact_structure_guidance' ) ? '1' : '',
+            'aeo_faq_guardrail' => filter_has_var( INPUT_POST, 'aeo_faq_guardrail' ) ? '1' : '',
+            'ai_crawler_policy_enabled' => filter_has_var( INPUT_POST, 'ai_crawler_policy_enabled' ) ? '1' : '',
             'ai_search_access'  => $this->postedPolicy( 'ai_search_access', 'allow' ),
             'ai_answers_access' => $answersPolicy,
             'ai_agent_access'   => $agentPolicy,
             'ai_retrieval_access' => $agentPolicy, // Backward-compatible alias for pre-4.69 settings and integrations.
             'ai_training_access'=> $this->postedPolicy( 'ai_training_access', 'allow' ),
             'ai_ads_access' => $this->postedPolicy( 'ai_ads_access', 'inherit' ),
-            'agent_markdown_enabled' => null !== filter_input( INPUT_POST, 'agent_markdown_enabled', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'agent_scoped_llms_enabled' => null !== filter_input( INPUT_POST, 'agent_scoped_llms_enabled', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'agent_sitemap_extension_enabled' => null !== filter_input( INPUT_POST, 'agent_sitemap_extension_enabled', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_shortlinks' => null !== filter_input( INPUT_POST, 'crawl_remove_shortlinks', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_rest_links' => null !== filter_input( INPUT_POST, 'crawl_remove_rest_links', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_rsd_wlw' => null !== filter_input( INPUT_POST, 'crawl_remove_rsd_wlw', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_oembed_links' => null !== filter_input( INPUT_POST, 'crawl_remove_oembed_links', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_generator' => null !== filter_input( INPUT_POST, 'crawl_remove_generator', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_pingback_header' => null !== filter_input( INPUT_POST, 'crawl_remove_pingback_header', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_powered_by_header' => null !== filter_input( INPUT_POST, 'crawl_remove_powered_by_header', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_remove_emoji' => null !== filter_input( INPUT_POST, 'crawl_remove_emoji', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_global_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_global_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_comments_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_comments_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_post_comments_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_post_comments_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_author_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_author_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_post_type_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_post_type_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_category_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_category_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_tag_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_tag_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_taxonomy_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_taxonomy_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_search_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_search_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disable_atom_rdf_feeds' => null !== filter_input( INPUT_POST, 'crawl_disable_atom_rdf_feeds', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_disallow_wp_json' => null !== filter_input( INPUT_POST, 'crawl_disallow_wp_json', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_search_noindex' => null !== filter_input( INPUT_POST, 'crawl_search_noindex', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_search_redirect_pretty' => null !== filter_input( INPUT_POST, 'crawl_search_redirect_pretty', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_search_filter_special' => null !== filter_input( INPUT_POST, 'crawl_search_filter_special', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_search_filter_spam' => null !== filter_input( INPUT_POST, 'crawl_search_filter_spam', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'crawl_clean_tracking_params' => null !== filter_input( INPUT_POST, 'crawl_clean_tracking_params', FILTER_UNSAFE_RAW ) ? '1' : '',
+            'agent_markdown_enabled' => filter_has_var( INPUT_POST, 'agent_markdown_enabled' ) ? '1' : '',
+            'agent_scoped_llms_enabled' => filter_has_var( INPUT_POST, 'agent_scoped_llms_enabled' ) ? '1' : '',
+            'agent_sitemap_extension_enabled' => filter_has_var( INPUT_POST, 'agent_sitemap_extension_enabled' ) ? '1' : '',
+            'crawl_remove_shortlinks' => filter_has_var( INPUT_POST, 'crawl_remove_shortlinks' ) ? '1' : '',
+            'crawl_remove_rest_links' => filter_has_var( INPUT_POST, 'crawl_remove_rest_links' ) ? '1' : '',
+            'crawl_remove_rsd_wlw' => filter_has_var( INPUT_POST, 'crawl_remove_rsd_wlw' ) ? '1' : '',
+            'crawl_remove_oembed_links' => filter_has_var( INPUT_POST, 'crawl_remove_oembed_links' ) ? '1' : '',
+            'crawl_remove_generator' => filter_has_var( INPUT_POST, 'crawl_remove_generator' ) ? '1' : '',
+            'crawl_remove_pingback_header' => filter_has_var( INPUT_POST, 'crawl_remove_pingback_header' ) ? '1' : '',
+            'crawl_remove_powered_by_header' => filter_has_var( INPUT_POST, 'crawl_remove_powered_by_header' ) ? '1' : '',
+            'crawl_remove_emoji' => filter_has_var( INPUT_POST, 'crawl_remove_emoji' ) ? '1' : '',
+            'crawl_disable_global_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_global_feeds' ) ? '1' : '',
+            'crawl_disable_comments_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_comments_feeds' ) ? '1' : '',
+            'crawl_disable_post_comments_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_post_comments_feeds' ) ? '1' : '',
+            'crawl_disable_author_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_author_feeds' ) ? '1' : '',
+            'crawl_disable_post_type_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_post_type_feeds' ) ? '1' : '',
+            'crawl_disable_category_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_category_feeds' ) ? '1' : '',
+            'crawl_disable_tag_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_tag_feeds' ) ? '1' : '',
+            'crawl_disable_taxonomy_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_taxonomy_feeds' ) ? '1' : '',
+            'crawl_disable_search_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_search_feeds' ) ? '1' : '',
+            'crawl_disable_atom_rdf_feeds' => filter_has_var( INPUT_POST, 'crawl_disable_atom_rdf_feeds' ) ? '1' : '',
+            'crawl_disallow_wp_json' => filter_has_var( INPUT_POST, 'crawl_disallow_wp_json' ) ? '1' : '',
+            'crawl_search_noindex' => filter_has_var( INPUT_POST, 'crawl_search_noindex' ) ? '1' : '',
+            'crawl_search_redirect_pretty' => filter_has_var( INPUT_POST, 'crawl_search_redirect_pretty' ) ? '1' : '',
+            'crawl_search_filter_special' => filter_has_var( INPUT_POST, 'crawl_search_filter_special' ) ? '1' : '',
+            'crawl_search_filter_spam' => filter_has_var( INPUT_POST, 'crawl_search_filter_spam' ) ? '1' : '',
+            'crawl_clean_tracking_params' => filter_has_var( INPUT_POST, 'crawl_clean_tracking_params' ) ? '1' : '',
             'crawl_search_max_chars' => (string) min( 200, max( 20, (int) filter_input( INPUT_POST, 'crawl_search_max_chars', FILTER_VALIDATE_INT ) ) ),
             'search_title_template' => $this->postedText( 'search_title_template' ),
             'error_404_title_template' => $this->postedText( 'error_404_title_template' ),
             'date_archive_title_template' => $this->postedText( 'date_archive_title_template' ),
             'post_format_archive_title_template' => $this->postedText( 'post_format_archive_title_template' ),
-            'date_archives_noindex' => null !== filter_input( INPUT_POST, 'date_archives_noindex', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'post_format_archives_noindex' => null !== filter_input( INPUT_POST, 'post_format_archives_noindex', FILTER_UNSAFE_RAW ) ? '1' : '',
-            'media_redirect_attachment_pages' => null !== filter_input( INPUT_POST, 'media_redirect_attachment_pages', FILTER_UNSAFE_RAW ) ? '1' : '',
+            'date_archives_noindex' => filter_has_var( INPUT_POST, 'date_archives_noindex' ) ? '1' : '',
+            'post_format_archives_noindex' => filter_has_var( INPUT_POST, 'post_format_archives_noindex' ) ? '1' : '',
+            'media_redirect_attachment_pages' => filter_has_var( INPUT_POST, 'media_redirect_attachment_pages' ) ? '1' : '',
             'media_redirect_target' => 'parent' === $this->postedKey( 'media_redirect_target' ) ? 'parent' : 'file',
             'rss_before_content' => $this->postedRssTemplate( 'rss_before_content' ),
             'rss_after_content' => $this->postedRssTemplate( 'rss_after_content' ),
-            'indexnow_enabled' => null !== filter_input( INPUT_POST, 'indexnow_enabled', FILTER_UNSAFE_RAW ) ? '1' : '',
+            'indexnow_enabled' => filter_has_var( INPUT_POST, 'indexnow_enabled' ) ? '1' : '',
         );
-        $rawSocialTemplates = filter_input( INPUT_POST, 'social_templates', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+        // Preserve percent-encoded image URLs until the field-specific
+        // SocialTemplateResolver sanitizer validates every nested key/value.
+        $rawSocialTemplates = filter_input( INPUT_POST, 'social_templates', FILTER_CALLBACK, array(
+            'flags' => FILTER_REQUIRE_ARRAY,
+            'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ),
+        ) );
         $settings['social_templates'] = is_array( $rawSocialTemplates ) ? SocialTemplateResolver::sanitize( $rawSocialTemplates ) : array();
         update_option( self::SETTINGS_OPTION, $settings, false );
 
         $aiSettings = new AiSettings();
-        $disconnect = null !== filter_input( INPUT_POST, 'yseo_ai_disconnect', FILTER_UNSAFE_RAW );
+        $disconnect = null !== filter_input( INPUT_POST, 'yseo_ai_disconnect', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( $disconnect ) {
             $aiSettings->disconnect();
         } else {
-            $rawApiKey = filter_input( INPUT_POST, 'yseo_ai_api_key', FILTER_UNSAFE_RAW );
+            $rawApiKey = filter_input( INPUT_POST, 'yseo_ai_api_key', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
             if ( is_string( $rawApiKey ) && '' !== trim( $rawApiKey ) ) {
                 try { $aiSettings->saveApiKey( sanitize_text_field( trim( $rawApiKey ) ) ); }
                 catch ( ServiceError $error ) { wp_die( esc_html( $error->getMessage() ) ); }
             }
-            $rawCreativity = filter_input( INPUT_POST, 'yseo_ai_creativity', FILTER_UNSAFE_RAW );
+            $rawCreativity = filter_input( INPUT_POST, 'yseo_ai_creativity', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
             $aiSettings->savePreferences(
                 array(
                     'workspace_id' => $this->postedText( 'yseo_ai_workspace_id' ),
@@ -914,7 +919,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
                 )
             );
         }
-        $settingsTab = $this->postedKey( 'yps_settings_tab' );
+        $settingsTab = $this->postedKey( 'yablseo_settings_tab' );
         if ( ! in_array( $settingsTab, array( 'general', 'search', 'social', 'answer', 'crawlers', 'ai', 'portability', 'developer' ), true ) ) {
             $settingsTab = 'general';
         }
@@ -940,7 +945,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
     }
 
     public function renderPostMetaBox( \WP_Post $post ): void {
-        wp_nonce_field( self::POST_NONCE, 'yps_seo_meta_nonce' );
+        wp_nonce_field( self::POST_NONCE, 'yablseo_seo_meta_nonce' );
         $fields = $this->postFieldDefinitions();
         $values = array();
         foreach ( $fields as $name => $field ) {
@@ -1176,7 +1181,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( wp_is_post_autosave( $postId ) || wp_is_post_revision( $postId ) ) {
             return;
         }
-        $rawNonce = filter_input( INPUT_POST, 'yps_seo_meta_nonce', FILTER_UNSAFE_RAW );
+        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_meta_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1198,7 +1203,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
         check_ajax_referer( 'yseo_ai_settings', 'nonce' );
-        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
+        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $fields = is_string( $rawFields ) ? array_values( array_filter( array_map( 'sanitize_key', explode( ',', $rawFields ) ) ) ) : array();
         try {
             $suggestions = ( new SiteSettingsSuggestionService() )->suggest( $fields );
@@ -1216,9 +1221,9 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
         check_ajax_referer( 'yseo_ai_settings', 'nonce' );
-        $rawGroup = filter_input( INPUT_POST, 'group', FILTER_UNSAFE_RAW );
-        $rawKey = filter_input( INPUT_POST, 'key', FILTER_UNSAFE_RAW );
-        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
+        $rawGroup = filter_input( INPUT_POST, 'group', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawKey = filter_input( INPUT_POST, 'key', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $group = is_string( $rawGroup ) ? sanitize_key( $rawGroup ) : '';
         $key = is_string( $rawKey ) ? sanitize_key( $rawKey ) : '';
         $fields = is_string( $rawFields ) ? array_values( array_filter( array_map( 'sanitize_key', explode( ',', $rawFields ) ) ) ) : array();
@@ -1300,7 +1305,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $rawField = filter_input( INPUT_POST, 'field', FILTER_UNSAFE_RAW );
+        $rawField = filter_input( INPUT_POST, 'field', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $field = is_string( $rawField ) ? sanitize_key( $rawField ) : '';
         if ( ! SettingsAuthoringRegistry::supportsImage( $field ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Image generation failed.', 'yablonsky-seo' ) ), 400 );
@@ -1328,9 +1333,9 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $rawGroup = filter_input( INPUT_POST, 'group', FILTER_UNSAFE_RAW );
-        $rawKey = filter_input( INPUT_POST, 'key', FILTER_UNSAFE_RAW );
-        $rawSlot = filter_input( INPUT_POST, 'slot', FILTER_UNSAFE_RAW );
+        $rawGroup = filter_input( INPUT_POST, 'group', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawKey = filter_input( INPUT_POST, 'key', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawSlot = filter_input( INPUT_POST, 'slot', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $group = is_string( $rawGroup ) ? sanitize_key( $rawGroup ) : '';
         $key = is_string( $rawKey ) ? sanitize_key( $rawKey ) : '';
         $slot = is_string( $rawSlot ) ? sanitize_key( $rawSlot ) : '';
@@ -1366,7 +1371,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         }
         $model = $this->postedText( 'model' );
         $prompt = $this->postedTextarea( 'prompt' );
-        $ratioRaw = filter_input( INPUT_POST, 'aspect_ratio', FILTER_UNSAFE_RAW );
+        $ratioRaw = filter_input( INPUT_POST, 'aspect_ratio', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $ratio = is_string( $ratioRaw ) ? sanitize_text_field( $ratioRaw ) : '16:9';
         if ( ! in_array( $ratio, array( '16:9', '4:3', '1:1' ), true ) ) { $ratio = '16:9'; }
         try {
@@ -1405,19 +1410,22 @@ untimeException $error ) {
         // YSEO fields in the form. The browser sends both snapshots here so one local
         // analyzer remains authoritative for live and saved scoring.
         $analysisPost = clone $post;
-        $rawDraftTitle = filter_input( INPUT_POST, 'draft_title', FILTER_UNSAFE_RAW );
+        $rawDraftTitle = filter_input( INPUT_POST, 'draft_title', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $rawDraftTitle ) ) {
-            $analysisPost->post_title = sanitize_text_field( wp_unslash( $rawDraftTitle ) );
+            $analysisPost->post_title = sanitize_text_field( $rawDraftTitle );
         }
-        $rawDraftExcerpt = filter_input( INPUT_POST, 'draft_excerpt', FILTER_UNSAFE_RAW );
+        $rawDraftExcerpt = filter_input( INPUT_POST, 'draft_excerpt', FILTER_CALLBACK, array( 'options' => 'sanitize_textarea_field' ) );
         if ( is_string( $rawDraftExcerpt ) ) {
-            $analysisPost->post_excerpt = sanitize_textarea_field( wp_unslash( $rawDraftExcerpt ) );
+            $analysisPost->post_excerpt = sanitize_textarea_field( $rawDraftExcerpt );
         }
-        $rawDraftContent = filter_input( INPUT_POST, 'draft_content', FILTER_UNSAFE_RAW );
+        $rawDraftContent = filter_input( INPUT_POST, 'draft_content', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'richHtml' ) ) );
         if ( is_string( $rawDraftContent ) ) {
-            $draftContent = wp_unslash( $rawDraftContent );
+            // The live editor snapshot is untrusted request data even though it
+            // is used only for analysis and is never saved by this endpoint.
+            // Reject oversized payloads before applying the allowed post-HTML policy.
+            $draftContent = $rawDraftContent;
             if ( strlen( $draftContent ) <= 2097152 ) {
-                $analysisPost->post_content = $draftContent;
+                $analysisPost->post_content = wp_kses_post( $draftContent );
             }
         }
 
@@ -1428,26 +1436,26 @@ untimeException $error ) {
         }
 
         foreach ( array( 'focus_keyphrase', 'seo_title' ) as $name ) {
-            $raw = filter_input( INPUT_POST, $name, FILTER_UNSAFE_RAW );
+            $raw = filter_input( INPUT_POST, $name, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
             if ( is_string( $raw ) ) {
-                $values[ $name ] = sanitize_text_field( wp_unslash( $raw ) );
+                $values[ $name ] = sanitize_text_field( $raw );
             }
         }
-        $rawDescription = filter_input( INPUT_POST, 'meta_description', FILTER_UNSAFE_RAW );
+        $rawDescription = filter_input( INPUT_POST, 'meta_description', FILTER_CALLBACK, array( 'options' => 'sanitize_textarea_field' ) );
         if ( is_string( $rawDescription ) ) {
-            $values['meta_description'] = sanitize_textarea_field( wp_unslash( $rawDescription ) );
+            $values['meta_description'] = sanitize_textarea_field( $rawDescription );
         }
-        $rawNoindex = filter_input( INPUT_POST, 'noindex', FILTER_UNSAFE_RAW );
+        $rawNoindex = filter_input( INPUT_POST, 'noindex', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $rawNoindex ) ) {
             $values['noindex'] = in_array( strtolower( trim( $rawNoindex ) ), array( '1', 'true', 'yes', 'on' ), true ) ? '1' : '';
         }
-        $rawSchemaPageType = filter_input( INPUT_POST, 'schema_page_type', FILTER_UNSAFE_RAW );
+        $rawSchemaPageType = filter_input( INPUT_POST, 'schema_page_type', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( is_string( $rawSchemaPageType ) ) {
-            $values['schema_page_type'] = sanitize_key( wp_unslash( $rawSchemaPageType ) );
+            $values['schema_page_type'] = sanitize_key( $rawSchemaPageType );
         }
 
-        $rawRelated = filter_input( INPUT_POST, 'focus_keyphrases', FILTER_UNSAFE_RAW );
-        $relatedRaw = is_string( $rawRelated ) ? wp_unslash( $rawRelated ) : '';
+        $rawRelated = filter_input( INPUT_POST, 'focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $relatedRaw = is_string( $rawRelated ) ? $rawRelated : '';
         $analysisValues = $values;
         $analysisValues['focus_keyphrases'] = $this->relatedKeyphrasesFromRaw( $relatedRaw, (string) ( $values['focus_keyphrase'] ?? '' ) );
 
@@ -1487,7 +1495,7 @@ untimeException $error ) {
         if ( ! $this->detector->hasProvider( 'yoast' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Yoast mirroring activates when Yoast SEO is active and provides live source metadata.', 'yablonsky-seo' ) ), 409 );
         }
-        $rawScope = filter_input( INPUT_POST, 'scope', FILTER_UNSAFE_RAW );
+        $rawScope = filter_input( INPUT_POST, 'scope', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $scope = is_string( $rawScope ) && MetadataMirrorState::SCOPE_ALL === sanitize_key( $rawScope ) ? MetadataMirrorState::SCOPE_ALL : MetadataMirrorState::SCOPE_SEARCH;
         $result = ( new MetadataMirrorService( new MetadataMirrorRepository() ) )->mirrorPost( $postId, $scope );
         /* translators: 1: copied metadata value count, 2: exact match count, 3: preserved existing YSEO value count. */
@@ -1503,7 +1511,7 @@ untimeException $error ) {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Editing this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $rawField = filter_input( INPUT_POST, 'field', FILTER_UNSAFE_RAW );
+        $rawField = filter_input( INPUT_POST, 'field', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $field = is_string( $rawField ) ? sanitize_key( $rawField ) : '';
         $requested = in_array( $field, array( 'focus_keyphrase', 'focus_keyphrases', 'seo_title', 'meta_description' ), true ) ? array( $field ) : array();
         try {
@@ -1528,7 +1536,7 @@ untimeException $error ) {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting AI assistance for this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $modeInput = filter_input( INPUT_POST, 'mode', FILTER_UNSAFE_RAW );
+        $modeInput = filter_input( INPUT_POST, 'mode', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $mode = is_string( $modeInput ) ? sanitize_key( $modeInput ) : '';
         try {
             $result = ( new ContentAssistService() )->assistPost( $postId, $mode );
@@ -1567,7 +1575,7 @@ untimeException $error ) {
     }
 
     public function renderTermAddFields(): void {
-        wp_nonce_field( self::TERM_NONCE, 'yps_seo_term_nonce' );
+        wp_nonce_field( self::TERM_NONCE, 'yablseo_seo_term_nonce' );
         foreach ( $this->termFieldDefinitions() as $name => $field ) {
             echo '<div class="form-field yps-taxonomy-seo-field">';
             $this->renderEditorField( $name, $field, '' );
@@ -1577,7 +1585,7 @@ untimeException $error ) {
 
     public function renderTermEditFields( \WP_Term $term, string $taxonomy ): void {
         unset( $taxonomy );
-        wp_nonce_field( self::TERM_NONCE, 'yps_seo_term_nonce' );
+        wp_nonce_field( self::TERM_NONCE, 'yablseo_seo_term_nonce' );
         foreach ( $this->termFieldDefinitions() as $name => $field ) {
             $value = get_term_meta( $term->term_id, $field['meta'], true );
             echo '<tr class="form-field yps-taxonomy-seo-field"><th scope="row"><label for="' . esc_attr( 'yps-' . $name ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
@@ -1587,7 +1595,7 @@ untimeException $error ) {
     }
 
     public function saveTermFields( int $termId ): void {
-        $rawNonce = filter_input( INPUT_POST, 'yps_seo_term_nonce', FILTER_UNSAFE_RAW );
+        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_term_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1613,25 +1621,25 @@ untimeException $error ) {
         if ( ! current_user_can( 'edit_user', $user->ID ) ) {
             return;
         }
-        wp_nonce_field( self::USER_NONCE, 'yps_seo_user_nonce' );
+        wp_nonce_field( self::USER_NONCE, 'yablseo_seo_user_nonce' );
         ?>
         <div class="yps-profile-seo-surface">
         <h2><?php echo esc_html__( 'Yablonsky SEO', 'yablonsky-seo' ); ?></h2>
         <table class="form-table yps-profile-seo-table" role="presentation">
-            <tr><th><label for="yps-author-title"><?php echo esc_html__( 'Author SEO title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-title" name="yps_author_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_seo_title', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-description"><?php echo esc_html__( 'Author meta description', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-description" name="yps_author_description"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_meta_description', true ) ); ?></textarea></td></tr>
-            <tr><th><label for="yps-author-job-title"><?php echo esc_html__( 'Job title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-job-title" name="yps_author_job_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_job_title', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-image-url"><?php echo esc_html__( 'Person image URL', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" type="url" id="yps-author-image-url" name="yps_author_image_url" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_image_url', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-same-as"><?php echo esc_html__( 'External sameAs URLs', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-same-as" name="yps_author_same_as"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_same_as', true ) ); ?></textarea><p class="description"><?php echo esc_html__( 'One URL per line. Migrated Yoast social profile fields are also included automatically.', 'yablonsky-seo' ); ?></p></td></tr>
-            <tr><th><label for="yps-author-knows-about"><?php echo esc_html__( 'knowsAbout topics', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-knows-about" name="yps_author_knows_about"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_knows_about', true ) ); ?></textarea></td></tr>
-            <tr><th><?php echo esc_html__( 'Indexability', 'yablonsky-seo' ); ?></th><td><label><input type="checkbox" name="yps_author_noindex" value="1" <?php checked( '1', (string) get_user_meta( $user->ID, '_yps_author_robots_noindex', true ) ); ?> /> <?php echo esc_html__( 'Noindex this author archive', 'yablonsky-seo' ); ?></label></td></tr>
+            <tr><th><label for="yps-author-title"><?php echo esc_html__( 'Author SEO title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-title" name="yablseo_author_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_seo_title', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-description"><?php echo esc_html__( 'Author meta description', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-description" name="yablseo_author_description"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_meta_description', true ) ); ?></textarea></td></tr>
+            <tr><th><label for="yps-author-job-title"><?php echo esc_html__( 'Job title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-job-title" name="yablseo_author_job_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_job_title', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-image-url"><?php echo esc_html__( 'Person image URL', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" type="url" id="yps-author-image-url" name="yablseo_author_image_url" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_image_url', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-same-as"><?php echo esc_html__( 'External sameAs URLs', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-same-as" name="yablseo_author_same_as"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_same_as', true ) ); ?></textarea><p class="description"><?php echo esc_html__( 'One URL per line. Migrated Yoast social profile fields are also included automatically.', 'yablonsky-seo' ); ?></p></td></tr>
+            <tr><th><label for="yps-author-knows-about"><?php echo esc_html__( 'knowsAbout topics', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-knows-about" name="yablseo_author_knows_about"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_knows_about', true ) ); ?></textarea></td></tr>
+            <tr><th><?php echo esc_html__( 'Indexability', 'yablonsky-seo' ); ?></th><td><label><input type="checkbox" name="yablseo_author_noindex" value="1" <?php checked( '1', (string) get_user_meta( $user->ID, '_yps_author_robots_noindex', true ) ); ?> /> <?php echo esc_html__( 'Noindex this author archive', 'yablonsky-seo' ); ?></label></td></tr>
         </table>
         </div>
         <?php
     }
 
     public function saveUserFields( int $userId ): void {
-        $rawNonce = filter_input( INPUT_POST, 'yps_seo_user_nonce', FILTER_UNSAFE_RAW );
+        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_user_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1639,13 +1647,13 @@ untimeException $error ) {
         if ( ! wp_verify_nonce( $nonce, self::USER_NONCE ) || ! current_user_can( 'edit_user', $userId ) ) {
             return;
         }
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_seo_title', $this->postedText( 'yps_author_title' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_meta_description', $this->postedTextarea( 'yps_author_description' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_job_title', $this->postedText( 'yps_author_job_title' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_image_url', esc_url_raw( $this->postedText( 'yps_author_image_url' ), array( 'http', 'https' ) ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_same_as', $this->postedTextarea( 'yps_author_same_as' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_knows_about', $this->postedTextarea( 'yps_author_knows_about' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_robots_noindex', null !== filter_input( INPUT_POST, 'yps_author_noindex', FILTER_UNSAFE_RAW ) ? '1' : '' );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_seo_title', $this->postedText( 'yablseo_author_title' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_meta_description', $this->postedTextarea( 'yablseo_author_description' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_job_title', $this->postedText( 'yablseo_author_job_title' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_image_url', esc_url_raw( $this->postedText( 'yablseo_author_image_url' ), array( 'http', 'https' ) ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_same_as', $this->postedTextarea( 'yablseo_author_same_as' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_knows_about', $this->postedTextarea( 'yablseo_author_knows_about' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_robots_noindex', filter_has_var( INPUT_POST, 'yablseo_author_noindex' ) ? '1' : '' );
     }
 
     /** @return array<string,array{meta:string,label:string,type:string}> */
@@ -1811,7 +1819,7 @@ untimeException $error ) {
     /** @param array{meta:string,label:string,type:string} $field @param mixed $value */
     private function renderEditorControl( string $name, array $field, $value ): void {
         $id = 'yps-' . $name;
-        $inputName = 'yps_' . $name;
+        $inputName = 'yablseo_' . $name;
         if ( 'textarea' === $field['type'] ) {
             printf( '<textarea class="large-text" rows="3" id="%1$s" name="%2$s">%3$s</textarea>', esc_attr( $id ), esc_attr( $inputName ), esc_textarea( (string) $value ) );
         } elseif ( 'checkbox' === $field['type'] ) {
@@ -1861,14 +1869,14 @@ untimeException $error ) {
                 $low = 50; $min = 80; $idealMax = 155; $max = 170;
                 $fitHelp = __( 'Practical display-fit target: 80–155 characters. Google adapts snippet display to device width and may truncate the visible text.', 'yablonsky-seo' );
             }
-            echo '<div class="yps-serp-meter is-critical" data-yps-serp-meter data-yps-count-for="' . esc_attr( 'yps_' . $name ) . '" data-yps-low="' . esc_attr( (string) $low ) . '" data-yps-min="' . esc_attr( (string) $min ) . '" data-yps-ideal-max="' . esc_attr( (string) $idealMax ) . '" data-yps-max="' . esc_attr( (string) $max ) . '">';
+            echo '<div class="yps-serp-meter is-critical" data-yps-serp-meter data-yps-count-for="' . esc_attr( 'yablseo_' . $name ) . '" data-yps-low="' . esc_attr( (string) $low ) . '" data-yps-min="' . esc_attr( (string) $min ) . '" data-yps-ideal-max="' . esc_attr( (string) $idealMax ) . '" data-yps-max="' . esc_attr( (string) $max ) . '">';
             echo '<div class="yps-serp-meter-head"><span data-yps-serp-label>' . esc_html__( 'Ready for input', 'yablonsky-seo' ) . '</span><strong><span data-yps-serp-count>0</span> ' . esc_html__( 'characters', 'yablonsky-seo' ) . '</strong></div>';
             echo '<div class="yps-serp-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="' . esc_attr( (string) $max ) . '" aria-valuenow="0"><i></i></div>';
             echo '<small>' . esc_html( $fitHelp ) . '</small></div>';
         } elseif ( $recommended > 0 ) {
             /* translators: %d: recommended maximum character count for the SEO field. */
             $recommendation = sprintf( __( 'Recommended ≤ %d characters', 'yablonsky-seo' ), $recommended );
-            echo '<div class="yps-field-meta"><span>' . esc_html( $recommendation ) . '</span><span><span data-yps-count-for="' . esc_attr( 'yps_' . $name ) . '">0</span></span></div>';
+            echo '<div class="yps-field-meta"><span>' . esc_html( $recommendation ) . '</span><span><span data-yps-count-for="' . esc_attr( 'yablseo_' . $name ) . '">0</span></span></div>';
         }
         echo '</div>';
     }
@@ -1958,7 +1966,7 @@ untimeException $error ) {
         echo '<div class="yps-editor-field is-wide" data-yps-field="focus_keyphrases">';
         echo '<label class="yps-label" for="yps-focus-keyphrases">' . esc_html__( 'Related keyphrases (up to 4)', 'yablonsky-seo' ) . '</label>';
         echo '<div class="yseo-ai-control-row is-textarea">';
-        echo '<textarea class="large-text" rows="3" id="yps-focus-keyphrases" name="yps_focus_keyphrases" placeholder="' . esc_attr__( 'One related keyphrase per line', 'yablonsky-seo' ) . '">' . esc_textarea( $value ) . '</textarea>';
+        echo '<textarea class="large-text" rows="3" id="yps-focus-keyphrases" name="yablseo_focus_keyphrases" placeholder="' . esc_attr__( 'One related keyphrase per line', 'yablonsky-seo' ) . '">' . esc_textarea( $value ) . '</textarea>';
         echo '<button type="button" class="button yseo-ai-mini-button yps-ai-field-button" data-yps-ai-field="focus_keyphrases" title="' . esc_attr__( 'Draft related keyphrases with Yablonsky AI', 'yablonsky-seo' ) . '" aria-label="' . esc_attr__( 'Draft related keyphrases with Yablonsky AI', 'yablonsky-seo' ) . '" ' . disabled( ! $aiConfigured, true, false ) . '>' . esc_html__( 'AI', 'yablonsky-seo' ) . '</button>';
         echo '</div>';
         echo '<small class="yps-field-help">' . esc_html__( 'The primary keyphrase remains the scoring anchor. Add up to four supporting phrases so YSEO can review topical coverage while keeping title wording editorially natural.', 'yablonsky-seo' ) . '</small>';
@@ -1966,8 +1974,8 @@ untimeException $error ) {
     }
 
     private function saveRelatedKeyphrases( int $postId ): void {
-        $raw = filter_input( INPUT_POST, 'yps_focus_keyphrases', FILTER_UNSAFE_RAW );
-        $raw = is_string( $raw ) ? wp_unslash( $raw ) : '';
+        $raw = filter_input( INPUT_POST, 'yablseo_focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = is_string( $raw ) ? $raw : '';
         $primary = (string) get_post_meta( $postId, '_yps_focus_keyphrase', true );
         $primaryKey = $this->normalizedKeyphraseKey( $primary );
         $parts = preg_split( '/[\r\n,;]+/u', $raw, -1, PREG_SPLIT_NO_EMPTY ) ?: array();
@@ -2043,9 +2051,9 @@ untimeException $error ) {
 
     /** @param array{meta:string,label:string,type:string} $field */
     private function saveObjectMetaValue( string $objectType, int $objectId, string $name, array $field ): void {
-        $inputName = 'yps_' . $name;
+        $inputName = 'yablseo_' . $name;
         if ( 'checkbox' === $field['type'] ) {
-            $value = null !== filter_input( INPUT_POST, $inputName, FILTER_UNSAFE_RAW ) ? '1' : '';
+            $value = null !== filter_input( INPUT_POST, $inputName, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ? '1' : '';
         } elseif ( 'textarea' === $field['type'] ) {
             $value = $this->postedTextarea( $inputName );
         } else {
@@ -2276,9 +2284,9 @@ untimeException $error ) {
     }
 
     private function postedVerification( string $key ): string {
-        $raw = filter_input( INPUT_POST, $key, FILTER_UNSAFE_RAW );
+        $raw = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
         if ( ! is_string( $raw ) ) { return ''; }
-        $raw = trim( wp_unslash( $raw ) );
+        $raw = trim( $raw );
         if ( '' === $raw ) { return ''; }
         if ( false !== stripos( $raw, '<meta' ) && preg_match( '/\bcontent\s*=\s*(["\'])(.*?)\1/is', $raw, $match ) ) {
             $raw = (string) $match[2];
@@ -2288,23 +2296,23 @@ untimeException $error ) {
     }
 
     private function postedRssTemplate( string $key ): string {
-        $raw = filter_input( INPUT_POST, $key, FILTER_UNSAFE_RAW );
+        $raw = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
         if ( ! is_string( $raw ) ) { return ''; }
-        return trim( wp_kses_post( wp_unslash( $raw ) ) );
+        return trim( wp_kses_post( $raw ) );
     }
 
     private function postedText( string $key ): string {
-        $value = filter_input( INPUT_POST, $key, FILTER_UNSAFE_RAW );
+        $value = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         return is_string( $value ) ? sanitize_text_field( $value ) : '';
     }
 
     private function postedTextarea( string $key ): string {
-        $value = filter_input( INPUT_POST, $key, FILTER_UNSAFE_RAW );
-        return is_string( $value ) ? sanitize_textarea_field( $value ) : '';
+        $value = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_textarea_field' ) );
+        return is_string( $value ) ? $value : '';
     }
 
     private function postedKey( string $key ): string {
-        $value = filter_input( INPUT_POST, $key, FILTER_UNSAFE_RAW );
+        $value = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         return is_string( $value ) ? sanitize_key( $value ) : '';
     }
 

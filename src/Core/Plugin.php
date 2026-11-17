@@ -90,16 +90,47 @@ final class Plugin {
         $loadablePartial = 'bundled-partial' === $state;
         if ( ! $loadablePartial && ( empty( $status['complete'] ) || ! ProductLocaleRegistry::hasBundledPack( $locale ) ) ) { return; }
 
-        $mofile = YPS_DIR . 'languages/yablonsky-seo-' . $pack . '.mo';
+        $mofile = YSEO_DIR . 'languages/yablonsky-seo-' . $pack . '.mo';
         if ( is_readable( $mofile ) ) { load_textdomain( 'yablonsky-seo', $mofile ); }
     }
 
+    /**
+     * Preserve all existing YSEO/Yoast-migrated state during the public
+     * identifier rollover. The old yps_* options are read once and copied
+     * losslessly to the distinctive yablseo_* keys. The originals are
+     * retained as rollback evidence; new writes go to the new namespace.
+     *
+     * This runs once on activation/update, before authority detection,
+     * sitemap initialization and migration jobs use the canonical values.
+     */
+    private static function migrateLegacyOptionNames(): void {
+        // Never repeat the bridge: a later intentional delete of a new-format
+        // job/lock must not revive a stale legacy job/lock on the next request.
+        if ( 'complete' === get_option( 'yablseo_legacy_option_bridge_v1', '' ) ) { return; }
+        $legacyKeys = array(
+            'installed_version', 'output_authority', 'public_settings', 'shadow_global_settings',
+            'migration_job', 'migration_step_lock', 'migration_global_provenance',
+            'backup_export_job', 'backup_anchor', 'backup_export_lock',
+            'sitemap_schema_version', 'sitemap_backfill_state', 'sitemap_backfill_lock',
+            'sitemap_dirty_buckets', 'sitemap_cache_generation', 'sitemap_shadow_paused',
+            'sitemap_last_generation_ms',
+        );
+        foreach ( $legacyKeys as $suffix ) {
+            $target = 'yablseo_' . $suffix;
+            if ( false !== get_option( $target, false ) ) { continue; }
+            $source = get_option( 'yps_' . $suffix, false );
+            if ( false !== $source ) { add_option( $target, $source, '', false ); }
+        }
+        update_option( 'yablseo_legacy_option_bridge_v1', 'complete', false );
+    }
+
     public static function activate(): void {
+        self::migrateLegacyOptionNames();
         $providers = ( new ProviderDetector() )->detectActiveProviders();
-        add_option( 'yps_output_authority', empty( $providers ) ? 'active' : 'shadow', '', false );
-        add_option( 'yps_installed_version', YPS_VERSION, '', false );
-        update_option( 'yps_installed_version', YPS_VERSION, false );
-        add_option( 'yps_public_settings', array(), '', false );
+        add_option( 'yablseo_output_authority', empty( $providers ) ? 'active' : 'shadow', '', false );
+        add_option( 'yablseo_installed_version', YSEO_VERSION, '', false );
+        update_option( 'yablseo_installed_version', YSEO_VERSION, false );
+        add_option( 'yablseo_public_settings', array(), '', false );
         ( new SitemapRepository() )->ensureSchema();
         ( new RedirectRepository() )->ensureSchema();
         ( new NotFoundRepository() )->ensureSchema();
@@ -112,7 +143,8 @@ final class Plugin {
     }
 
     public static function deactivate(): void {
-        wp_clear_scheduled_hook( 'yps_sitemap_backfill' );
+        wp_clear_scheduled_hook( 'yablseo_sitemap_backfill' );
+        wp_clear_scheduled_hook( 'yps_sitemap_backfill' ); // Legacy one-off event.
         IndexNowController::clearSchedule();
         wp_clear_scheduled_hook( 'yseo_internal_link_backfill' );
         ResourceLanguageIndex::clearSchedule();
@@ -126,24 +158,25 @@ final class Plugin {
     }
 
     public static function initialize(): void {
+        self::migrateLegacyOptionNames();
         $detector = new ProviderDetector();
         $providers = $detector->detectActiveProviders();
 
-        if ( false === get_option( 'yps_output_authority', false ) ) {
-            add_option( 'yps_output_authority', empty( $providers ) ? 'active' : 'shadow', '', false );
+        if ( false === get_option( 'yablseo_output_authority', false ) ) {
+            add_option( 'yablseo_output_authority', empty( $providers ) ? 'active' : 'shadow', '', false );
         }
-        if ( false === get_option( 'yps_public_settings', false ) ) {
-            add_option( 'yps_public_settings', array(), '', false );
+        if ( false === get_option( 'yablseo_public_settings', false ) ) {
+            add_option( 'yablseo_public_settings', array(), '', false );
         }
-        $installedVersion = (string) get_option( 'yps_installed_version', '' );
-        if ( $installedVersion !== YPS_VERSION ) {
+        $installedVersion = (string) get_option( 'yablseo_installed_version', '' );
+        if ( $installedVersion !== YSEO_VERSION ) {
             if ( '' !== $installedVersion ) {
                 $history = get_option( 'yseo_upgrade_history', array() );
                 $history = is_array( $history ) ? $history : array();
-                $history[] = array( 'from' => sanitize_text_field( $installedVersion ), 'to' => YPS_VERSION, 'at' => gmdate( 'c' ) );
+                $history[] = array( 'from' => sanitize_text_field( $installedVersion ), 'to' => YSEO_VERSION, 'at' => gmdate( 'c' ) );
                 update_option( 'yseo_upgrade_history', array_slice( $history, -10 ), false );
             }
-            update_option( 'yps_installed_version', YPS_VERSION, false );
+            update_option( 'yablseo_installed_version', YSEO_VERSION, false );
         }
 
         $sitemapRepository = new SitemapRepository();
@@ -203,7 +236,8 @@ final class Plugin {
             ( new IndexNowController() )->register();
         } else {
             $sitemapRepository->pauseForShadow();
-            if ( wp_next_scheduled( 'yps_sitemap_backfill' ) ) { wp_clear_scheduled_hook( 'yps_sitemap_backfill' ); }
+            if ( wp_next_scheduled( 'yablseo_sitemap_backfill' ) ) { wp_clear_scheduled_hook( 'yablseo_sitemap_backfill' ); }
+        if ( wp_next_scheduled( 'yps_sitemap_backfill' ) ) { wp_clear_scheduled_hook( 'yps_sitemap_backfill' ); }
         }
 
         if ( $canEmitPublicSeo ) {
@@ -246,7 +280,7 @@ final class Plugin {
         ( new SchemaAggregatorController() )->register();
         ( new HeadlessSeoController() )->register();
         try {
-            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YPS_DIR . 'data/ai-crawlers.json' );
+            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YSEO_DIR . 'data/ai-crawlers.json' );
             ( new RobotsPolicyController( $crawlerRegistry ) )->register();
         } catch ( \RuntimeException $error ) {
             // Fail closed: SEO output remains valid even if the optional local crawler registry is unreadable.
