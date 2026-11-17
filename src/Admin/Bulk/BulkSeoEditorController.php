@@ -300,7 +300,7 @@ final class BulkSeoEditorController {
         // each expected leaf rather than passing a nested array through
         // FILTER_CALLBACK (which does not guarantee recursive validation).
         $postedRows = isset( $_POST['rows'] ) && is_array( $_POST['rows'] )
-            ? wp_unslash( $_POST['rows'] ) : array();
+            ? map_deep( array_slice( wp_unslash( $_POST['rows'] ), 0, min( self::MAX_ROWS, $perPage ), true ), 'sanitize_text_field' ) : array();
         $rows = array();
         foreach ( array_slice( $postedRows, 0, min( self::MAX_ROWS, $perPage ), true ) as $id => $row ) {
             if ( ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_array( $row ) ) { continue; }
@@ -316,7 +316,7 @@ final class BulkSeoEditorController {
         if ( 'selected' === $saveScope ) {
             // Only bounded positive IDs are accepted from selected rows.
             $rawSelected = isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] )
-                ? wp_unslash( $_POST['selected_rows'] ) : array();
+                ? map_deep( array_slice( wp_unslash( $_POST['selected_rows'] ), 0, self::MAX_ROWS ), 'sanitize_text_field' ) : array();
             $selected = array();
             foreach ( array_slice( $rawSelected, 0, self::MAX_ROWS ) as $selectedId ) {
                 if ( ! is_scalar( $selectedId ) || ! ctype_digit( (string) $selectedId ) ) { continue; }
@@ -363,7 +363,7 @@ final class BulkSeoEditorController {
 
     /** @param mixed $raw */
     private function saveField( int $postId, string $metaKey, $raw, int $max ): void {
-        // The nested request was unslashed and sanitized by filter_input().
+        // The nested request was unslashed, bounded and sanitized before saving.
         $value = is_scalar( $raw ) ? sanitize_text_field( (string) $raw ) : '';
         $value = function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $max, 'UTF-8' ) : substr( $value, 0, $max );
         if ( '' === $value ) { delete_post_meta( $postId, $metaKey ); } else { update_post_meta( $postId, $metaKey, $value ); }

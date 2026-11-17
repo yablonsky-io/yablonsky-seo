@@ -229,14 +229,8 @@ final class NotFoundRepository {
         $sort = in_array( $sort, array( 'hits', 'recent', 'oldest', 'first_seen' ), true ) ? $sort : 'hits';
         $signal = in_array( $signal, array( 'seo', 'access', 'technical', 'probe', 'all' ), true ) ? $signal : 'seo';
 
-        // Fixed SQL shape: every request-dependent value is bound by
-        // wpdb::prepare(). Neither WHERE nor ORDER BY interpolates input.
-        $where = ' WHERE (%d=1 OR signal_kind=%s)'
-            . ' AND (%d=1 OR path LIKE %s)'
-            . ' AND (%d=1 OR language_key=%s)'
-            . ' AND (%d=1 OR last_seen_gmt>=%s)'
-            . ' AND (%d=1 OR last_seen_gmt<%s)'
-            . ' AND (%d=1 OR hits>=%d)';
+        // Identical bound filters for count and items. Query templates are literal
+        // strings so both reviewers and static checks can verify every SQL clause.
         $dateEnd = '' !== $dateTo ? gmdate( 'Y-m-d H:i:s', strtotime( $dateTo . ' +1 day' ) ) : '';
         $whereArgs = array(
             0 !== strcmp( $signal, 'all' ) ? 0 : 1, $signal,
@@ -246,27 +240,75 @@ final class NotFoundRepository {
             '' === $dateTo ? 1 : 0, $dateEnd,
             0 === $minHits ? 1 : 0, $minHits,
         );
-        $countArgs = array_merge( array( $this->table ), $whereArgs );
-        // The SQL fragment is assembled exclusively from the fixed literals
-        // above; all table names and input values use prepared placeholders.
-        $countSql = 'SELECT COUNT(*) FROM %i' . $where;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded count in a plugin-owned table.
-        $total = (int) $wpdb->get_var( $wpdb->prepare( $countSql, $countArgs ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Indexed count is a bounded report over plugin-owned data.
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            'SELECT COUNT(*) FROM %i
+             WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)',
+            array_merge( array( $this->table ), $whereArgs )
+        ) );
         $pages = max( 1, (int) ceil( $total / $perPage ) );
         $page = min( $page, $pages );
         $offset = ( $page - 1 ) * $perPage;
-        $sql = 'SELECT * FROM %i' . $where;
-        // Sort order is chosen exclusively from hard-coded SQL literals.
-        switch ( $sort ) {
-            case 'recent': $sql .= ' ORDER BY last_seen_gmt DESC,hits DESC,id DESC'; break;
-            case 'oldest': $sql .= ' ORDER BY last_seen_gmt ASC,id ASC'; break;
-            case 'first_seen': $sql .= ' ORDER BY first_seen_gmt DESC,id DESC'; break;
-            default: $sql .= ' ORDER BY hits DESC,last_seen_gmt DESC,id DESC'; break;
-        }
-        $sql .= ' LIMIT %d OFFSET %d';
         $args = array_merge( array( $this->table ), $whereArgs, array( $perPage, $offset ) );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded admin report.
-        $items = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
+        // Only the hardcoded ORDER BY changes. Index-assisted sorting is preserved.
+        if ( 'recent' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY last_seen_gmt DESC,hits DESC,id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } elseif ( 'oldest' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY last_seen_gmt ASC,id ASC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } elseif ( 'first_seen' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY first_seen_gmt DESC,id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT * FROM %i
+                 WHERE (%d=1 OR signal_kind=%s)
+                  AND (%d=1 OR path LIKE %s)
+                  AND (%d=1 OR language_key=%s)
+                  AND (%d=1 OR last_seen_gmt>=%s)
+                  AND (%d=1 OR last_seen_gmt<%s)
+                  AND (%d=1 OR hits>=%d)
+                 ORDER BY hits DESC,last_seen_gmt DESC,id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        }
         return array( 'items' => $items, 'total' => $total, 'page' => $page, 'pages' => $pages, 'per_page' => $perPage );
     }
 

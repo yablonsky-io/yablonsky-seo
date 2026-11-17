@@ -29,7 +29,11 @@ final class SitemapRepository {
         // fall back to the existing table until an administrator can inspect it.
         if ( false === get_option( 'yablseo_sitemap_table_bridge_v1', false ) ) {
             $legacy = $wpdb->prefix . 'yps_sitemap_membership';
+            // These table-existence checks are a one-time schema bridge, not a
+            // cacheable public request. Their result controls an atomic rename.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time legacy-table presence check.
             $oldTable = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $legacy ) ) );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time destination-table presence check.
             $newTable = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $this->table ) ) );
             if ( $oldTable === $legacy && $newTable !== $this->table ) {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time atomic migration of existing plugin-owned data.

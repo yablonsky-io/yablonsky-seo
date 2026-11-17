@@ -175,16 +175,21 @@ final class LocalSeoController {
         foreach ( $this->fieldDefinitions() as $key => $field ) {
             $inputKey = 'yseo_local_' . $key;
             if ( ! isset( $_POST[ $inputKey ] ) || ! is_string( $_POST[ $inputKey ] ) ) { continue; }
-            $value = wp_unslash( $_POST[ $inputKey ] );
-            if ( strlen( $value ) > 1048576 ) { continue; }
-            if ( 'url' === (string) $field['type'] ) { $value = esc_url_raw( $value, array( 'http', 'https' ) ); }
-            elseif ( in_array( $key, array( 'latitude', 'longitude' ), true ) ) { $value = $this->coordinate( $value, 'latitude' === $key ); }
-            elseif ( 'select' === (string) $field['type'] ) {
-                $value = sanitize_text_field( $value );
-                if ( ! array_key_exists( $value, (array) $field['options'] ) ) { continue; }
+            // Sanitize at the input boundary with the proper field-specific
+            // function. Do not strip URL percent-encodings or textarea newlines.
+            if ( 'url' === (string) $field['type'] ) {
+                $value = esc_url_raw( wp_unslash( $_POST[ $inputKey ] ), array( 'http', 'https' ) );
+            } elseif ( 'textarea' === (string) $field['type'] ) {
+                $value = sanitize_textarea_field( wp_unslash( $_POST[ $inputKey ] ) );
+            } else {
+                $value = sanitize_text_field( wp_unslash( $_POST[ $inputKey ] ) );
             }
-            elseif ( 'textarea' === (string) $field['type'] ) { $value = sanitize_textarea_field( $value ); }
-            else { $value = sanitize_text_field( $value ); }
+            if ( strlen( $value ) > 1048576 ) { continue; }
+            if ( in_array( $key, array( 'latitude', 'longitude' ), true ) ) {
+                $value = $this->coordinate( $value, 'latitude' === $key );
+            } elseif ( 'select' === (string) $field['type'] && ! array_key_exists( $value, (array) $field['options'] ) ) {
+                continue;
+            }
             // _yps_local_* is existing stored WordPress metadata: preserve it for
             // compatibility with verified Yoast-to-YSEO migrations.
             if ( '' === $value ) { delete_post_meta( $postId, '_yps_local_' . $key ); }

@@ -31,9 +31,10 @@ final class NotFoundAdminController {
     public function clearNonSeo(): void { $this->guard( 'yseo_404_clear_nonseo' ); $report = $this->repository->purgeNonSeoBacklog(); $this->back( 'nonseo-cleared-' . (string) (int) $report['rows_removed'] ); }
 
     public function bulkAction(): void {
-        $this->guard( 'yseo_404_bulk' );
+        if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing the 404 monitor requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
+        check_admin_referer( 'yseo_404_bulk' );
         $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $rawIds = isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ? wp_unslash( $_POST['yseo_ids'] ) : array();
+        $rawIds = isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ? map_deep( wp_unslash( $_POST['yseo_ids'] ), 'sanitize_text_field' ) : array();
         $unique = array();
         foreach ( array_slice( $rawIds, 0, 100 ) as $rawId ) {
             if ( ! is_scalar( $rawId ) || ! ctype_digit( (string) $rawId ) ) { continue; }

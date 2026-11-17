@@ -45,8 +45,8 @@ final class SitemapsAdminController {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing sitemaps requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::SAVE_ACTION );
         $before = $this->settings->all();
-        $rawPosted = isset( $_POST['yseo_sitemap'] ) && is_array( $_POST['yseo_sitemap'] ) ? wp_unslash( $_POST['yseo_sitemap'] ) : array();
-        $posted = is_array( $rawPosted ) ? map_deep( $rawPosted, 'sanitize_text_field' ) : array();
+        $posted = isset( $_POST['yseo_sitemap'] ) && is_array( $_POST['yseo_sitemap'] )
+            ? map_deep( wp_unslash( $_POST['yseo_sitemap'] ), 'sanitize_text_field' ) : array();
         $this->settings->saveSitemapSection( $posted );
         $after = $this->settings->all();
         $beforeSitemap = isset( $before['sitemap'] ) && is_array( $before['sitemap'] ) ? $before['sitemap'] : array();

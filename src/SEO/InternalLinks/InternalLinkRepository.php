@@ -265,19 +265,10 @@ final class InternalLinkRepository {
         $dateTo = $this->normalizeDate( $dateTo );
         $sort = in_array( $sort, array( 'modified_desc', 'modified_asc', 'title_asc', 'title_desc' ), true ) ? $sort : ( 'cornerstone' === $view ? 'modified_asc' : 'modified_desc' );
         if ( '' !== $postType && ! in_array( $postType, $this->publicPostTypes(), true ) ) { $postType = ''; }
-        // Same fixed prepared SQL shape for count and page queries.
-        // Existing orphan/cornerstone behavior and all user filters are
-        // represented by bound condition switches, not interpolated SQL.
+        // Fixed filters; all user-controlled values pass through placeholders.
+        // Static ORDER BY variants retain the original indexed sort behavior.
         $cutoff = gmdate( 'Y-m-d H:i:s', time() - 180 * DAY_IN_SECONDS );
         $dateEnd = '' !== $dateTo ? gmdate( 'Y-m-d H:i:s', strtotime( $dateTo . ' +1 day' ) ) : '';
-        $where = " WHERE p.post_status='publish'"
-            . ' AND (%d=1 OR NOT EXISTS (SELECT 1 FROM %i e WHERE e.target_id=s.source_id AND e.source_id<>s.source_id))'
-            . ' AND (%d=1 OR (s.is_cornerstone=1 AND s.modified_gmt IS NOT NULL AND s.modified_gmt<=%s))'
-            . ' AND (%d=1 OR s.post_type=%s)'
-            . ' AND (%d=1 OR s.language_key=%s)'
-            . ' AND (%d=1 OR p.post_modified_gmt>=%s)'
-            . ' AND (%d=1 OR p.post_modified_gmt<%s)'
-            . ' AND (%d=1 OR p.post_title LIKE %s)';
         $filterArgs = array(
             'orphaned' === $view ? 0 : 1, $this->edgesTable,
             'cornerstone' === $view ? 0 : 1, $cutoff,
@@ -287,25 +278,88 @@ final class InternalLinkRepository {
             '' === $dateTo ? 1 : 0, $dateEnd,
             '' === $search ? 1 : 0, '%' . $wpdb->esc_like( $search ) . '%',
         );
-        $countSql = 'SELECT COUNT(*) FROM %i s INNER JOIN %i p ON p.ID=s.source_id' . $where;
-        $countArgs = array_merge( array( $this->sourcesTable, $wpdb->posts ), $filterArgs );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded admin count from plugin-owned indexed tables.
-        $total = (int) $wpdb->get_var( $wpdb->prepare( $countSql, $countArgs ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin count.
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            'SELECT COUNT(*) FROM %i s INNER JOIN %i p ON p.ID=s.source_id
+             WHERE p.post_status=%s
+                  AND (%d=1 OR NOT EXISTS (SELECT 1 FROM %i e WHERE e.target_id=s.source_id AND e.source_id<>s.source_id))
+                  AND (%d=1 OR (s.is_cornerstone=1 AND s.modified_gmt IS NOT NULL AND s.modified_gmt<=%s))
+                  AND (%d=1 OR s.post_type=%s)
+                  AND (%d=1 OR s.language_key=%s)
+                  AND (%d=1 OR p.post_modified_gmt>=%s)
+                  AND (%d=1 OR p.post_modified_gmt<%s)
+                  AND (%d=1 OR p.post_title LIKE %s)',
+            array_merge( array( $this->sourcesTable, $wpdb->posts, 'publish' ), $filterArgs )
+        ) );
         $pages = max( 1, (int) ceil( $total / $perPage ) );
         $page = min( $page, $pages );
         $offset = ( $page - 1 ) * $perPage;
-        $sql = 'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone'
-            . ' FROM %i s INNER JOIN %i p ON p.ID=s.source_id' . $where;
-        switch ( $sort ) {
-            case 'modified_asc': $sql .= ' ORDER BY s.modified_gmt ASC,s.source_id ASC'; break;
-            case 'title_asc': $sql .= ' ORDER BY p.post_title ASC,s.source_id ASC'; break;
-            case 'title_desc': $sql .= ' ORDER BY p.post_title DESC,s.source_id DESC'; break;
-            default: $sql .= ' ORDER BY s.modified_gmt DESC,s.source_id DESC'; break;
+        $args = array_merge( array( $this->sourcesTable, $wpdb->posts, 'publish' ), $filterArgs, array( $perPage, $offset ) );
+        if ( 'modified_asc' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
+                 FROM %i s INNER JOIN %i p ON p.ID=s.source_id
+                 WHERE p.post_status=%s
+                  AND (%d=1 OR NOT EXISTS (SELECT 1 FROM %i e WHERE e.target_id=s.source_id AND e.source_id<>s.source_id))
+                  AND (%d=1 OR (s.is_cornerstone=1 AND s.modified_gmt IS NOT NULL AND s.modified_gmt<=%s))
+                  AND (%d=1 OR s.post_type=%s)
+                  AND (%d=1 OR s.language_key=%s)
+                  AND (%d=1 OR p.post_modified_gmt>=%s)
+                  AND (%d=1 OR p.post_modified_gmt<%s)
+                  AND (%d=1 OR p.post_title LIKE %s)
+                 ORDER BY s.modified_gmt ASC,s.source_id ASC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } elseif ( 'title_asc' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
+                 FROM %i s INNER JOIN %i p ON p.ID=s.source_id
+                 WHERE p.post_status=%s
+                  AND (%d=1 OR NOT EXISTS (SELECT 1 FROM %i e WHERE e.target_id=s.source_id AND e.source_id<>s.source_id))
+                  AND (%d=1 OR (s.is_cornerstone=1 AND s.modified_gmt IS NOT NULL AND s.modified_gmt<=%s))
+                  AND (%d=1 OR s.post_type=%s)
+                  AND (%d=1 OR s.language_key=%s)
+                  AND (%d=1 OR p.post_modified_gmt>=%s)
+                  AND (%d=1 OR p.post_modified_gmt<%s)
+                  AND (%d=1 OR p.post_title LIKE %s)
+                 ORDER BY p.post_title ASC,s.source_id ASC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } elseif ( 'title_desc' === $sort ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
+                 FROM %i s INNER JOIN %i p ON p.ID=s.source_id
+                 WHERE p.post_status=%s
+                  AND (%d=1 OR NOT EXISTS (SELECT 1 FROM %i e WHERE e.target_id=s.source_id AND e.source_id<>s.source_id))
+                  AND (%d=1 OR (s.is_cornerstone=1 AND s.modified_gmt IS NOT NULL AND s.modified_gmt<=%s))
+                  AND (%d=1 OR s.post_type=%s)
+                  AND (%d=1 OR s.language_key=%s)
+                  AND (%d=1 OR p.post_modified_gmt>=%s)
+                  AND (%d=1 OR p.post_modified_gmt<%s)
+                  AND (%d=1 OR p.post_title LIKE %s)
+                 ORDER BY p.post_title DESC,s.source_id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            $items = (array) $wpdb->get_results( $wpdb->prepare(
+                'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
+                 FROM %i s INNER JOIN %i p ON p.ID=s.source_id
+                 WHERE p.post_status=%s
+                  AND (%d=1 OR NOT EXISTS (SELECT 1 FROM %i e WHERE e.target_id=s.source_id AND e.source_id<>s.source_id))
+                  AND (%d=1 OR (s.is_cornerstone=1 AND s.modified_gmt IS NOT NULL AND s.modified_gmt<=%s))
+                  AND (%d=1 OR s.post_type=%s)
+                  AND (%d=1 OR s.language_key=%s)
+                  AND (%d=1 OR p.post_modified_gmt>=%s)
+                  AND (%d=1 OR p.post_modified_gmt<%s)
+                  AND (%d=1 OR p.post_title LIKE %s)
+                 ORDER BY s.modified_gmt DESC,s.source_id DESC LIMIT %d OFFSET %d',
+                $args
+            ), ARRAY_A );
         }
-        $sql .= ' LIMIT %d OFFSET %d';
-        $args = array_merge( array( $this->sourcesTable, $wpdb->posts ), $filterArgs, array( $perPage, $offset ) );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded admin report from plugin-owned tables.
-        $items = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
         return array( 'items' => $items, 'total' => $total, 'page' => $page, 'pages' => $pages, 'per_page' => $perPage );
     }
 

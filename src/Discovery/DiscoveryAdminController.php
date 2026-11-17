@@ -63,8 +63,8 @@ final class DiscoveryAdminController {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing commerce feeds requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::SAVE_ACTION );
         $before = $this->settings->all();
-        $rawPosted = isset( $_POST['yseo_commerce'] ) && is_array( $_POST['yseo_commerce'] ) ? wp_unslash( $_POST['yseo_commerce'] ) : array();
-        $posted = is_array( $rawPosted ) ? map_deep( $rawPosted, 'sanitize_text_field' ) : array();
+        $posted = isset( $_POST['yseo_commerce'] ) && is_array( $_POST['yseo_commerce'] )
+            ? map_deep( wp_unslash( $_POST['yseo_commerce'] ), 'sanitize_text_field' ) : array();
         $this->settings->saveCommerceSection( $posted );
         $after = $this->settings->all();
         $beforeCommerce = isset( $before['feeds']['commerce'] ) && is_array( $before['feeds']['commerce'] ) ? $before['feeds']['commerce'] : array();

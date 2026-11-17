@@ -3,7 +3,7 @@
  * Plugin Name: Yablonsky SEO — GEO & AEO
  * Plugin URI: https://yablonsky.io/seo/
  * Description: SEO, GEO & AEO for search and AI discovery. Prepare your site for Google Search, AI Overviews, AI Mode and answer engines.
- * Version: 5.86.7
+ * Version: 5.86.8
  * Requires at least: 6.8
  * Requires PHP: 7.4
  * Author: Yablonsky.io
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'YSEO_VERSION', '5.86.7' );
+define( 'YSEO_VERSION', '5.86.8' );
 define( 'YSEO_FILE', __FILE__ );
 define( 'YSEO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'YSEO_URL', plugin_dir_url( __FILE__ ) );
