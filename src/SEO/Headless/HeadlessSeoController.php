@@ -133,7 +133,7 @@ final class HeadlessSeoController {
     }
 
     public function getMachinePolicy( \WP_REST_Request $request ): \WP_REST_Response {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $payload = array(
             'schema' => 'yablonsky.seo.machine-use-policy.v1',
@@ -151,7 +151,7 @@ final class HeadlessSeoController {
     }
 
     public function getHealth(): \WP_REST_Response {
-        $authority = sanitize_key( (string) get_option( 'yps_output_authority', 'active' ) );
+        $authority = sanitize_key( (string) get_option( 'yablseo_output_authority', 'active' ) );
         $payload = array(
             'status' => 'ok',
             'api_version' => 1,

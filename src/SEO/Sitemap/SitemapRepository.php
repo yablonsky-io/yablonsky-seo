@@ -7,13 +7,13 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class SitemapRepository {
     private const SCHEMA_VERSION = '1';
-    private const OPTION_SCHEMA = 'yps_sitemap_schema_version';
-    private const OPTION_BACKFILL = 'yps_sitemap_backfill_state';
-    private const OPTION_BACKFILL_LOCK = 'yps_sitemap_backfill_lock';
-    private const OPTION_DIRTY = 'yps_sitemap_dirty_buckets';
-    private const OPTION_CACHE_GENERATION = 'yps_sitemap_cache_generation';
-    private const OPTION_SHADOW_PAUSED = 'yps_sitemap_shadow_paused';
-    private const TRANSIENT_MANIFEST = 'yps_sitemap_manifest_v1';
+    private const OPTION_SCHEMA = 'yablseo_sitemap_schema_version';
+    private const OPTION_BACKFILL = 'yablseo_sitemap_backfill_state';
+    private const OPTION_BACKFILL_LOCK = 'yablseo_sitemap_backfill_lock';
+    private const OPTION_DIRTY = 'yablseo_sitemap_dirty_buckets';
+    private const OPTION_CACHE_GENERATION = 'yablseo_sitemap_cache_generation';
+    private const OPTION_SHADOW_PAUSED = 'yablseo_sitemap_shadow_paused';
+    private const TRANSIENT_MANIFEST = 'yablseo_sitemap_manifest_v1';
     private const CACHE_GROUP = 'yablonsky-seo-sitemaps';
     private const BUCKET_SIZE = 1000;
     private const BUCKET_URL_BYTES = 8388608;
@@ -23,7 +23,27 @@ final class SitemapRepository {
 
     public function __construct() {
         global $wpdb;
-        $this->table = $wpdb->prefix . 'yps_sitemap_membership';
+        $this->table = $wpdb->prefix . 'yablseo_sitemap_membership';
+        // Atomically preserve the materialized sitemap ledger from the legacy
+        // three-letter table name. Failure does not delete a single row:
+        // fall back to the existing table until an administrator can inspect it.
+        if ( false === get_option( 'yablseo_sitemap_table_bridge_v1', false ) ) {
+            $legacy = $wpdb->prefix . 'yps_sitemap_membership';
+            $oldTable = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $legacy ) ) );
+            $newTable = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $this->table ) ) );
+            if ( $oldTable === $legacy && $newTable !== $this->table ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time atomic migration of existing plugin-owned data.
+                $result = $wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i', $legacy, $this->table ) );
+                if ( false === $result ) {
+                    $this->table = $legacy;
+                    update_option( 'yablseo_sitemap_table_bridge_v1', 'legacy-fallback', false );
+                    return;
+                }
+            }
+            update_option( 'yablseo_sitemap_table_bridge_v1', 'canonical', false );
+        } elseif ( 'legacy-fallback' === get_option( 'yablseo_sitemap_table_bridge_v1' ) ) {
+            $this->table = $wpdb->prefix . 'yps_sitemap_membership';
+        }
     }
 
     public function table(): string { return $this->table; }
@@ -260,7 +280,7 @@ final class SitemapRepository {
     }
 
     public function childCacheKey( string $type, string $subtype, int $bucket ): string {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $featureSignature = implode(
             '',
@@ -271,7 +291,7 @@ final class SitemapRepository {
             )
         );
         $discoverySignature = ( new DiscoverySettings() )->sitemapPayloadSignature();
-        return 'v' . sanitize_key( str_replace( '.', '-', YPS_VERSION ) ) . ':g' . $this->cacheGeneration() . ':a' . $featureSignature . ':d' . $discoverySignature . ':child:' . sanitize_key( $type ) . ':' . sanitize_key( $subtype ) . ':' . max( 1, $bucket );
+        return 'v' . sanitize_key( str_replace( '.', '-', YSEO_VERSION ) ) . ':g' . $this->cacheGeneration() . ':a' . $featureSignature . ':d' . $discoverySignature . ':child:' . sanitize_key( $type ) . ':' . sanitize_key( $subtype ) . ':' . max( 1, $bucket );
     }
 
     public function cacheGeneration(): int {

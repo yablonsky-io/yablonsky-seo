@@ -6,8 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class MigrationRepository {
-    private const OPTION = 'yps_migration_job';
-    private const LOCK_OPTION = 'yps_migration_step_lock';
+    private const OPTION = 'yablseo_migration_job';
+    private const LOCK_OPTION = 'yablseo_migration_step_lock';
 
     public function load(): ?MigrationState {
         $value = get_option( self::OPTION, null );

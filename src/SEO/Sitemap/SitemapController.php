@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class SitemapController {
     private const CACHE_GROUP = 'yablonsky-seo-sitemaps';
-    private const TIMING_SAMPLE_TRANSIENT = 'yps_sitemap_timing_sample_lock';
+    private const TIMING_SAMPLE_TRANSIENT = 'yablseo_sitemap_timing_sample_lock';
     /** @var SitemapRepository */ private $repository;
     /** @var float */ private $startedAt = 0.0;
     /** @var bool */ private $missingSitemap = false;
@@ -178,7 +178,9 @@ final class SitemapController {
             header( 'X-YSEO-Sitemap-Route-Class: ' . sanitize_key( $routeClass ), true );
             header( 'X-YSEO-Sitemap-Stray-Bytes: ' . max( 0, $strayBytes ), true );
         }
-        echo $xml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML values are escaped during deterministic construction and callback output is discarded before this boundary.
+        $safeXml = SitemapXml::verifiedDocument( $xml );
+        if ( '' === $safeXml ) { status_header( 500 ); return; }
+        echo $safeXml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Verified XML document (non-HTML context) with individually XML-escaped nodes.
         $this->recordTiming();
     }
 
@@ -249,6 +251,6 @@ final class SitemapController {
         if ( $this->startedAt <= 0 || false !== get_transient( self::TIMING_SAMPLE_TRANSIENT ) ) { return; }
         // Sampling avoids a wp_options write on every crawler request while retaining useful operational timing.
         set_transient( self::TIMING_SAMPLE_TRANSIENT, 1, 5 * MINUTE_IN_SECONDS );
-        update_option( 'yps_sitemap_last_generation_ms', (int) round( ( microtime( true ) - $this->startedAt ) * 1000 ), false );
+        update_option( 'yablseo_sitemap_last_generation_ms', (int) round( ( microtime( true ) - $this->startedAt ) * 1000 ), false );
     }
 }

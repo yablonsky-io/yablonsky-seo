@@ -18,7 +18,7 @@ final class OutputAuthorityGate {
             return 'shadow';
         }
 
-        $mode = (string) get_option( 'yps_output_authority', 'active' );
+        $mode = (string) get_option( 'yablseo_output_authority', 'active' );
         return 'active' === $mode ? 'active' : 'shadow';
     }
 

@@ -21,7 +21,7 @@ final class SupportSnapshotBuilder {
         $gate = new OutputAuthorityGate( $providers );
         $sitemap = ( new SitemapRepository() )->diagnostics();
         $redirects = ( new RedirectRepository() )->diagnostics();
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $providerRows = array();
         foreach ( $providers as $provider ) { $providerRows[] = array( 'id' => $provider->id(), 'name' => $provider->name(), 'version' => $provider->version() ); }
@@ -87,7 +87,7 @@ final class SupportSnapshotBuilder {
             'schema' => 'yablonsky.seo-support-snapshot/v2',
             'generated_at' => gmdate( 'c' ),
             'site_host' => sanitize_text_field( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) ),
-            'yseo_version' => YPS_VERSION,
+            'yseo_version' => YSEO_VERSION,
             'wordpress_version' => (string) get_bloginfo( 'version' ),
             'php_version' => PHP_VERSION,
             'multisite' => is_multisite(),

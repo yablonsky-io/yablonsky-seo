@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class YoastMigrationService {
     public const CONTRACT_REVISION = 'yoast-core-26.8-28.4-yseo-2.70.1-r3';
-    private const GLOBAL_TARGET_OPTION = 'yps_shadow_global_settings';
+    private const GLOBAL_TARGET_OPTION = 'yablseo_shadow_global_settings';
 
     /** @var MigrationRepository */ private $repository;
     /** @var PostIdBatchReader */ private $postReader;

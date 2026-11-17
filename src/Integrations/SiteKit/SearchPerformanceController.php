@@ -37,9 +37,9 @@ final class SearchPerformanceController {
 
     public function enqueueAssets( string $hook ): void {
         if ( false === strpos( $hook, self::PAGE ) ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
-        wp_enqueue_script( 'yseo-performance-charts', YPS_URL . 'assets/performance-charts.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_script( 'yseo-performance-charts', YSEO_URL . 'assets/performance-charts.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function render(): void {
@@ -392,8 +392,7 @@ final class SearchPerformanceController {
             }
             echo '<div class="yseo-performance-bar-row"><div class="yseo-performance-bar-label"><strong>';
             if ( '' !== $url ) { echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $label ) . '</a>'; } else { echo esc_html( $label ); }
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- languageMarkup is assembled from esc_attr()/esc_html() only.
-            echo $languageMarkup;
+            echo wp_kses( $languageMarkup, array( 'span' => array( 'class' => true, 'title' => true ) ) );
             /* translators: %d: organic landing entrance count. */
             echo '</strong><span>' . esc_html( sprintf( _n( '%d organic entrance', '%d organic entrances', $count, 'yablonsky-seo' ), $count ) ) . '</span></div><div class="yseo-performance-bar-track" aria-hidden="true"><i style="width:' . esc_attr( number_format( $width, 1, '.', '' ) ) . '%"></i></div></div>';
         }

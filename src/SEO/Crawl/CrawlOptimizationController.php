@@ -7,7 +7,7 @@ final class CrawlOptimizationController {
     /** @var array<string,mixed> */ private $settings = array();
 
     public function register(): void {
-        $raw = get_option( 'yps_public_settings', array() );
+        $raw = get_option( 'yablseo_public_settings', array() );
         $this->settings = is_array( $raw ) ? $raw : array();
 
         if ( $this->enabled( 'crawl_remove_shortlinks' ) ) {

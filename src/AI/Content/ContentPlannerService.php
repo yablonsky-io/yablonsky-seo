@@ -55,7 +55,7 @@ final class ContentPlannerService {
             );
             if ( count( $contentSample ) >= 20 ) { break; }
         }
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $payload = array(
             'contract' => 'yseo.content.plan.v1',

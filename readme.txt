@@ -4,7 +4,7 @@ Tags: seo, aeo, geo, schema, woocommerce
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.86.6
+Stable tag: 5.86.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -180,6 +180,10 @@ The platform-directory `setup_url` and `docs_url` entries (such as Prisjakt and 
 
 == Changelog ==
 
+= 5.86.7 =
+* WordPress.org manual-review corrections: nonce origin checks, typed input boundaries, output validation, prepared SQL filters and compatibility-preserving runtime identifier normalization.
+* Preserve previous Yoast migration data and validated rollback evidence while upgrading legacy option names.
+
 = 5.86.6 =
 * Correct WordPress Plugin Check input-validation warnings in bulk SEO, social templates, internal links, redirects and frontend inspector without losing nested field formats.
 * Respect WordPress query filters when resolving public author resources for headless SEO.
@@ -211,6 +215,9 @@ The platform-directory `setup_url` and `docs_url` entries (such as Prisjakt and 
 Further release history is recorded in the publicly available GitHub repository.
 
 == Upgrade Notice ==
+
+= 5.86.7 =
+Compliance and security corrections with lossless migration-state compatibility.
 
 = 5.86.6 =
 Plugin Check input-boundary and public-author query corrections; existing settings, metadata and migration state are preserved.

@@ -23,7 +23,7 @@ final class NotFoundAdminController {
         add_action( 'admin_post_yseo_404_export', array( $this, 'exportCsv' ) );
     }
     public function menu(): void { add_submenu_page( 'yablonsky-seo', __( '404 Monitor', 'yablonsky-seo' ), __( '404 Monitor', 'yablonsky-seo' ), 'manage_options', self::PAGE, array( $this, 'render' ) ); }
-    public function assets( string $hook ): void { if ( 'yablonsky-seo_page_' . self::PAGE !== $hook ) { return; } wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION ); wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) ); }
+    public function assets( string $hook ): void { if ( 'yablonsky-seo_page_' . self::PAGE !== $hook ) { return; } wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION ); wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) ); }
     public function delete(): void { $this->guard( 'yseo_404_delete' ); $id = (int) filter_input( INPUT_GET, 'id', FILTER_VALIDATE_INT ); $this->repository->delete( $id ); $this->back(); }
     public function clear(): void { $this->guard( 'yseo_404_clear' ); $this->repository->clear(); $this->back( 'cleared' ); }
     public function cleanupNoise(): void { $this->guard( 'yseo_404_cleanup_noise' ); $report = $this->repository->purgeLowValueNoise(); $this->back( 'noise-cleaned-' . (string) (int) $report['rows_removed'] ); }
@@ -33,9 +33,14 @@ final class NotFoundAdminController {
     public function bulkAction(): void {
         $this->guard( 'yseo_404_bulk' );
         $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $rawIds = filter_input( INPUT_POST, 'yseo_ids', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
-        $rawIds = is_array( $rawIds ) ? $rawIds : array();
-        $ids = array_values( array_slice( array_unique( array_filter( array_map( 'absint', $rawIds ) ) ), 0, 100 ) );
+        $rawIds = isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ? wp_unslash( $_POST['yseo_ids'] ) : array();
+        $unique = array();
+        foreach ( array_slice( $rawIds, 0, 100 ) as $rawId ) {
+            if ( ! is_scalar( $rawId ) || ! ctype_digit( (string) $rawId ) ) { continue; }
+            $id = absint( $rawId );
+            if ( $id > 0 ) { $unique[ $id ] = $id; }
+        }
+        $ids = array_values( $unique );
         if ( empty( $ids ) || ! in_array( $action, array( 'dismiss', 'gone', 'redirect' ), true ) ) { $this->back( 'bulk-none' ); }
         if ( 'dismiss' === $action ) {
             $count = $this->repository->deleteMany( $ids );

@@ -29,7 +29,7 @@ final class ProductLocalePackAudit {
                 }
             }
         }
-        $pot = YPS_DIR . 'languages/yablonsky-seo.pot';
+        $pot = YSEO_DIR . 'languages/yablonsky-seo.pot';
         $actualCatalogHash = is_readable( $pot ) ? (string) hash_file( 'sha256', $pot ) : '';
         $expectedCatalogHash = isset( $statusData['source_catalog_sha256'] ) ? strtolower( trim( (string) $statusData['source_catalog_sha256'] ) ) : '';
         $catalogVerified = '' !== $actualCatalogHash && '' !== $expectedCatalogHash && hash_equals( $expectedCatalogHash, strtolower( $actualCatalogHash ) );
@@ -48,8 +48,8 @@ final class ProductLocalePackAudit {
             $status = ProductLocaleRegistry::translationStatusForCode( $code );
             $declaredComplete = $source || ( is_array( $status ) && ! empty( $status['complete'] ) );
             $pack = is_array( $status ) && isset( $status['pack'] ) ? sanitize_file_name( (string) $status['pack'] ) : '';
-            $poReadable = $source || ( '' !== $pack && is_readable( YPS_DIR . 'languages/yablonsky-seo-' . $pack . '.po' ) );
-            $moReadable = $source || ( '' !== $pack && is_readable( YPS_DIR . 'languages/yablonsky-seo-' . $pack . '.mo' ) );
+            $poReadable = $source || ( '' !== $pack && is_readable( YSEO_DIR . 'languages/yablonsky-seo-' . $pack . '.po' ) );
+            $moReadable = $source || ( '' !== $pack && is_readable( YSEO_DIR . 'languages/yablonsky-seo-' . $pack . '.mo' ) );
             $ready = $source ? $catalogVerified : ( $catalogVerified && $declaredComplete && $poReadable && $moReadable );
             if ( $ready ) {
                 ++$readyTotal;
@@ -105,7 +105,7 @@ final class ProductLocalePackAudit {
 
     /** @return array<string,mixed> */
     private static function progressData(): array {
-        $path = YPS_DIR . 'data/product-translation-progress.json';
+        $path = YSEO_DIR . 'data/product-translation-progress.json';
         if ( ! is_readable( $path ) ) {
             return array( 'schema' => 'yablonsky.product-translation-progress.v1', 'locales' => array() );
         }

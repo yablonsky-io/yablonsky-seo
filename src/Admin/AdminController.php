@@ -51,7 +51,7 @@ final class AdminController {
     private const PAGE = 'yablonsky-seo';
     private const LEGACY_PAGE = 'yablonsky-performance-seo';
     private const LEGACY_PLUGIN = 'yablonsky-performance-seo/yablonsky-performance-seo.php';
-    private const NONCE_ACTION = 'yps_migration_action';
+    private const NONCE_ACTION = 'yablseo_migration_action';
 
     /** @var ProviderDetector */
     private $detector;
@@ -70,14 +70,14 @@ final class AdminController {
         add_action( 'wp_ajax_yseo_sitemap_transport_probe', array( $this, 'ajaxProbeSitemapTransport' ) );
         add_action( 'admin_post_yseo_sitemap_purge_transport', array( $this, 'purgeSitemapTransport' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueueAssets' ) );
-        add_action( 'wp_ajax_yps_migration_start', array( $this, 'ajaxStartMigration' ) );
-        add_action( 'wp_ajax_yps_migration_step', array( $this, 'ajaxStepMigration' ) );
-        add_action( 'wp_ajax_yps_migration_reset', array( $this, 'ajaxResetMigration' ) );
-        add_action( 'wp_ajax_yps_migration_inspect_conflicts', array( $this, 'ajaxInspectMigrationConflicts' ) );
-        add_action( 'wp_ajax_yps_backup_start', array( $this, 'ajaxStartBackup' ) );
-        add_action( 'wp_ajax_yps_backup_step', array( $this, 'ajaxStepBackup' ) );
-        add_action( 'wp_ajax_yps_backup_reset', array( $this, 'ajaxResetBackup' ) );
-        add_action( 'wp_ajax_yps_takeover', array( $this, 'ajaxTakeover' ) );
+        add_action( 'wp_ajax_yablseo_migration_start', array( $this, 'ajaxStartMigration' ) );
+        add_action( 'wp_ajax_yablseo_migration_step', array( $this, 'ajaxStepMigration' ) );
+        add_action( 'wp_ajax_yablseo_migration_reset', array( $this, 'ajaxResetMigration' ) );
+        add_action( 'wp_ajax_yablseo_migration_inspect_conflicts', array( $this, 'ajaxInspectMigrationConflicts' ) );
+        add_action( 'wp_ajax_yablseo_backup_start', array( $this, 'ajaxStartBackup' ) );
+        add_action( 'wp_ajax_yablseo_backup_step', array( $this, 'ajaxStepBackup' ) );
+        add_action( 'wp_ajax_yablseo_backup_reset', array( $this, 'ajaxResetBackup' ) );
+        add_action( 'wp_ajax_yablseo_takeover', array( $this, 'ajaxTakeover' ) );
         add_action( 'wp_ajax_yseo_metadata_mirror_start', array( $this, 'ajaxStartMetadataMirror' ) );
         add_action( 'wp_ajax_yseo_metadata_mirror_step', array( $this, 'ajaxStepMetadataMirror' ) );
         add_action( 'wp_ajax_yseo_metadata_mirror_reset', array( $this, 'ajaxResetMetadataMirror' ) );
@@ -89,7 +89,7 @@ final class AdminController {
         add_action( 'wp_ajax_yseo_ai_metadata_reset', array( $this, 'ajaxResetAiMetadata' ) );
         add_action( 'wp_ajax_yseo_ai_metadata_pause', array( $this, 'ajaxPauseAiMetadata' ) );
         add_action( 'wp_ajax_yseo_ai_content_plan', array( $this, 'ajaxAiContentPlan' ) );
-        add_filter( 'plugin_action_links_' . plugin_basename( YPS_FILE ), array( $this, 'pluginActionLinks' ) );
+        add_filter( 'plugin_action_links_' . plugin_basename( YSEO_FILE ), array( $this, 'pluginActionLinks' ) );
     }
 
     public function maybeRedirectLegacyPage(): void {
@@ -220,11 +220,11 @@ final class AdminController {
             return;
         }
 
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
         wp_localize_script(
-            'yps-admin',
-            'YPS_ADMIN',
+            'yablseo-admin',
+            'YABLSEO_ADMIN',
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( self::NONCE_ACTION ),
@@ -394,7 +394,7 @@ final class AdminController {
         $takeoverComplete = is_array( $rollbackCheckpoint ) && 'cutover' === (string) ( $rollbackCheckpoint['status'] ?? '' ) && empty( $providers );
         $adapterRegistry = new ProviderAdapterRegistry();
         $portableProfiles = $this->portableActiveProfiles( $providers );
-        $settings        = get_option( 'yps_public_settings', array() );
+        $settings        = get_option( 'yablseo_public_settings', array() );
         $settings        = is_array( $settings ) ? $settings : array();
         $aeoPolicy       = AeoPolicy::fromSettings( $settings );
         $aeoAudit        = ( new AeoReadinessAudit() )->report();
@@ -437,7 +437,7 @@ final class AdminController {
         $crawlerCount = 0;
         $crawlerRegistryVersion = '';
         try {
-            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YPS_DIR . 'data/ai-crawlers.json' );
+            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YSEO_DIR . 'data/ai-crawlers.json' );
             $crawlerCount = $crawlerRegistry->count();
             $crawlerRegistryVersion = $crawlerRegistry->version();
         } catch ( \Throwable $exception ) {
@@ -461,7 +461,7 @@ final class AdminController {
                 </div>
                 <div class="yps-product-actions">
                     <a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo-settings' ) ); ?>"><?php echo esc_html__( 'SEO Settings', 'yablonsky-seo' ); ?></a>
-                    <span class="yps-pill">v<?php echo esc_html( YPS_VERSION ); ?></span>
+                    <span class="yps-pill">v<?php echo esc_html( YSEO_VERSION ); ?></span>
                     <span class="yps-pill yps-pill-success"><?php echo esc_html__( 'Stable', 'yablonsky-seo' ); ?></span>
                     <span class="yps-pill yps-pill-free"><?php echo esc_html__( 'Local features · Free', 'yablonsky-seo' ); ?></span>
                 </div>
@@ -870,7 +870,7 @@ final class AdminController {
                         </article>
                         <article class="yps-card">
                             <span class="yps-card-kicker"><?php echo esc_html__( 'Last XML generation', 'yablonsky-seo' ); ?></span>
-                            <h2><?php echo esc_html( number_format_i18n( (int) get_option( 'yps_sitemap_last_generation_ms', 0 ) ) . ' ms' ); ?></h2>
+                            <h2><?php echo esc_html( number_format_i18n( (int) get_option( 'yablseo_sitemap_last_generation_ms', 0 ) ) . ' ms' ); ?></h2>
                             <p class="yps-muted"><?php echo esc_html__( 'Locally sampled at most once every five minutes to avoid a database write on every crawler request.', 'yablonsky-seo' ); ?></p>
                         </article>
                         <article class="yps-card">
@@ -1407,7 +1407,7 @@ final class AdminController {
 
     private function engineCount(): int {
         try {
-            return EngineRegistry::fromJsonFile( YPS_DIR . 'data/ai-engines.json' )->count();
+            return EngineRegistry::fromJsonFile( YSEO_DIR . 'data/ai-engines.json' )->count();
         } catch ( \Throwable $exception ) {
             unset( $exception );
             return 0;

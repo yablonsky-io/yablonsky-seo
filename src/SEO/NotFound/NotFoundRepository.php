@@ -229,32 +229,43 @@ final class NotFoundRepository {
         $sort = in_array( $sort, array( 'hits', 'recent', 'oldest', 'first_seen' ), true ) ? $sort : 'hits';
         $signal = in_array( $signal, array( 'seo', 'access', 'technical', 'probe', 'all' ), true ) ? $signal : 'seo';
 
-        $where = array( '1=1' );
-        $values = array();
-        if ( 'all' !== $signal ) { $where[] = 'signal_kind=%s'; $values[] = $signal; }
-        if ( '' !== $search ) { $where[] = 'path LIKE %s'; $values[] = '%' . $wpdb->esc_like( $search ) . '%'; }
-        if ( '' !== $language ) { $where[] = 'language_key=%s'; $values[] = $language; }
-        if ( '' !== $dateFrom ) { $where[] = 'last_seen_gmt>=%s'; $values[] = $dateFrom . ' 00:00:00'; }
-        if ( '' !== $dateTo ) { $where[] = 'last_seen_gmt<%s'; $values[] = gmdate( 'Y-m-d H:i:s', strtotime( $dateTo . ' +1 day' ) ); }
-        if ( $minHits > 0 ) { $where[] = 'hits>=%d'; $values[] = $minHits; }
-        $whereSql = implode( ' AND ', $where );
-        $orders = array(
-            'hits' => 'hits DESC,last_seen_gmt DESC,id DESC',
-            'recent' => 'last_seen_gmt DESC,hits DESC,id DESC',
-            'oldest' => 'last_seen_gmt ASC,id ASC',
-            'first_seen' => 'first_seen_gmt DESC,id DESC',
+        // Fixed SQL shape: every request-dependent value is bound by
+        // wpdb::prepare(). Neither WHERE nor ORDER BY interpolates input.
+        $where = ' WHERE (%d=1 OR signal_kind=%s)'
+            . ' AND (%d=1 OR path LIKE %s)'
+            . ' AND (%d=1 OR language_key=%s)'
+            . ' AND (%d=1 OR last_seen_gmt>=%s)'
+            . ' AND (%d=1 OR last_seen_gmt<%s)'
+            . ' AND (%d=1 OR hits>=%d)';
+        $dateEnd = '' !== $dateTo ? gmdate( 'Y-m-d H:i:s', strtotime( $dateTo . ' +1 day' ) ) : '';
+        $whereArgs = array(
+            0 !== strcmp( $signal, 'all' ) ? 0 : 1, $signal,
+            '' === $search ? 1 : 0, '%' . $wpdb->esc_like( $search ) . '%',
+            '' === $language ? 1 : 0, $language,
+            '' === $dateFrom ? 1 : 0, '' === $dateFrom ? '' : $dateFrom . ' 00:00:00',
+            '' === $dateTo ? 1 : 0, $dateEnd,
+            0 === $minHits ? 1 : 0, $minHits,
         );
-        $orderSql = $orders[ $sort ];
-        $countSql = "SELECT COUNT(*) FROM %i WHERE {$whereSql}";
-        $countArgs = array_merge( array( $this->table ), $values );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Clauses/order come from fixed allowlists; all user-controlled values and table identifier are prepared.
+        $countArgs = array_merge( array( $this->table ), $whereArgs );
+        // The SQL fragment is assembled exclusively from the fixed literals
+        // above; all table names and input values use prepared placeholders.
+        $countSql = 'SELECT COUNT(*) FROM %i' . $where;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded count in a plugin-owned table.
         $total = (int) $wpdb->get_var( $wpdb->prepare( $countSql, $countArgs ) );
         $pages = max( 1, (int) ceil( $total / $perPage ) );
         $page = min( $page, $pages );
         $offset = ( $page - 1 ) * $perPage;
-        $sql = "SELECT * FROM %i WHERE {$whereSql} ORDER BY {$orderSql} LIMIT %d OFFSET %d";
-        $args = array_merge( array( $this->table ), $values, array( $perPage, $offset ) );
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Clauses/order come from fixed allowlists; all user-controlled values and table identifier are prepared; result is bounded.
+        $sql = 'SELECT * FROM %i' . $where;
+        // Sort order is chosen exclusively from hard-coded SQL literals.
+        switch ( $sort ) {
+            case 'recent': $sql .= ' ORDER BY last_seen_gmt DESC,hits DESC,id DESC'; break;
+            case 'oldest': $sql .= ' ORDER BY last_seen_gmt ASC,id ASC'; break;
+            case 'first_seen': $sql .= ' ORDER BY first_seen_gmt DESC,id DESC'; break;
+            default: $sql .= ' ORDER BY hits DESC,last_seen_gmt DESC,id DESC'; break;
+        }
+        $sql .= ' LIMIT %d OFFSET %d';
+        $args = array_merge( array( $this->table ), $whereArgs, array( $perPage, $offset ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded admin report.
         $items = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
         return array( 'items' => $items, 'total' => $total, 'page' => $page, 'pages' => $pages, 'per_page' => $perPage );
     }

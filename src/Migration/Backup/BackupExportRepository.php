@@ -6,9 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class BackupExportRepository {
-    private const JOB_OPTION = 'yps_backup_export_job';
-    private const ANCHOR_OPTION = 'yps_backup_anchor';
-    private const LOCK_OPTION = 'yps_backup_export_lock';
+    private const JOB_OPTION = 'yablseo_backup_export_job';
+    private const ANCHOR_OPTION = 'yablseo_backup_anchor';
+    private const LOCK_OPTION = 'yablseo_backup_export_lock';
 
     public function load(): ?BackupExportState {
         $value = get_option( self::JOB_OPTION, null );

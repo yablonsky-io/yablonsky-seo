@@ -38,11 +38,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class SeoEditorController {
     private const SETTINGS_PAGE = 'yablonsky-seo-settings';
-    private const SETTINGS_OPTION = 'yps_public_settings';
-    private const SETTINGS_NONCE = 'yps_public_settings_save';
-    private const POST_NONCE = 'yps_seo_post_meta_save';
-    private const TERM_NONCE = 'yps_seo_term_meta_save';
-    private const USER_NONCE = 'yps_seo_user_meta_save';
+    private const SETTINGS_OPTION = 'yablseo_public_settings';
+    private const SETTINGS_NONCE = 'yablseo_public_settings_save';
+    private const POST_NONCE = 'yablseo_seo_post_meta_save';
+    private const TERM_NONCE = 'yablseo_seo_term_meta_save';
+    private const USER_NONCE = 'yablseo_seo_user_meta_save';
     private const EDITOR_AJAX_NONCE = 'yseo_editor_assist';
 
     /** @var ProviderDetector */
@@ -55,7 +55,7 @@ final class SeoEditorController {
     public function register(): void {
         add_action( 'admin_menu', array( $this, 'registerSettingsPage' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueueSettingsAssets' ) );
-        add_action( 'admin_post_yps_save_public_settings', array( $this, 'saveSettings' ) );
+        add_action( 'admin_post_yablseo_save_public_settings', array( $this, 'saveSettings' ) );
         add_action( 'admin_post_yseo_localization_export', array( $this, 'exportLocalizationEvidence' ) );
         add_action( 'admin_post_yseo_settings_export', array( $this, 'exportPortableSettings' ) );
         add_action( 'admin_post_yseo_settings_import', array( $this, 'importPortableSettings' ) );
@@ -90,16 +90,16 @@ final class SeoEditorController {
         if ( ! $isSettings && ! $isEditor && ! $isTermUi && ! $isUserUi ) {
             return;
         }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
         if ( $isSettings || $isEditor ) {
             wp_enqueue_media();
-            wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
-            wp_localize_script( 'yps-admin-editor', 'YPS_MEDIA', array( 'title' => esc_html__( 'Select image', 'yablonsky-seo' ), 'button' => esc_html__( 'Use image', 'yablonsky-seo' ) ) );
+            wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+            wp_localize_script( 'yablseo-admin-editor', 'YABLSEO_MEDIA', array( 'title' => esc_html__( 'Select image', 'yablonsky-seo' ), 'button' => esc_html__( 'Use image', 'yablonsky-seo' ) ) );
         }
         if ( $isSettings ) {
             wp_localize_script(
-                'yps-admin-editor',
-                'YPS_AI_SETTINGS',
+                'yablseo-admin-editor',
+                'YABLSEO_AI_SETTINGS',
                 array(
                     'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                     'nonce' => wp_create_nonce( 'yseo_ai_settings' ),
@@ -124,8 +124,8 @@ final class SeoEditorController {
         if ( $isEditor ) {
             $ai = new MetadataSuggestionService();
             wp_localize_script(
-                'yps-admin-editor',
-                'YPS_EDITOR',
+                'yablseo-admin-editor',
+                'YABLSEO_EDITOR',
                 array(
                     'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                     'nonce' => wp_create_nonce( self::EDITOR_AJAX_NONCE ),
@@ -249,7 +249,7 @@ final class SeoEditorController {
         $aeoPolicy = AeoPolicy::fromSettings( $settings );
         $aeoAudit = ( new AeoReadinessAudit() )->report();
         $providers = $this->detector->detectActiveProviders();
-        $authority = (string) get_option( 'yps_output_authority', 'active' );
+        $authority = (string) get_option( 'yablseo_output_authority', 'active' );
         $updatedFlag = filter_input( INPUT_GET, 'updated', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $localeStatus = ProductLocaleRegistry::currentStatus();
         $localeCoverage = ProductLocaleRegistry::coverage();
@@ -275,7 +275,7 @@ final class SeoEditorController {
         $crawlerInterop = CrawlerInteroperabilityAudit::build( $settings );
         $crawlerPermission = CrawlerPermissionPolicy::fromSettings( $settings );
         try {
-            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YPS_DIR . 'data/ai-crawlers.json' );
+            $crawlerRegistry = CrawlerRegistry::fromJsonFile( YSEO_DIR . 'data/ai-crawlers.json' );
             $crawlerRegistryRows = $crawlerRegistry->all();
             $crawlerRegistryVersion = $crawlerRegistry->version();
         } catch ( \RuntimeException $error ) {
@@ -307,16 +307,16 @@ final class SeoEditorController {
                 </div>
                 <div class="yps-product-actions">
                     <a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo' ) ); ?>"><?php echo esc_html__( 'Back to Dashboard', 'yablonsky-seo' ); ?></a>
-                    <span class="yps-pill">v<?php echo esc_html( YPS_VERSION ); ?></span>
+                    <span class="yps-pill">v<?php echo esc_html( YSEO_VERSION ); ?></span>
                 </div>
             </header>
             <?php if ( is_string( $updatedFlag ) && '1' === sanitize_text_field( $updatedFlag ) ) : ?>
                 <div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'SEO settings saved.', 'yablonsky-seo' ); ?></p></div>
             <?php endif; ?>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                <input type="hidden" name="action" value="yps_save_public_settings" />
+                <input type="hidden" name="action" value="yablseo_save_public_settings" />
                 <?php wp_nonce_field( self::SETTINGS_NONCE ); ?>
-                <input type="hidden" id="yps-settings-active-tab" name="yps_settings_tab" value="general" />
+                <input type="hidden" id="yps-settings-active-tab" name="yablseo_settings_tab" value="general" />
                 <nav class="yps-settings-nav" aria-label="<?php echo esc_attr__( 'Yablonsky SEO settings sections', 'yablonsky-seo' ); ?>">
                     <button type="button" class="yps-settings-nav-item is-active" data-yps-settings-tab="general" aria-selected="true" aria-controls="yps-settings-panel-general"><?php echo esc_html__( 'General', 'yablonsky-seo' ); ?></button>
                     <button type="button" class="yps-settings-nav-item is-seo" data-yps-settings-tab="search" aria-selected="false" aria-controls="yps-settings-panel-search"><?php echo esc_html__( 'SEO', 'yablonsky-seo' ); ?></button>
@@ -805,7 +805,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         $rawAuthority = filter_input( INPUT_POST, 'output_authority', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         $requestedAuthority = is_string( $rawAuthority ) ? sanitize_key( $rawAuthority ) : 'shadow';
         $authority = empty( $providers ) && 'active' === $requestedAuthority ? 'active' : 'shadow';
-        update_option( 'yps_output_authority', $authority, false );
+        update_option( 'yablseo_output_authority', $authority, false );
 
         $agentPolicy = $this->postedPolicy( 'ai_agent_access', 'allow' );
         $answersPolicy = $this->postedPolicy( 'ai_answers_access', 'inherit' );
@@ -919,7 +919,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
                 )
             );
         }
-        $settingsTab = $this->postedKey( 'yps_settings_tab' );
+        $settingsTab = $this->postedKey( 'yablseo_settings_tab' );
         if ( ! in_array( $settingsTab, array( 'general', 'search', 'social', 'answer', 'crawlers', 'ai', 'portability', 'developer' ), true ) ) {
             $settingsTab = 'general';
         }
@@ -945,7 +945,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
     }
 
     public function renderPostMetaBox( \WP_Post $post ): void {
-        wp_nonce_field( self::POST_NONCE, 'yps_seo_meta_nonce' );
+        wp_nonce_field( self::POST_NONCE, 'yablseo_seo_meta_nonce' );
         $fields = $this->postFieldDefinitions();
         $values = array();
         foreach ( $fields as $name => $field ) {
@@ -1181,7 +1181,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( wp_is_post_autosave( $postId ) || wp_is_post_revision( $postId ) ) {
             return;
         }
-        $rawNonce = filter_input( INPUT_POST, 'yps_seo_meta_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_meta_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1575,7 +1575,7 @@ untimeException $error ) {
     }
 
     public function renderTermAddFields(): void {
-        wp_nonce_field( self::TERM_NONCE, 'yps_seo_term_nonce' );
+        wp_nonce_field( self::TERM_NONCE, 'yablseo_seo_term_nonce' );
         foreach ( $this->termFieldDefinitions() as $name => $field ) {
             echo '<div class="form-field yps-taxonomy-seo-field">';
             $this->renderEditorField( $name, $field, '' );
@@ -1585,7 +1585,7 @@ untimeException $error ) {
 
     public function renderTermEditFields( \WP_Term $term, string $taxonomy ): void {
         unset( $taxonomy );
-        wp_nonce_field( self::TERM_NONCE, 'yps_seo_term_nonce' );
+        wp_nonce_field( self::TERM_NONCE, 'yablseo_seo_term_nonce' );
         foreach ( $this->termFieldDefinitions() as $name => $field ) {
             $value = get_term_meta( $term->term_id, $field['meta'], true );
             echo '<tr class="form-field yps-taxonomy-seo-field"><th scope="row"><label for="' . esc_attr( 'yps-' . $name ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
@@ -1595,7 +1595,7 @@ untimeException $error ) {
     }
 
     public function saveTermFields( int $termId ): void {
-        $rawNonce = filter_input( INPUT_POST, 'yps_seo_term_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_term_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1621,25 +1621,25 @@ untimeException $error ) {
         if ( ! current_user_can( 'edit_user', $user->ID ) ) {
             return;
         }
-        wp_nonce_field( self::USER_NONCE, 'yps_seo_user_nonce' );
+        wp_nonce_field( self::USER_NONCE, 'yablseo_seo_user_nonce' );
         ?>
         <div class="yps-profile-seo-surface">
         <h2><?php echo esc_html__( 'Yablonsky SEO', 'yablonsky-seo' ); ?></h2>
         <table class="form-table yps-profile-seo-table" role="presentation">
-            <tr><th><label for="yps-author-title"><?php echo esc_html__( 'Author SEO title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-title" name="yps_author_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_seo_title', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-description"><?php echo esc_html__( 'Author meta description', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-description" name="yps_author_description"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_meta_description', true ) ); ?></textarea></td></tr>
-            <tr><th><label for="yps-author-job-title"><?php echo esc_html__( 'Job title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-job-title" name="yps_author_job_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_job_title', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-image-url"><?php echo esc_html__( 'Person image URL', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" type="url" id="yps-author-image-url" name="yps_author_image_url" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_image_url', true ) ); ?>" /></td></tr>
-            <tr><th><label for="yps-author-same-as"><?php echo esc_html__( 'External sameAs URLs', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-same-as" name="yps_author_same_as"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_same_as', true ) ); ?></textarea><p class="description"><?php echo esc_html__( 'One URL per line. Migrated Yoast social profile fields are also included automatically.', 'yablonsky-seo' ); ?></p></td></tr>
-            <tr><th><label for="yps-author-knows-about"><?php echo esc_html__( 'knowsAbout topics', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-knows-about" name="yps_author_knows_about"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_knows_about', true ) ); ?></textarea></td></tr>
-            <tr><th><?php echo esc_html__( 'Indexability', 'yablonsky-seo' ); ?></th><td><label><input type="checkbox" name="yps_author_noindex" value="1" <?php checked( '1', (string) get_user_meta( $user->ID, '_yps_author_robots_noindex', true ) ); ?> /> <?php echo esc_html__( 'Noindex this author archive', 'yablonsky-seo' ); ?></label></td></tr>
+            <tr><th><label for="yps-author-title"><?php echo esc_html__( 'Author SEO title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-title" name="yablseo_author_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_seo_title', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-description"><?php echo esc_html__( 'Author meta description', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-description" name="yablseo_author_description"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_meta_description', true ) ); ?></textarea></td></tr>
+            <tr><th><label for="yps-author-job-title"><?php echo esc_html__( 'Job title', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" id="yps-author-job-title" name="yablseo_author_job_title" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_job_title', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-image-url"><?php echo esc_html__( 'Person image URL', 'yablonsky-seo' ); ?></label></th><td><input class="regular-text" type="url" id="yps-author-image-url" name="yablseo_author_image_url" value="<?php echo esc_attr( (string) get_user_meta( $user->ID, '_yps_author_image_url', true ) ); ?>" /></td></tr>
+            <tr><th><label for="yps-author-same-as"><?php echo esc_html__( 'External sameAs URLs', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-same-as" name="yablseo_author_same_as"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_same_as', true ) ); ?></textarea><p class="description"><?php echo esc_html__( 'One URL per line. Migrated Yoast social profile fields are also included automatically.', 'yablonsky-seo' ); ?></p></td></tr>
+            <tr><th><label for="yps-author-knows-about"><?php echo esc_html__( 'knowsAbout topics', 'yablonsky-seo' ); ?></label></th><td><textarea class="large-text" rows="3" id="yps-author-knows-about" name="yablseo_author_knows_about"><?php echo esc_textarea( (string) get_user_meta( $user->ID, '_yps_author_knows_about', true ) ); ?></textarea></td></tr>
+            <tr><th><?php echo esc_html__( 'Indexability', 'yablonsky-seo' ); ?></th><td><label><input type="checkbox" name="yablseo_author_noindex" value="1" <?php checked( '1', (string) get_user_meta( $user->ID, '_yps_author_robots_noindex', true ) ); ?> /> <?php echo esc_html__( 'Noindex this author archive', 'yablonsky-seo' ); ?></label></td></tr>
         </table>
         </div>
         <?php
     }
 
     public function saveUserFields( int $userId ): void {
-        $rawNonce = filter_input( INPUT_POST, 'yps_seo_user_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_user_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1647,13 +1647,13 @@ untimeException $error ) {
         if ( ! wp_verify_nonce( $nonce, self::USER_NONCE ) || ! current_user_can( 'edit_user', $userId ) ) {
             return;
         }
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_seo_title', $this->postedText( 'yps_author_title' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_meta_description', $this->postedTextarea( 'yps_author_description' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_job_title', $this->postedText( 'yps_author_job_title' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_image_url', esc_url_raw( $this->postedText( 'yps_author_image_url' ), array( 'http', 'https' ) ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_same_as', $this->postedTextarea( 'yps_author_same_as' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_knows_about', $this->postedTextarea( 'yps_author_knows_about' ) );
-        $this->updateOrDeleteUserMeta( $userId, '_yps_author_robots_noindex', filter_has_var( INPUT_POST, 'yps_author_noindex' ) ? '1' : '' );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_seo_title', $this->postedText( 'yablseo_author_title' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_meta_description', $this->postedTextarea( 'yablseo_author_description' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_job_title', $this->postedText( 'yablseo_author_job_title' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_image_url', esc_url_raw( $this->postedText( 'yablseo_author_image_url' ), array( 'http', 'https' ) ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_same_as', $this->postedTextarea( 'yablseo_author_same_as' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_knows_about', $this->postedTextarea( 'yablseo_author_knows_about' ) );
+        $this->updateOrDeleteUserMeta( $userId, '_yps_author_robots_noindex', filter_has_var( INPUT_POST, 'yablseo_author_noindex' ) ? '1' : '' );
     }
 
     /** @return array<string,array{meta:string,label:string,type:string}> */
@@ -1819,7 +1819,7 @@ untimeException $error ) {
     /** @param array{meta:string,label:string,type:string} $field @param mixed $value */
     private function renderEditorControl( string $name, array $field, $value ): void {
         $id = 'yps-' . $name;
-        $inputName = 'yps_' . $name;
+        $inputName = 'yablseo_' . $name;
         if ( 'textarea' === $field['type'] ) {
             printf( '<textarea class="large-text" rows="3" id="%1$s" name="%2$s">%3$s</textarea>', esc_attr( $id ), esc_attr( $inputName ), esc_textarea( (string) $value ) );
         } elseif ( 'checkbox' === $field['type'] ) {
@@ -1869,14 +1869,14 @@ untimeException $error ) {
                 $low = 50; $min = 80; $idealMax = 155; $max = 170;
                 $fitHelp = __( 'Practical display-fit target: 80–155 characters. Google adapts snippet display to device width and may truncate the visible text.', 'yablonsky-seo' );
             }
-            echo '<div class="yps-serp-meter is-critical" data-yps-serp-meter data-yps-count-for="' . esc_attr( 'yps_' . $name ) . '" data-yps-low="' . esc_attr( (string) $low ) . '" data-yps-min="' . esc_attr( (string) $min ) . '" data-yps-ideal-max="' . esc_attr( (string) $idealMax ) . '" data-yps-max="' . esc_attr( (string) $max ) . '">';
+            echo '<div class="yps-serp-meter is-critical" data-yps-serp-meter data-yps-count-for="' . esc_attr( 'yablseo_' . $name ) . '" data-yps-low="' . esc_attr( (string) $low ) . '" data-yps-min="' . esc_attr( (string) $min ) . '" data-yps-ideal-max="' . esc_attr( (string) $idealMax ) . '" data-yps-max="' . esc_attr( (string) $max ) . '">';
             echo '<div class="yps-serp-meter-head"><span data-yps-serp-label>' . esc_html__( 'Ready for input', 'yablonsky-seo' ) . '</span><strong><span data-yps-serp-count>0</span> ' . esc_html__( 'characters', 'yablonsky-seo' ) . '</strong></div>';
             echo '<div class="yps-serp-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="' . esc_attr( (string) $max ) . '" aria-valuenow="0"><i></i></div>';
             echo '<small>' . esc_html( $fitHelp ) . '</small></div>';
         } elseif ( $recommended > 0 ) {
             /* translators: %d: recommended maximum character count for the SEO field. */
             $recommendation = sprintf( __( 'Recommended ≤ %d characters', 'yablonsky-seo' ), $recommended );
-            echo '<div class="yps-field-meta"><span>' . esc_html( $recommendation ) . '</span><span><span data-yps-count-for="' . esc_attr( 'yps_' . $name ) . '">0</span></span></div>';
+            echo '<div class="yps-field-meta"><span>' . esc_html( $recommendation ) . '</span><span><span data-yps-count-for="' . esc_attr( 'yablseo_' . $name ) . '">0</span></span></div>';
         }
         echo '</div>';
     }
@@ -1966,7 +1966,7 @@ untimeException $error ) {
         echo '<div class="yps-editor-field is-wide" data-yps-field="focus_keyphrases">';
         echo '<label class="yps-label" for="yps-focus-keyphrases">' . esc_html__( 'Related keyphrases (up to 4)', 'yablonsky-seo' ) . '</label>';
         echo '<div class="yseo-ai-control-row is-textarea">';
-        echo '<textarea class="large-text" rows="3" id="yps-focus-keyphrases" name="yps_focus_keyphrases" placeholder="' . esc_attr__( 'One related keyphrase per line', 'yablonsky-seo' ) . '">' . esc_textarea( $value ) . '</textarea>';
+        echo '<textarea class="large-text" rows="3" id="yps-focus-keyphrases" name="yablseo_focus_keyphrases" placeholder="' . esc_attr__( 'One related keyphrase per line', 'yablonsky-seo' ) . '">' . esc_textarea( $value ) . '</textarea>';
         echo '<button type="button" class="button yseo-ai-mini-button yps-ai-field-button" data-yps-ai-field="focus_keyphrases" title="' . esc_attr__( 'Draft related keyphrases with Yablonsky AI', 'yablonsky-seo' ) . '" aria-label="' . esc_attr__( 'Draft related keyphrases with Yablonsky AI', 'yablonsky-seo' ) . '" ' . disabled( ! $aiConfigured, true, false ) . '>' . esc_html__( 'AI', 'yablonsky-seo' ) . '</button>';
         echo '</div>';
         echo '<small class="yps-field-help">' . esc_html__( 'The primary keyphrase remains the scoring anchor. Add up to four supporting phrases so YSEO can review topical coverage while keeping title wording editorially natural.', 'yablonsky-seo' ) . '</small>';
@@ -1974,7 +1974,7 @@ untimeException $error ) {
     }
 
     private function saveRelatedKeyphrases( int $postId ): void {
-        $raw = filter_input( INPUT_POST, 'yps_focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = filter_input( INPUT_POST, 'yablseo_focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
         $raw = is_string( $raw ) ? $raw : '';
         $primary = (string) get_post_meta( $postId, '_yps_focus_keyphrase', true );
         $primaryKey = $this->normalizedKeyphraseKey( $primary );
@@ -2051,7 +2051,7 @@ untimeException $error ) {
 
     /** @param array{meta:string,label:string,type:string} $field */
     private function saveObjectMetaValue( string $objectType, int $objectId, string $name, array $field ): void {
-        $inputName = 'yps_' . $name;
+        $inputName = 'yablseo_' . $name;
         if ( 'checkbox' === $field['type'] ) {
             $value = null !== filter_input( INPUT_POST, $inputName, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ? '1' : '';
         } elseif ( 'textarea' === $field['type'] ) {

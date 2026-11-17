@@ -301,7 +301,7 @@ final class ReadinessAudit {
     private function crawlerCoverage(): array {
         $coverage = array( 'search' => 0, 'agent' => 0, 'training' => 0 );
         try {
-            $registry = CrawlerRegistry::fromJsonFile( YPS_DIR . 'data/ai-crawlers.json' );
+            $registry = CrawlerRegistry::fromJsonFile( YSEO_DIR . 'data/ai-crawlers.json' );
             foreach ( $registry->all() as $crawler ) {
                 $purpose = sanitize_key( (string) ( $crawler['purpose'] ?? '' ) );
                 if ( 'retrieval' === $purpose ) { $purpose = 'agent'; }

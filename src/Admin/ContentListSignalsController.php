@@ -122,13 +122,13 @@ final class ContentListSignalsController {
 
     public function enqueueAssets( string $hook ): void {
         if ( 'edit.php' !== $hook ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
     }
 
     public function adminBar( \WP_Admin_Bar $bar ): void {
         if ( ! is_admin() || ! current_user_can( 'edit_posts' ) ) { return; }
-        $authority = 'active' === (string) get_option( 'yps_output_authority', 'active' );
+        $authority = 'active' === (string) get_option( 'yablseo_output_authority', 'active' );
         $title = 'YSEO · ' . ( $authority ? __( 'LIVE', 'yablonsky-seo' ) : __( 'SHADOW', 'yablonsky-seo' ) );
         $bar->add_node(
             array(

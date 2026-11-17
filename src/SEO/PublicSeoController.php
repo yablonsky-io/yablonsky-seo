@@ -93,7 +93,7 @@ final class PublicSeoController {
         $twitterImage = (string) $document['twitter_image'];
 
         echo "\n<!-- Yablonsky SEO -->\n";
-        $publicSettings = get_option( 'yps_public_settings', array() );
+        $publicSettings = get_option( 'yablseo_public_settings', array() );
         $publicSettings = is_array( $publicSettings ) ? $publicSettings : array();
         $verificationNames = array(
             'verification_google' => 'google-site-verification',
@@ -325,9 +325,9 @@ final class PublicSeoController {
 
     /** @return array<string,mixed> */
     private function buildDocument( ResourceIdentity $resource ): array {
-        $globals = get_option( 'yps_shadow_global_settings', array() );
+        $globals = get_option( 'yablseo_shadow_global_settings', array() );
         $globals = is_array( $globals ) ? $globals : array();
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $values = $this->resourceValues( $resource );
 

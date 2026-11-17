@@ -163,7 +163,7 @@ final class SeoImageGenerationService {
     }
 
     private function defaultSitePrompt( string $purpose ): string {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $siteName = trim( (string) ( $settings['site_display_name'] ?? '' ) );
         if ( '' === $siteName ) { $siteName = trim( (string) get_bloginfo( 'name' ) ); }

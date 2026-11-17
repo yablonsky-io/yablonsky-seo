@@ -30,7 +30,7 @@ final class SiteSettingsSuggestionService {
         if ( ! $this->client->isConfigured() ) {
             throw new ServiceError( esc_html__( 'Connect and verify a Yablonsky AI User API key before requesting site setup suggestions.', 'yablonsky-seo' ) );
         }
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $settings = is_array( $settings ) ? $settings : array();
         $requestedFields = $this->sanitizeRequestedFields( $requestedFields, $settings );
         if ( empty( $requestedFields ) ) {

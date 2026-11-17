@@ -36,13 +36,13 @@ final class BulkSeoEditorController {
 
     public function enqueueAssets( string $hook ): void {
         if ( false === strpos( $hook, self::PAGE ) ) { return; }
-        wp_enqueue_style( 'yps-admin', YPS_URL . 'assets/admin.css', array(), YPS_VERSION );
-        wp_enqueue_script( 'yps-admin-editor', YPS_URL . 'assets/admin.js', array(), YPS_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
+        wp_enqueue_style( 'yablseo-admin', YSEO_URL . 'assets/admin.css', array(), YSEO_VERSION );
+        wp_enqueue_script( 'yablseo-admin-editor', YSEO_URL . 'assets/admin.js', array(), YSEO_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
         $ai = new MetadataSuggestionService();
-        wp_localize_script( 'yps-admin-editor', 'YSEO_BULK', array(
+        wp_localize_script( 'yablseo-admin-editor', 'YSEO_BULK', array(
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce' => wp_create_nonce( self::AI_NONCE ),
-            'jobNonce' => wp_create_nonce( 'yps_migration_action' ),
+            'jobNonce' => wp_create_nonce( 'yablseo_migration_action' ),
             'aiConfigured' => $ai->isConfigured(),
             'jobState' => ( static function () { $state = ( new BulkMetadataRepository() )->load(); return null === $state ? null : $state->toArray(); } )(),
             'labels' => array(
@@ -295,21 +295,35 @@ final class BulkSeoEditorController {
         if ( ! current_user_can( 'edit_posts' ) ) { wp_die( esc_html__( 'Editing SEO metadata requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::NONCE );
         $perPage = $this->sanitizePerPage( (int) filter_input( INPUT_POST, 'return_per_page', FILTER_VALIDATE_INT ) );
-        // FILTER_CALLBACK operates on the original, unslashed POST payload;
-        // nested scalar metadata is cleaned before it can reach the database.
-        $rawRows = filter_input( INPUT_POST, 'rows', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => 'sanitize_text_field',
-        ) );
-        $rows = is_array( $rawRows ) ? array_slice( $rawRows, 0, min( self::MAX_ROWS, $perPage ), true ) : array();
+        // WordPress submits rows as a nested array keyed by post ID.
+        // Check the nonce above, then unslash, bound, validate and sanitize
+        // each expected leaf rather than passing a nested array through
+        // FILTER_CALLBACK (which does not guarantee recursive validation).
+        $postedRows = isset( $_POST['rows'] ) && is_array( $_POST['rows'] )
+            ? wp_unslash( $_POST['rows'] ) : array();
+        $rows = array();
+        foreach ( array_slice( $postedRows, 0, min( self::MAX_ROWS, $perPage ), true ) as $id => $row ) {
+            if ( ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_array( $row ) ) { continue; }
+            $clean = array();
+            foreach ( array( 'focus_keyphrase', 'seo_title', 'meta_description' ) as $key ) {
+                $rawValue = $row[ $key ] ?? '';
+                if ( ! is_string( $rawValue ) || strlen( $rawValue ) > 10000 ) { continue; }
+                $clean[ $key ] = sanitize_text_field( $rawValue );
+            }
+            $rows[ (int) $id ] = $clean;
+        }
         $saveScope = sanitize_key( (string) filter_input( INPUT_POST, 'save_scope', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
         if ( 'selected' === $saveScope ) {
-            // Only bounded positive IDs are accepted from the selected rows.
-            $rawSelected = filter_input( INPUT_POST, 'selected_rows', FILTER_CALLBACK, array(
-                'flags' => FILTER_REQUIRE_ARRAY,
-                'options' => 'absint',
-            ) );
-            $selected = is_array( $rawSelected ) ? array_slice( array_values( array_unique( array_filter( $rawSelected ) ) ), 0, self::MAX_ROWS ) : array();
+            // Only bounded positive IDs are accepted from selected rows.
+            $rawSelected = isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] )
+                ? wp_unslash( $_POST['selected_rows'] ) : array();
+            $selected = array();
+            foreach ( array_slice( $rawSelected, 0, self::MAX_ROWS ) as $selectedId ) {
+                if ( ! is_scalar( $selectedId ) || ! ctype_digit( (string) $selectedId ) ) { continue; }
+                $selectedId = absint( $selectedId );
+                if ( $selectedId > 0 ) { $selected[ $selectedId ] = $selectedId; }
+            }
+            $selected = array_values( $selected );
             $allowed = array_fill_keys( $selected, true );
             $rows = array_filter( $rows, static function ( $id ) use ( $allowed ): bool { return isset( $allowed[ (int) $id ] ); }, ARRAY_FILTER_USE_KEY );
         }

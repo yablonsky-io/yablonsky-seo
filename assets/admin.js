@@ -101,21 +101,21 @@
 
     function initPreview() {
         document.querySelectorAll('.yps-editor').forEach(function (editor) {
-            const titleInput = editor.querySelector('[name="yps_seo_title"]');
-            const descriptionInput = editor.querySelector('[name="yps_meta_description"]');
+            const titleInput = editor.querySelector('[name="yablseo_seo_title"]');
+            const descriptionInput = editor.querySelector('[name="yablseo_meta_description"]');
             const titleNode = editor.querySelector('[data-yps-preview-title]');
             const descriptionNode = editor.querySelector('[data-yps-preview-description]');
             const fallbackTitle = editor.dataset.ypsFallbackTitle || '';
             const fallbackDescription = editor.dataset.ypsFallbackDescription || '';
-            const ogImageInput = editor.querySelector('[name="yps_og_image"]');
-            const twitterImageInput = editor.querySelector('[name="yps_twitter_image"]');
-            const ogTitleInput = editor.querySelector('[name="yps_og_title"]');
-            const ogDescriptionInput = editor.querySelector('[name="yps_og_description"]');
-            const twitterTitleInput = editor.querySelector('[name="yps_twitter_title"]');
-            const twitterDescriptionInput = editor.querySelector('[name="yps_twitter_description"]');
+            const ogImageInput = editor.querySelector('[name="yablseo_og_image"]');
+            const twitterImageInput = editor.querySelector('[name="yablseo_twitter_image"]');
+            const ogTitleInput = editor.querySelector('[name="yablseo_og_title"]');
+            const ogDescriptionInput = editor.querySelector('[name="yablseo_og_description"]');
+            const twitterTitleInput = editor.querySelector('[name="yablseo_twitter_title"]');
+            const twitterDescriptionInput = editor.querySelector('[name="yablseo_twitter_description"]');
             const previewImage = editor.querySelector('[data-yps-preview-image]');
             const previewBox = editor.querySelector('[data-yps-search-preview]');
-            const focusInput = editor.querySelector('[name="yps_focus_keyphrase"]');
+            const focusInput = editor.querySelector('[name="yablseo_focus_keyphrase"]');
             const templateContext = {
                 title: editor.dataset.ypsTemplateTitle || '',
                 sitename: editor.dataset.ypsTemplateSitename || '',
@@ -192,20 +192,20 @@
                         const track = node.querySelector('.yps-serp-meter-track');
                         const fill = track ? track.querySelector('i') : null;
                         let state = 'critical';
-                        let label = (window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.serpEmpty) || 'Empty';
+                        let label = (window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.serpEmpty) || 'Empty';
                         if (count > 0 && count < low) {
-                            label = (window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.serpTooShort) || 'Too short';
+                            label = (window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.serpTooShort) || 'Too short';
                         } else if (count >= low && count < min) {
                             state = 'attention';
-                            label = (window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.serpShort) || 'Short';
+                            label = (window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.serpShort) || 'Short';
                         } else if (count >= min && count <= idealMax) {
                             state = 'good';
-                            label = (window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.serpGood) || 'Good fit';
+                            label = (window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.serpGood) || 'Good fit';
                         } else if (count > idealMax && count <= max) {
                             state = 'attention';
-                            label = (window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.serpLong) || 'Long';
+                            label = (window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.serpLong) || 'Long';
                         } else if (count > max) {
-                            label = (window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.serpTooLong) || 'Too long';
+                            label = (window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.serpTooLong) || 'Too long';
                         }
                         node.classList.remove('is-good', 'is-attention', 'is-critical');
                         node.classList.add('is-' + state);
@@ -289,7 +289,7 @@
         let dryRunFreshUntil = 0;
         let freshnessTimer = null;
 
-        if (!status || typeof YPS_ADMIN === 'undefined') {
+        if (!status || typeof YABLSEO_ADMIN === 'undefined') {
             return;
         }
 
@@ -305,15 +305,15 @@
             let lastError = null;
             for (let attempt = 0; attempt < 3; attempt += 1) {
                 try {
-                    const response = await fetch(YPS_ADMIN.ajaxUrl, {
+                    const response = await fetch(YABLSEO_ADMIN.ajaxUrl, {
                         method: 'POST',
                         credentials: 'same-origin',
                         headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
-                        body: encode(Object.assign({action: action, nonce: YPS_ADMIN.nonce}, extra || {}))
+                        body: encode(Object.assign({action: action, nonce: YABLSEO_ADMIN.nonce}, extra || {}))
                     });
                     const json = await response.json();
                     if (response.ok && json.success) { return json.data; }
-                    const message = json && json.data && json.data.message ? json.data.message : YPS_ADMIN.labels.failed;
+                    const message = json && json.data && json.data.message ? json.data.message : YABLSEO_ADMIN.labels.failed;
                     if (![429, 502, 503, 504].includes(response.status)) { throw new Error(message); }
                     lastError = new Error(message);
                     lastError.retryAfterMs = json && json.data && Number.isFinite(Number(json.data.retry_after_ms)) ? Number(json.data.retry_after_ms) : 250 * (attempt + 1);
@@ -323,17 +323,17 @@
                 const retryDelay = lastError && Number.isFinite(Number(lastError.retryAfterMs)) ? Number(lastError.retryAfterMs) : 250 * (attempt + 1);
                 await sleep(Math.max(100, Math.min(2000, retryDelay)));
             }
-            throw lastError || new Error(YPS_ADMIN.labels.failed);
+            throw lastError || new Error(YABLSEO_ADMIN.labels.failed);
         }
         function phaseLabel(phase) {
             const map = {
-                inventory: YPS_ADMIN.labels.phaseInventory,
-                globals: YPS_ADMIN.labels.phaseGlobals,
-                posts: YPS_ADMIN.labels.phasePosts,
-                users: YPS_ADMIN.labels.phaseUsers,
-                taxonomy: YPS_ADMIN.labels.phaseTaxonomy,
-                finalize: YPS_ADMIN.labels.phaseFinalize,
-                complete: YPS_ADMIN.labels.phaseComplete
+                inventory: YABLSEO_ADMIN.labels.phaseInventory,
+                globals: YABLSEO_ADMIN.labels.phaseGlobals,
+                posts: YABLSEO_ADMIN.labels.phasePosts,
+                users: YABLSEO_ADMIN.labels.phaseUsers,
+                taxonomy: YABLSEO_ADMIN.labels.phaseTaxonomy,
+                finalize: YABLSEO_ADMIN.labels.phaseFinalize,
+                complete: YABLSEO_ADMIN.labels.phaseComplete
             };
             return map[phase] || phase || '';
         }
@@ -363,35 +363,35 @@
         }
         function showRunning(kind, state) {
             const phase = state ? phaseLabel(state.phase) : '';
-            let title = YPS_ADMIN.labels.migrationRunning;
-            let detail = YPS_ADMIN.labels.progressSafe;
+            let title = YABLSEO_ADMIN.labels.migrationRunning;
+            let detail = YABLSEO_ADMIN.labels.progressSafe;
             let meta = phase;
             if (kind === 'backup') {
-                title = YPS_ADMIN.labels.backupRunning;
+                title = YABLSEO_ADMIN.labels.backupRunning;
                 meta = phase + ' · ' + (state && state.export_records ? state.export_records : 0) + ' / ' + (state && state.verify_records ? state.verify_records : 0);
             } else if (kind === 'mirror') {
-                title = YPS_ADMIN.labels.mirrorRunning;
+                title = YABLSEO_ADMIN.labels.mirrorRunning;
             } else if (state) {
-                meta = phase + ' · ' + YPS_ADMIN.labels.posts + ': ' + (state.processed_posts || 0) + ' · ' + YPS_ADMIN.labels.imported + ': ' + (state.imported_values || 0) + ' · ' + YPS_ADMIN.labels.conflicts + ': ' + (state.conflicts || 0);
+                meta = phase + ' · ' + YABLSEO_ADMIN.labels.posts + ': ' + (state.processed_posts || 0) + ' · ' + YABLSEO_ADMIN.labels.imported + ': ' + (state.imported_values || 0) + ' · ' + YABLSEO_ADMIN.labels.conflicts + ': ' + (state.conflicts || 0);
             }
-            setConsole('running', YPS_ADMIN.labels.badgeRunning || 'RUNNING', title, detail, meta, 46, true);
+            setConsole('running', YABLSEO_ADMIN.labels.badgeRunning || 'RUNNING', title, detail, meta, 46, true);
         }
         function render(state) {
             lastMigrationState = state || null;
             if (!state || state.status === 'reset') {
-                status.textContent = YPS_ADMIN.labels.empty;
+                status.textContent = YABLSEO_ADMIN.labels.empty;
                 updateControls();
                 return;
             }
             const items = [
-                [YPS_ADMIN.labels.mode, state.mode], [YPS_ADMIN.labels.status, state.status], [YPS_ADMIN.labels.phase, state.phase],
-                [YPS_ADMIN.labels.posts, state.processed_posts], [YPS_ADMIN.labels.users, state.processed_user_meta || 0], [YPS_ADMIN.labels.terms, state.processed_terms],
-                [YPS_ADMIN.labels.mapped, state.mapped_values], [YPS_ADMIN.labels.global, state.global_mapped_values],
-                [YPS_ADMIN.labels.unsupported, state.classification_counts && state.classification_counts.UNSUPPORTED ? state.classification_counts.UNSUPPORTED : 0],
-                [YPS_ADMIN.labels.ignored, state.ignored_derived_values], [YPS_ADMIN.labels.imported, state.imported_values], [YPS_ADMIN.labels.verified, state.verified_values],
-                [YPS_ADMIN.labels.conflicts, state.conflicts], [YPS_ADMIN.labels.batch, state.adaptive_batch_size || 0], [YPS_ADMIN.labels.stepMs, state.last_step_ms || 0],
-                [YPS_ADMIN.labels.queries, state.last_step_queries || 0], [YPS_ADMIN.labels.memory, state.last_step_memory_delta || 0],
-                [YPS_ADMIN.labels.pressure, (state.pressure_state || 'normal') + ' · ' + (state.pressure_reason || 'steady')], [YPS_ADMIN.labels.delay, state.recommended_delay_ms || 25]
+                [YABLSEO_ADMIN.labels.mode, state.mode], [YABLSEO_ADMIN.labels.status, state.status], [YABLSEO_ADMIN.labels.phase, state.phase],
+                [YABLSEO_ADMIN.labels.posts, state.processed_posts], [YABLSEO_ADMIN.labels.users, state.processed_user_meta || 0], [YABLSEO_ADMIN.labels.terms, state.processed_terms],
+                [YABLSEO_ADMIN.labels.mapped, state.mapped_values], [YABLSEO_ADMIN.labels.global, state.global_mapped_values],
+                [YABLSEO_ADMIN.labels.unsupported, state.classification_counts && state.classification_counts.UNSUPPORTED ? state.classification_counts.UNSUPPORTED : 0],
+                [YABLSEO_ADMIN.labels.ignored, state.ignored_derived_values], [YABLSEO_ADMIN.labels.imported, state.imported_values], [YABLSEO_ADMIN.labels.verified, state.verified_values],
+                [YABLSEO_ADMIN.labels.conflicts, state.conflicts], [YABLSEO_ADMIN.labels.batch, state.adaptive_batch_size || 0], [YABLSEO_ADMIN.labels.stepMs, state.last_step_ms || 0],
+                [YABLSEO_ADMIN.labels.queries, state.last_step_queries || 0], [YABLSEO_ADMIN.labels.memory, state.last_step_memory_delta || 0],
+                [YABLSEO_ADMIN.labels.pressure, (state.pressure_state || 'normal') + ' · ' + (state.pressure_reason || 'steady')], [YABLSEO_ADMIN.labels.delay, state.recommended_delay_ms || 25]
             ];
             const list = document.createElement('ul');
             items.forEach(function (item) {
@@ -408,23 +408,23 @@
 
             if (state.status === 'running') {
                 showRunning('migration', state);
-                if (state.mode === 'import') { setStage('shadow', 'is-active', YPS_ADMIN.labels.running); }
-                else { setStage('source', 'is-active', YPS_ADMIN.labels.running); }
+                if (state.mode === 'import') { setStage('shadow', 'is-active', YABLSEO_ADMIN.labels.running); }
+                else { setStage('source', 'is-active', YABLSEO_ADMIN.labels.running); }
             } else if (state.status === 'blocked') {
-                setConsole('stopped', YPS_ADMIN.labels.badgeStopped || 'STOPPED', YPS_ADMIN.labels.migrationStopped, state.message || YPS_ADMIN.labels.progressReview, YPS_ADMIN.labels.conflicts + ': ' + (state.conflicts || 0) + ' · ' + YPS_ADMIN.labels.progressSafe, 100, false);
-                if (state.source_coverage_ready) { setStage('source', 'is-complete', YPS_ADMIN.labels.progressVerified); }
-                if (state.mode === 'import') { setStage('shadow', 'is-stopped', YPS_ADMIN.labels.progressReview); }
+                setConsole('stopped', YABLSEO_ADMIN.labels.badgeStopped || 'STOPPED', YABLSEO_ADMIN.labels.migrationStopped, state.message || YABLSEO_ADMIN.labels.progressReview, YABLSEO_ADMIN.labels.conflicts + ': ' + (state.conflicts || 0) + ' · ' + YABLSEO_ADMIN.labels.progressSafe, 100, false);
+                if (state.source_coverage_ready) { setStage('source', 'is-complete', YABLSEO_ADMIN.labels.progressVerified); }
+                if (state.mode === 'import') { setStage('shadow', 'is-stopped', YABLSEO_ADMIN.labels.progressReview); }
             } else if (state.status === 'complete' && state.mode === 'import' && state.cutover_ready) {
-                setConsole('complete', YPS_ADMIN.labels.badgeVerified || 'VERIFIED', YPS_ADMIN.labels.migrationComplete, state.message || YPS_ADMIN.labels.progressVerified, YPS_ADMIN.labels.progressSafe, 100, false);
-                setStage('source', 'is-complete', YPS_ADMIN.labels.progressVerified);
-                setStage('backup', 'is-complete', YPS_ADMIN.labels.progressVerified);
-                setStage('shadow', 'is-complete', YPS_ADMIN.labels.progressVerified);
-                setStage('takeover', 'is-active', YPS_ADMIN.labels.available);
+                setConsole('complete', YABLSEO_ADMIN.labels.badgeVerified || 'VERIFIED', YABLSEO_ADMIN.labels.migrationComplete, state.message || YABLSEO_ADMIN.labels.progressVerified, YABLSEO_ADMIN.labels.progressSafe, 100, false);
+                setStage('source', 'is-complete', YABLSEO_ADMIN.labels.progressVerified);
+                setStage('backup', 'is-complete', YABLSEO_ADMIN.labels.progressVerified);
+                setStage('shadow', 'is-complete', YABLSEO_ADMIN.labels.progressVerified);
+                setStage('takeover', 'is-active', YABLSEO_ADMIN.labels.available);
             } else if (state.status === 'complete' && state.mode === 'dry-run' && state.source_coverage_ready) {
                 dryRunFreshUntil = Date.now() + (15 * 60 * 1000);
                 startFreshnessTimer();
-                setConsole('complete', YPS_ADMIN.labels.badgeVerified || 'VERIFIED', YPS_ADMIN.labels.migrationComplete, state.message || YPS_ADMIN.labels.progressVerified, YPS_ADMIN.labels.progressSafe, 100, false);
-                setStage('source', 'is-complete', YPS_ADMIN.labels.progressVerified);
+                setConsole('complete', YABLSEO_ADMIN.labels.badgeVerified || 'VERIFIED', YABLSEO_ADMIN.labels.migrationComplete, state.message || YABLSEO_ADMIN.labels.progressVerified, YABLSEO_ADMIN.labels.progressSafe, 100, false);
+                setStage('source', 'is-complete', YABLSEO_ADMIN.labels.progressVerified);
             }
             updateControls();
         }
@@ -432,16 +432,16 @@
             lastBackupState = state || null;
             if (!backupStatus) { return; }
             if (!state || state.status === 'reset') {
-                backupStatus.textContent = YPS_ADMIN.labels.backupEmpty;
+                backupStatus.textContent = YABLSEO_ADMIN.labels.backupEmpty;
                 updateControls();
                 return;
             }
             const list = document.createElement('ul');
             [
-                [YPS_ADMIN.labels.backupStatus, state.status],
-                [YPS_ADMIN.labels.backupPhase, state.phase],
-                [YPS_ADMIN.labels.backupRecords, state.export_records || 0],
-                [YPS_ADMIN.labels.backupVerified, state.verify_records || 0]
+                [YABLSEO_ADMIN.labels.backupStatus, state.status],
+                [YABLSEO_ADMIN.labels.backupPhase, state.phase],
+                [YABLSEO_ADMIN.labels.backupRecords, state.export_records || 0],
+                [YABLSEO_ADMIN.labels.backupVerified, state.verify_records || 0]
             ].forEach(function (item) {
                 const li = document.createElement('li'); li.textContent = item[0] + ': ' + item[1]; list.appendChild(li);
             });
@@ -449,13 +449,13 @@
             if (state.message) { const p = document.createElement('p'); p.textContent = state.message; backupStatus.appendChild(p); }
             if (state.status === 'running') {
                 showRunning('backup', state);
-                setStage('backup', 'is-active', YPS_ADMIN.labels.running);
+                setStage('backup', 'is-active', YABLSEO_ADMIN.labels.running);
             } else if (state.status === 'complete' && state.verified) {
-                setConsole('complete', YPS_ADMIN.labels.badgeVerified || 'VERIFIED', YPS_ADMIN.labels.backupComplete, state.message || YPS_ADMIN.labels.progressVerified, YPS_ADMIN.labels.progressSafe, 100, false);
-                setStage('backup', 'is-complete', YPS_ADMIN.labels.progressVerified);
+                setConsole('complete', YABLSEO_ADMIN.labels.badgeVerified || 'VERIFIED', YABLSEO_ADMIN.labels.backupComplete, state.message || YABLSEO_ADMIN.labels.progressVerified, YABLSEO_ADMIN.labels.progressSafe, 100, false);
+                setStage('backup', 'is-complete', YABLSEO_ADMIN.labels.progressVerified);
             } else if (state.status === 'blocked') {
-                setConsole('stopped', YPS_ADMIN.labels.badgeStopped || 'STOPPED', YPS_ADMIN.labels.migrationStopped, state.message || YPS_ADMIN.labels.progressReview, YPS_ADMIN.labels.progressSafe, 100, false);
-                setStage('backup', 'is-stopped', YPS_ADMIN.labels.progressReview);
+                setConsole('stopped', YABLSEO_ADMIN.labels.badgeStopped || 'STOPPED', YABLSEO_ADMIN.labels.migrationStopped, state.message || YABLSEO_ADMIN.labels.progressReview, YABLSEO_ADMIN.labels.progressSafe, 100, false);
+                setStage('backup', 'is-stopped', YABLSEO_ADMIN.labels.progressReview);
             }
             updateControls();
         }
@@ -467,7 +467,7 @@
                 const remaining = Math.max(0, Math.ceil((dryRunFreshUntil - Date.now()) / 1000));
                 if (remaining <= 0) {
                     dryRunFreshUntil = 0;
-                    consoleMeta.textContent = YPS_ADMIN.labels.dryRunExpired;
+                    consoleMeta.textContent = YABLSEO_ADMIN.labels.dryRunExpired;
                     if (backupStart) { backupStart.disabled = true; }
                     window.clearInterval(freshnessTimer);
                     freshnessTimer = null;
@@ -475,14 +475,14 @@
                 }
                 const minutes = Math.floor(remaining / 60);
                 const seconds = String(remaining % 60).padStart(2, '0');
-                consoleMeta.textContent = YPS_ADMIN.labels.dryRunValid + ' ' + minutes + ':' + seconds + ' · ' + YPS_ADMIN.labels.progressSafe;
+                consoleMeta.textContent = YABLSEO_ADMIN.labels.dryRunValid + ' ' + minutes + ':' + seconds + ' · ' + YABLSEO_ADMIN.labels.progressSafe;
             };
             tick();
             freshnessTimer = window.setInterval(tick, 1000);
         }
         async function continueJob(state) {
             while (state && state.status === 'running') {
-                state = await request('yps_migration_step');
+                state = await request('yablseo_migration_step');
                 render(state);
                 await sleep(Math.max(25, Math.min(2000, Number(state.recommended_delay_ms || 25))));
             }
@@ -490,7 +490,7 @@
         }
         async function continueBackup(state) {
             while (state && state.status === 'running') {
-                state = await request('yps_backup_step');
+                state = await request('yablseo_backup_step');
                 renderBackup(state);
                 await sleep(40);
             }
@@ -517,14 +517,14 @@
             if (!busy) { updateControls(); }
         }
         function fail(error) {
-            const message = error && error.message ? error.message : YPS_ADMIN.labels.failed;
-            setConsole('failed', YPS_ADMIN.labels.badgeFailed || 'FAILED', YPS_ADMIN.labels.failed, message, YPS_ADMIN.labels.progressSafe, 100, false);
+            const message = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed;
+            setConsole('failed', YABLSEO_ADMIN.labels.badgeFailed || 'FAILED', YABLSEO_ADMIN.labels.failed, message, YABLSEO_ADMIN.labels.progressSafe, 100, false);
             const p = document.createElement('p'); p.textContent = message; status.replaceChildren(p);
         }
         async function run(mode) {
             setBusy(true);
             try {
-                let state = await request('yps_migration_start', {mode: mode});
+                let state = await request('yablseo_migration_start', {mode: mode});
                 render(state);
                 state = await continueJob(state);
                 if (state && state.conflicts > 0) { await loadConflictReview(); }
@@ -541,19 +541,19 @@
             const box = document.createElement('div');
             box.className = 'yps-conflict-review ' + (inspection.legacy_global_merge ? 'is-repairable' : 'is-conflict');
             const head = document.createElement('div'); head.className = 'yps-conflict-review-head';
-            const title = document.createElement('strong'); title.textContent = inspection.legacy_global_merge ? YPS_ADMIN.labels.legacyMergeTitle : YPS_ADMIN.labels.migrationConflictTitle;
-            const badge = document.createElement('span'); badge.className = 'yps-mini-status ' + (inspection.legacy_global_merge ? 'attention' : 'bad'); badge.textContent = inspection.legacy_global_merge ? YPS_ADMIN.labels.repairable : YPS_ADMIN.labels.conflictBadge;
+            const title = document.createElement('strong'); title.textContent = inspection.legacy_global_merge ? YABLSEO_ADMIN.labels.legacyMergeTitle : YABLSEO_ADMIN.labels.migrationConflictTitle;
+            const badge = document.createElement('span'); badge.className = 'yps-mini-status ' + (inspection.legacy_global_merge ? 'attention' : 'bad'); badge.textContent = inspection.legacy_global_merge ? YABLSEO_ADMIN.labels.repairable : YABLSEO_ADMIN.labels.conflictBadge;
             head.append(title, badge); box.appendChild(head);
             const message = document.createElement('p'); message.textContent = inspection.message || ''; box.appendChild(message);
             if (inspection.legacy_global_merge) {
-                const note = document.createElement('p'); note.className = 'yps-muted'; note.textContent = YPS_ADMIN.labels.legacyMergeNote; box.appendChild(note);
+                const note = document.createElement('p'); note.className = 'yps-muted'; note.textContent = YABLSEO_ADMIN.labels.legacyMergeNote; box.appendChild(note);
             }
             const details = Array.isArray(inspection.details) ? inspection.details : [];
             if (details.length) {
                 const wrap = document.createElement('div'); wrap.className = 'yps-conflict-table-wrap';
                 const table = document.createElement('table'); table.className = 'widefat striped yps-conflict-table';
                 const thead = document.createElement('thead'); const hr = document.createElement('tr');
-                [YPS_ADMIN.labels.scope, YPS_ADMIN.labels.object, YPS_ADMIN.labels.sourceField, YPS_ADMIN.labels.yseoField, YPS_ADMIN.labels.reason].forEach(function (text) { const th = document.createElement('th'); th.textContent = text; hr.appendChild(th); });
+                [YABLSEO_ADMIN.labels.scope, YABLSEO_ADMIN.labels.object, YABLSEO_ADMIN.labels.sourceField, YABLSEO_ADMIN.labels.yseoField, YABLSEO_ADMIN.labels.reason].forEach(function (text) { const th = document.createElement('th'); th.textContent = text; hr.appendChild(th); });
                 thead.appendChild(hr); table.appendChild(thead);
                 const tbody = document.createElement('tbody');
                 details.slice(0, 20).forEach(function (detail) {
@@ -567,11 +567,11 @@
         }
         async function loadConflictReview() {
             try {
-                const inspection = await request('yps_migration_inspect_conflicts');
+                const inspection = await request('yablseo_migration_inspect_conflicts');
                 renderConflictReview(inspection);
                 return inspection;
             } catch (error) {
-                if (conflictHost) { const p = document.createElement('p'); p.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; conflictHost.replaceChildren(p); }
+                if (conflictHost) { const p = document.createElement('p'); p.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; conflictHost.replaceChildren(p); }
                 return null;
             }
         }
@@ -580,34 +580,34 @@
             prepareTakeover.addEventListener('click', async function () {
                 setBusy(true);
                 try {
-                    setConsole('running', YPS_ADMIN.labels.badgeRunning || 'RUNNING', YPS_ADMIN.labels.safePreparationStarted, YPS_ADMIN.labels.safePreparationDetail, YPS_ADMIN.labels.safeStepDryRun, 12, true);
-                    let migration = await request('yps_migration_start', {mode: 'dry-run'});
+                    setConsole('running', YABLSEO_ADMIN.labels.badgeRunning || 'RUNNING', YABLSEO_ADMIN.labels.safePreparationStarted, YABLSEO_ADMIN.labels.safePreparationDetail, YABLSEO_ADMIN.labels.safeStepDryRun, 12, true);
+                    let migration = await request('yablseo_migration_start', {mode: 'dry-run'});
                     render(migration);
                     migration = await continueJob(migration);
                     if (!migration || migration.status !== 'complete' || !migration.source_coverage_ready) {
                         if (migration && migration.conflicts > 0) { await loadConflictReview(); }
-                        throw new Error(migration && migration.message ? migration.message : YPS_ADMIN.labels.failed);
+                        throw new Error(migration && migration.message ? migration.message : YABLSEO_ADMIN.labels.failed);
                     }
-                    setConsole('running', YPS_ADMIN.labels.badgeRunning || 'RUNNING', YPS_ADMIN.labels.backupRunning, YPS_ADMIN.labels.sourcePassedBackupDetail, YPS_ADMIN.labels.safeStepBackup, 45, true);
-                    let backup = await request('yps_backup_start');
+                    setConsole('running', YABLSEO_ADMIN.labels.badgeRunning || 'RUNNING', YABLSEO_ADMIN.labels.backupRunning, YABLSEO_ADMIN.labels.sourcePassedBackupDetail, YABLSEO_ADMIN.labels.safeStepBackup, 45, true);
+                    let backup = await request('yablseo_backup_start');
                     renderBackup(backup);
                     backup = await continueBackup(backup);
                     if (!backup || backup.status !== 'complete' || !backup.verified) {
-                        throw new Error(backup && backup.message ? backup.message : YPS_ADMIN.labels.failed);
+                        throw new Error(backup && backup.message ? backup.message : YABLSEO_ADMIN.labels.failed);
                     }
-                    setConsole('running', YPS_ADMIN.labels.badgeRunning || 'RUNNING', YPS_ADMIN.labels.shadowRunning, YPS_ADMIN.labels.shadowRunningDetail, YPS_ADMIN.labels.safeStepShadow, 72, true);
-                    migration = await request('yps_migration_start', {mode: 'import'});
+                    setConsole('running', YABLSEO_ADMIN.labels.badgeRunning || 'RUNNING', YABLSEO_ADMIN.labels.shadowRunning, YABLSEO_ADMIN.labels.shadowRunningDetail, YABLSEO_ADMIN.labels.safeStepShadow, 72, true);
+                    migration = await request('yablseo_migration_start', {mode: 'import'});
                     render(migration);
                     migration = await continueJob(migration);
                     if (migration && migration.conflicts > 0) { await loadConflictReview(); }
                     if (!migration || migration.status !== 'complete' || !migration.cutover_ready) {
-                        throw new Error(migration && migration.message ? migration.message : YPS_ADMIN.labels.failed);
+                        throw new Error(migration && migration.message ? migration.message : YABLSEO_ADMIN.labels.failed);
                     }
-                    setConsole('complete', YPS_ADMIN.labels.badgeVerified || 'VERIFIED', YPS_ADMIN.labels.safePreparationComplete, YPS_ADMIN.labels.safePreparationCompleteDetail, YPS_ADMIN.labels.safePreparationCompleteMeta, 100, false);
+                    setConsole('complete', YABLSEO_ADMIN.labels.badgeVerified || 'VERIFIED', YABLSEO_ADMIN.labels.safePreparationComplete, YABLSEO_ADMIN.labels.safePreparationCompleteDetail, YABLSEO_ADMIN.labels.safePreparationCompleteMeta, 100, false);
                 } catch (error) {
-                    const message = error && error.message ? error.message : YPS_ADMIN.labels.failed;
+                    const message = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed;
                     if (lastMigrationState && lastMigrationState.status === 'blocked') {
-                        setConsole('stopped', YPS_ADMIN.labels.badgeStopped || 'STOPPED', YPS_ADMIN.labels.migrationStopped, message, YPS_ADMIN.labels.progressSafe, 100, false);
+                        setConsole('stopped', YABLSEO_ADMIN.labels.badgeStopped || 'STOPPED', YABLSEO_ADMIN.labels.migrationStopped, message, YABLSEO_ADMIN.labels.progressSafe, 100, false);
                     } else { fail(error); }
                 } finally { setBusy(false); }
             });
@@ -617,8 +617,8 @@
             backupStart.addEventListener('click', async function () {
                 setBusy(true);
                 try {
-                    let state = await request('yps_backup_start'); renderBackup(state); state = await continueBackup(state);
-                    if (!state || state.status !== 'complete' || !state.verified) { throw new Error(state && state.message ? state.message : YPS_ADMIN.labels.failed); }
+                    let state = await request('yablseo_backup_start'); renderBackup(state); state = await continueBackup(state);
+                    if (!state || state.status !== 'complete' || !state.verified) { throw new Error(state && state.message ? state.message : YABLSEO_ADMIN.labels.failed); }
                 } catch (error) { fail(error); }
                 finally { setBusy(false); }
             });
@@ -627,16 +627,16 @@
         if (inspectConflicts) { inspectConflicts.addEventListener('click', loadConflictReview); }
         if (takeover) {
             takeover.addEventListener('click', async function () {
-                if (!window.confirm(YPS_ADMIN.labels.confirmTakeover)) { return; }
+                if (!window.confirm(YABLSEO_ADMIN.labels.confirmTakeover)) { return; }
                 setBusy(true);
                 try {
-                    setConsole('running', YPS_ADMIN.labels.badgeRunning || 'RUNNING', YPS_ADMIN.labels.publicTakeoverRunning, YPS_ADMIN.labels.publicTakeoverRunningDetail, YPS_ADMIN.labels.progressSafe, 55, true);
-                    const takeoverResult = await request('yps_takeover');
+                    setConsole('running', YABLSEO_ADMIN.labels.badgeRunning || 'RUNNING', YABLSEO_ADMIN.labels.publicTakeoverRunning, YABLSEO_ADMIN.labels.publicTakeoverRunningDetail, YABLSEO_ADMIN.labels.progressSafe, 55, true);
+                    const takeoverResult = await request('yablseo_takeover');
                     if (takeoverResult && takeoverResult.status === 'manual-deactivation-required') {
-                        setConsole('neutral', YPS_ADMIN.labels.badgeActionRequired || 'ACTION REQUIRED', YPS_ADMIN.labels.manualYoastTitle || 'Manual Yoast deactivation required', takeoverResult.message || YPS_ADMIN.labels.manualYoastDetail || 'Deactivate Yoast SEO manually in Plugins, then return here.', YPS_ADMIN.labels.pluginsInstalled || 'Plugins → Installed Plugins', 85, false);
+                        setConsole('neutral', YABLSEO_ADMIN.labels.badgeActionRequired || 'ACTION REQUIRED', YABLSEO_ADMIN.labels.manualYoastTitle || 'Manual Yoast deactivation required', takeoverResult.message || YABLSEO_ADMIN.labels.manualYoastDetail || 'Deactivate Yoast SEO manually in Plugins, then return here.', YABLSEO_ADMIN.labels.pluginsInstalled || 'Plugins → Installed Plugins', 85, false);
                         return;
                     }
-                    setConsole('complete', YPS_ADMIN.labels.badgeLive || 'LIVE', YPS_ADMIN.labels.publicTakeoverComplete, YPS_ADMIN.labels.publicTakeoverCompleteDetail, YPS_ADMIN.labels.verifiedCutoverComplete, 100, false);
+                    setConsole('complete', YABLSEO_ADMIN.labels.badgeLive || 'LIVE', YABLSEO_ADMIN.labels.publicTakeoverComplete, YABLSEO_ADMIN.labels.publicTakeoverCompleteDetail, YABLSEO_ADMIN.labels.verifiedCutoverComplete, 100, false);
                     await sleep(650);
                     window.location.reload();
                 } catch (error) { fail(error); }
@@ -646,21 +646,21 @@
         if (resume) {
             resume.addEventListener('click', async function () {
                 setBusy(true);
-                try { let state = await request('yps_migration_step'); render(state); state = await continueJob(state); if (state && state.conflicts > 0) { await loadConflictReview(); } }
+                try { let state = await request('yablseo_migration_step'); render(state); state = await continueJob(state); if (state && state.conflicts > 0) { await loadConflictReview(); } }
                 catch (error) { fail(error); }
                 finally { setBusy(false); }
             });
         }
         if (reset) {
             reset.addEventListener('click', async function () {
-                if (!window.confirm(YPS_ADMIN.labels.resetMigrationConfirm)) { return; }
+                if (!window.confirm(YABLSEO_ADMIN.labels.resetMigrationConfirm)) { return; }
                 setBusy(true);
                 try {
-                    render(await request('yps_migration_reset'));
-                    renderBackup(await request('yps_backup_reset'));
+                    render(await request('yablseo_migration_reset'));
+                    renderBackup(await request('yablseo_backup_reset'));
                     if (conflictHost) { conflictHost.replaceChildren(); }
-                    setConsole('neutral', YPS_ADMIN.labels.badgeReady || 'READY', YPS_ADMIN.labels.readySafeDryRun, YPS_ADMIN.labels.progressSafe, YPS_ADMIN.labels.currentVerifySource, 0, false);
-                    setStage('source', 'is-pending', YPS_ADMIN.labels.required); setStage('backup', 'is-pending', YPS_ADMIN.labels.required); setStage('shadow', 'is-pending', YPS_ADMIN.labels.required); setStage('takeover', 'is-locked', YPS_ADMIN.labels.locked);
+                    setConsole('neutral', YABLSEO_ADMIN.labels.badgeReady || 'READY', YABLSEO_ADMIN.labels.readySafeDryRun, YABLSEO_ADMIN.labels.progressSafe, YABLSEO_ADMIN.labels.currentVerifySource, 0, false);
+                    setStage('source', 'is-pending', YABLSEO_ADMIN.labels.required); setStage('backup', 'is-pending', YABLSEO_ADMIN.labels.required); setStage('shadow', 'is-pending', YABLSEO_ADMIN.labels.required); setStage('takeover', 'is-locked', YABLSEO_ADMIN.labels.locked);
                 } catch (error) { fail(error); }
                 finally { setBusy(false); }
             });
@@ -717,7 +717,7 @@
             headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
             body: encode(Object.assign({action: action, nonce: nonce}, extra || {}))
         });
-        const runtimeLabels = typeof YPS_EDITOR !== 'undefined' ? YPS_EDITOR.labels : (typeof YPS_AI_SETTINGS !== 'undefined' ? YPS_AI_SETTINGS.labels : (typeof YPS_ADMIN !== 'undefined' ? YPS_ADMIN.labels : {}));
+        const runtimeLabels = typeof YABLSEO_EDITOR !== 'undefined' ? YABLSEO_EDITOR.labels : (typeof YABLSEO_AI_SETTINGS !== 'undefined' ? YABLSEO_AI_SETTINGS.labels : (typeof YABLSEO_ADMIN !== 'undefined' ? YABLSEO_ADMIN.labels : {}));
         let json = null;
         try { json = await response.json(); } catch (error) { throw new Error(runtimeLabels.invalidResponse || runtimeLabels.failed || 'Error'); }
         if (!response.ok || !json.success) {
@@ -733,8 +733,8 @@
     function sleep(ms) { return new Promise(function (resolve) { window.setTimeout(resolve, ms); }); }
 
     function initLiveAnalysis() {
-        if (typeof YPS_EDITOR === 'undefined') { return; }
-        const watchedSelector = '[name="yps_focus_keyphrase"], [name="yps_focus_keyphrases"], [name="yps_seo_title"], [name="yps_meta_description"], [name="yps_noindex"], [name="yps_schema_page_type"]';
+        if (typeof YABLSEO_EDITOR === 'undefined') { return; }
+        const watchedSelector = '[name="yablseo_focus_keyphrase"], [name="yablseo_focus_keyphrases"], [name="yablseo_seo_title"], [name="yablseo_meta_description"], [name="yablseo_noindex"], [name="yablseo_schema_page_type"]';
 
         function draftSnapshot() {
             const snapshot = {draft_title: '', draft_excerpt: '', draft_content: ''};
@@ -793,7 +793,7 @@
                 if (!notice) { return; }
                 if (active) {
                     notice.hidden = false;
-                    notice.textContent = YPS_EDITOR.labels.analysisRefreshing || YPS_EDITOR.labels.working || 'Working…';
+                    notice.textContent = YABLSEO_EDITOR.labels.analysisRefreshing || YABLSEO_EDITOR.labels.working || 'Working…';
                 }
             }
 
@@ -813,14 +813,14 @@
                 lastDraftSignature = draftSignature(snapshot);
                 setBusy(true);
                 try {
-                    const data = await post(YPS_EDITOR.ajaxUrl, YPS_EDITOR.nonce, 'yseo_refresh_post_analysis', {
+                    const data = await post(YABLSEO_EDITOR.ajaxUrl, YABLSEO_EDITOR.nonce, 'yseo_refresh_post_analysis', {
                         post_id: postId,
-                        focus_keyphrase: value('yps_focus_keyphrase'),
-                        focus_keyphrases: value('yps_focus_keyphrases'),
-                        seo_title: value('yps_seo_title'),
-                        meta_description: value('yps_meta_description'),
-                        noindex: value('yps_noindex'),
-                        schema_page_type: value('yps_schema_page_type'),
+                        focus_keyphrase: value('yablseo_focus_keyphrase'),
+                        focus_keyphrases: value('yablseo_focus_keyphrases'),
+                        seo_title: value('yablseo_seo_title'),
+                        meta_description: value('yablseo_meta_description'),
+                        noindex: value('yablseo_noindex'),
+                        schema_page_type: value('yablseo_schema_page_type'),
                         draft_title: snapshot.draft_title,
                         draft_excerpt: snapshot.draft_excerpt,
                         draft_content: snapshot.draft_content
@@ -829,13 +829,13 @@
                     replaceAnalysis(data);
                     if (notice) {
                         notice.hidden = !!isConfirmedSave;
-                        notice.textContent = isConfirmedSave ? '' : (YPS_EDITOR.labels.analysisPreview || 'Live analysis preview updated.');
+                        notice.textContent = isConfirmedSave ? '' : (YABLSEO_EDITOR.labels.analysisPreview || 'Live analysis preview updated.');
                     }
                 } catch (error) {
                     if (serial !== requestSerial) { return; }
                     if (notice) {
                         notice.hidden = false;
-                        notice.textContent = (error && error.message) ? error.message : (YPS_EDITOR.labels.analysisRefreshFailed || YPS_EDITOR.labels.failed || 'Error');
+                        notice.textContent = (error && error.message) ? error.message : (YABLSEO_EDITOR.labels.analysisRefreshFailed || YABLSEO_EDITOR.labels.failed || 'Error');
                     }
                 } finally {
                     if (serial === requestSerial) { setBusy(false); }
@@ -919,17 +919,17 @@
     }
 
     function initEditorAssist() {
-        if (typeof YPS_EDITOR === 'undefined') { return; }
+        if (typeof YABLSEO_EDITOR === 'undefined') { return; }
         document.querySelectorAll('.yps-seo-editor').forEach(function (editor) {
             const postId = Number(editor.dataset.ypsPostId || 0);
             const sourceStatus = editor.querySelector('[data-yps-assist-status]');
             const aiStatus = editor.querySelector('[data-yps-ai-status]');
             const aiButtons = Array.from(editor.querySelectorAll('[data-yps-ai-field], [data-yps-ai-all]'));
 
-            if (!YPS_EDITOR.aiConfigured) {
+            if (!YABLSEO_EDITOR.aiConfigured) {
                 aiButtons.forEach(function (button) {
                     button.disabled = true;
-                    button.title = YPS_EDITOR.labels.aiUnavailable;
+                    button.title = YABLSEO_EDITOR.labels.aiUnavailable;
                 });
             }
 
@@ -938,47 +938,47 @@
                     if (!postId) { return; }
                     const buttons = Array.from(editor.querySelectorAll('[data-yps-mirror-post]'));
                     buttons.forEach(function (item) { item.disabled = true; });
-                    if (sourceStatus) { sourceStatus.textContent = YPS_EDITOR.labels.working; }
+                    if (sourceStatus) { sourceStatus.textContent = YABLSEO_EDITOR.labels.working; }
                     try {
-                        const result = await post(YPS_EDITOR.ajaxUrl, YPS_EDITOR.nonce, 'yseo_mirror_post_metadata', {post_id: postId, scope: button.dataset.ypsMirrorPost || 'search'});
-                        if (sourceStatus) { sourceStatus.textContent = result.message || YPS_EDITOR.labels.mirrorDone; }
+                        const result = await post(YABLSEO_EDITOR.ajaxUrl, YABLSEO_EDITOR.nonce, 'yseo_mirror_post_metadata', {post_id: postId, scope: button.dataset.ypsMirrorPost || 'search'});
+                        if (sourceStatus) { sourceStatus.textContent = result.message || YABLSEO_EDITOR.labels.mirrorDone; }
                         window.setTimeout(function () { window.location.reload(); }, 350);
                     } catch (error) {
-                        if (sourceStatus) { sourceStatus.textContent = error && error.message ? error.message : YPS_EDITOR.labels.failed; }
+                        if (sourceStatus) { sourceStatus.textContent = error && error.message ? error.message : YABLSEO_EDITOR.labels.failed; }
                         buttons.forEach(function (item) { item.disabled = false; });
                     }
                 });
             });
 
             async function generate(targetField) {
-                if (!postId || !YPS_EDITOR.aiConfigured) {
-                    if (aiStatus) { aiStatus.textContent = YPS_EDITOR.labels.aiUnavailable; }
+                if (!postId || !YABLSEO_EDITOR.aiConfigured) {
+                    if (aiStatus) { aiStatus.textContent = YABLSEO_EDITOR.labels.aiUnavailable; }
                     return;
                 }
                 aiButtons.forEach(function (button) { button.disabled = true; });
                 const progressFields = targetField ? [targetField] : ['focus_keyphrase', 'focus_keyphrases', 'seo_title', 'meta_description'];
-                const progressNodes = progressFields.map(function (field) { return editor.querySelector('[name="yps_' + field + '"]'); }).filter(Boolean);
+                const progressNodes = progressFields.map(function (field) { return editor.querySelector('[name="yablseo_' + field + '"]'); }).filter(Boolean);
                 progressNodes.forEach(function (node) { setAiFieldProgress(node, true); });
-                if (aiStatus) { aiStatus.textContent = YPS_EDITOR.labels.working; }
+                if (aiStatus) { aiStatus.textContent = YABLSEO_EDITOR.labels.working; }
                 try {
-                    const result = await post(YPS_EDITOR.ajaxUrl, YPS_EDITOR.nonce, 'yseo_ai_suggest_post', {post_id: postId, field: targetField || ''});
+                    const result = await post(YABLSEO_EDITOR.ajaxUrl, YABLSEO_EDITOR.nonce, 'yseo_ai_suggest_post', {post_id: postId, field: targetField || ''});
                     const suggestions = result && result.suggestions ? result.suggestions : {};
                     const fields = targetField ? [targetField] : ['focus_keyphrase', 'focus_keyphrases', 'seo_title', 'meta_description'];
                     fields.forEach(function (field) {
                         if (!suggestions[field]) { return; }
-                        const input = editor.querySelector('[name="yps_' + field + '"]');
+                        const input = editor.querySelector('[name="yablseo_' + field + '"]');
                         if (!input) { return; }
                         input.value = suggestions[field];
                         input.dispatchEvent(new Event('input', {bubbles: true}));
                         input.dispatchEvent(new Event('change', {bubbles: true}));
                     });
                     if (typeof editor.__yseoRefreshAnalysis === 'function') { editor.__yseoRefreshAnalysis(false); }
-                    if (aiStatus) { aiStatus.textContent = result.message || YPS_EDITOR.labels.aiReview; }
+                    if (aiStatus) { aiStatus.textContent = result.message || YABLSEO_EDITOR.labels.aiReview; }
                 } catch (error) {
-                    if (aiStatus) { aiStatus.textContent = error && error.message ? error.message : YPS_EDITOR.labels.failed; }
+                    if (aiStatus) { aiStatus.textContent = error && error.message ? error.message : YABLSEO_EDITOR.labels.failed; }
                 } finally {
                     progressNodes.forEach(function (node) { setAiFieldProgress(node, false); });
-                    aiButtons.forEach(function (button) { button.disabled = !YPS_EDITOR.aiConfigured; });
+                    aiButtons.forEach(function (button) { button.disabled = !YABLSEO_EDITOR.aiConfigured; });
                 }
             }
 
@@ -993,22 +993,22 @@
                 const contentButtons = Array.from(contentAssist.querySelectorAll('[data-yps-ai-content]'));
                 const contentStatus = contentAssist.querySelector('[data-yps-ai-content-status]');
                 const contentOutput = contentAssist.querySelector('[data-yps-ai-content-output]');
-                if (!YPS_EDITOR.aiConfigured) {
-                    contentButtons.forEach(function (button) { button.disabled = true; button.title = YPS_EDITOR.labels.aiUnavailable; });
+                if (!YABLSEO_EDITOR.aiConfigured) {
+                    contentButtons.forEach(function (button) { button.disabled = true; button.title = YABLSEO_EDITOR.labels.aiUnavailable; });
                 }
                 contentButtons.forEach(function (button) {
                     button.addEventListener('click', async function () {
-                        if (!postId || !YPS_EDITOR.aiConfigured) { if (contentStatus) { contentStatus.textContent = YPS_EDITOR.labels.aiUnavailable; } return; }
+                        if (!postId || !YABLSEO_EDITOR.aiConfigured) { if (contentStatus) { contentStatus.textContent = YABLSEO_EDITOR.labels.aiUnavailable; } return; }
                         contentButtons.forEach(function (item) { item.disabled = true; });
-                        if (contentStatus) { contentStatus.textContent = YPS_EDITOR.labels.working; }
+                        if (contentStatus) { contentStatus.textContent = YABLSEO_EDITOR.labels.working; }
                         try {
-                            const result = await post(YPS_EDITOR.ajaxUrl, YPS_EDITOR.nonce, 'yseo_ai_content_assist', {post_id: postId, mode: button.dataset.ypsAiContent || ''});
+                            const result = await post(YABLSEO_EDITOR.ajaxUrl, YABLSEO_EDITOR.nonce, 'yseo_ai_content_assist', {post_id: postId, mode: button.dataset.ypsAiContent || ''});
                             if (contentOutput) { contentOutput.value = result.text || ''; contentOutput.hidden = !result.text; }
-                            if (contentStatus) { contentStatus.textContent = result.message || YPS_EDITOR.labels.aiContentReview; }
+                            if (contentStatus) { contentStatus.textContent = result.message || YABLSEO_EDITOR.labels.aiContentReview; }
                         } catch (error) {
-                            if (contentStatus) { contentStatus.textContent = error && error.message ? error.message : YPS_EDITOR.labels.failed; }
+                            if (contentStatus) { contentStatus.textContent = error && error.message ? error.message : YABLSEO_EDITOR.labels.failed; }
                         } finally {
-                            contentButtons.forEach(function (item) { item.disabled = !YPS_EDITOR.aiConfigured; });
+                            contentButtons.forEach(function (item) { item.disabled = !YABLSEO_EDITOR.aiConfigured; });
                         }
                     });
                 });
@@ -1025,25 +1025,25 @@
                     loadDraft.addEventListener('click', function () {
                         ['focus_keyphrase', 'focus_keyphrases', 'seo_title', 'meta_description'].forEach(function (field) {
                             if (!draftValues[field]) { return; }
-                            const input = editor.querySelector('[name="yps_' + field + '"]');
+                            const input = editor.querySelector('[name="yablseo_' + field + '"]');
                             if (!input) { return; }
                             input.value = draftValues[field];
                             input.dispatchEvent(new Event('input', {bubbles: true}));
                             input.dispatchEvent(new Event('change', {bubbles: true}));
                         });
                         if (typeof editor.__yseoRefreshAnalysis === 'function') { editor.__yseoRefreshAnalysis(false); }
-                        if (draftStatus) { draftStatus.textContent = YPS_EDITOR.labels.draftLoaded; }
+                        if (draftStatus) { draftStatus.textContent = YABLSEO_EDITOR.labels.draftLoaded; }
                     });
                 }
                 if (discardDraft) {
                     discardDraft.addEventListener('click', async function () {
                         discardDraft.disabled = true;
                         try {
-                            const result = await post(YPS_EDITOR.ajaxUrl, YPS_EDITOR.nonce, 'yseo_ai_discard_draft', {post_id: postId});
-                            if (draftStatus) { draftStatus.textContent = result.message || YPS_EDITOR.labels.draftDiscarded; }
+                            const result = await post(YABLSEO_EDITOR.ajaxUrl, YABLSEO_EDITOR.nonce, 'yseo_ai_discard_draft', {post_id: postId});
+                            if (draftStatus) { draftStatus.textContent = result.message || YABLSEO_EDITOR.labels.draftDiscarded; }
                             window.setTimeout(function () { draftBox.remove(); }, 450);
                         } catch (error) {
-                            if (draftStatus) { draftStatus.textContent = error && error.message ? error.message : YPS_EDITOR.labels.failed; }
+                            if (draftStatus) { draftStatus.textContent = error && error.message ? error.message : YABLSEO_EDITOR.labels.failed; }
                             discardDraft.disabled = false;
                         }
                     });
@@ -1053,7 +1053,7 @@
     }
 
     function initMetadataMirror() {
-        if (typeof YPS_ADMIN === 'undefined') { return; }
+        if (typeof YABLSEO_ADMIN === 'undefined') { return; }
         const status = document.getElementById('yps-mirror-status');
         const search = document.getElementById('yps-mirror-search');
         const all = document.getElementById('yps-mirror-all');
@@ -1064,22 +1064,22 @@
             [search, all, resume, reset].forEach(function (button) { if (button) { button.disabled = value; } });
         }
         function render(state) {
-            if (!state || state.status === 'reset') { status.textContent = YPS_ADMIN.labels.mirrorEmpty; return; }
+            if (!state || state.status === 'reset') { status.textContent = YABLSEO_ADMIN.labels.mirrorEmpty; return; }
             const banner = document.createElement('div');
             banner.className = 'yps-inline-job-state ' + (state.status === 'running' ? 'is-running' : (state.status === 'complete' ? 'is-complete' : 'is-stopped'));
             const title = document.createElement('strong');
-            title.textContent = state.status === 'running' ? YPS_ADMIN.labels.mirrorRunning : (state.status === 'complete' ? YPS_ADMIN.labels.mirrorComplete : YPS_ADMIN.labels.migrationStopped);
+            title.textContent = state.status === 'running' ? YABLSEO_ADMIN.labels.mirrorRunning : (state.status === 'complete' ? YABLSEO_ADMIN.labels.mirrorComplete : YABLSEO_ADMIN.labels.migrationStopped);
             const bar = document.createElement('span'); bar.className = 'yps-inline-job-progress' + (state.status === 'running' ? ' is-indeterminate' : '');
             const fill = document.createElement('i'); fill.style.width = state.status === 'running' ? '45%' : '100%'; bar.appendChild(fill);
             banner.append(title, bar);
             const list = document.createElement('ul');
             [
-                [YPS_ADMIN.labels.mirrorStatus, state.status],
-                [YPS_ADMIN.labels.mirrorPhase, state.phase || ''],
-                [YPS_ADMIN.labels.mirrorPosts, state.processed_posts || 0],
-                [YPS_ADMIN.labels.mirrorCopied, state.copied_values || 0],
-                [YPS_ADMIN.labels.mirrorMatched, state.matched_values || 0],
-                [YPS_ADMIN.labels.mirrorPreserved, state.preserved_values || 0]
+                [YABLSEO_ADMIN.labels.mirrorStatus, state.status],
+                [YABLSEO_ADMIN.labels.mirrorPhase, state.phase || ''],
+                [YABLSEO_ADMIN.labels.mirrorPosts, state.processed_posts || 0],
+                [YABLSEO_ADMIN.labels.mirrorCopied, state.copied_values || 0],
+                [YABLSEO_ADMIN.labels.mirrorMatched, state.matched_values || 0],
+                [YABLSEO_ADMIN.labels.mirrorPreserved, state.preserved_values || 0]
             ].forEach(function (item) { const li = document.createElement('li'); li.textContent = item[0] + ': ' + item[1]; list.appendChild(li); });
             status.replaceChildren(banner, list);
             if (state.message) { const p = document.createElement('p'); p.textContent = state.message; status.appendChild(p); }
@@ -1087,7 +1087,7 @@
         async function continueRun(state) {
             while (state && state.status === 'running') {
                 await sleep(Math.max(75, Number(state.recommended_delay_ms || 100)));
-                try { state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_metadata_mirror_step'); }
+                try { state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_metadata_mirror_step'); }
                 catch (error) { if (error.status === 429) { await sleep(Math.max(200, error.retryAfterMs || 400)); continue; } throw error; }
                 render(state);
             }
@@ -1096,20 +1096,20 @@
         async function run(scope) {
             busy(true);
             try {
-                let state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_metadata_mirror_start', {scope: scope});
+                let state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_metadata_mirror_start', {scope: scope});
                 render(state);
                 await continueRun(state);
-            } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; }
+            } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; }
             finally { busy(false); }
         }
         if (search) { search.addEventListener('click', function () { run('search'); }); }
         if (all) { all.addEventListener('click', function () { run('all'); }); }
-        if (resume) { resume.addEventListener('click', async function () { busy(true); try { let state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_metadata_mirror_step'); render(state); await continueRun(state); } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; } finally { busy(false); } }); }
-        if (reset) { reset.addEventListener('click', async function () { busy(true); try { render(await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_metadata_mirror_reset')); } catch (error) { status.textContent = error.message; } finally { busy(false); } }); }
+        if (resume) { resume.addEventListener('click', async function () { busy(true); try { let state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_metadata_mirror_step'); render(state); await continueRun(state); } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; } finally { busy(false); } }); }
+        if (reset) { reset.addEventListener('click', async function () { busy(true); try { render(await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_metadata_mirror_reset')); } catch (error) { status.textContent = error.message; } finally { busy(false); } }); }
     }
 
     function initPortableMetadataMirror() {
-        if (typeof YPS_ADMIN === 'undefined') { return; }
+        if (typeof YABLSEO_ADMIN === 'undefined') { return; }
         const status = document.getElementById('yseo-portable-mirror-status');
         const starts = Array.from(document.querySelectorAll('.yseo-portable-mirror-start'));
         const resume = document.getElementById('yseo-portable-mirror-resume');
@@ -1121,17 +1121,17 @@
             if (reset) { reset.disabled = value; }
         }
         function render(state) {
-            if (!state || state.status === 'reset') { status.textContent = YPS_ADMIN.labels.portableEmpty; return; }
+            if (!state || state.status === 'reset') { status.textContent = YABLSEO_ADMIN.labels.portableEmpty; return; }
             const list = document.createElement('ul');
             [
-                [YPS_ADMIN.labels.portableProvider, state.provider_label || state.provider_id || ''],
-                [YPS_ADMIN.labels.mirrorStatus, state.status || ''],
-                [YPS_ADMIN.labels.mirrorPhase, state.phase || ''],
-                [YPS_ADMIN.labels.mirrorPosts, state.processed_posts || 0],
-                [YPS_ADMIN.labels.terms, state.processed_terms || 0],
-                [YPS_ADMIN.labels.mirrorCopied, state.copied_values || 0],
-                [YPS_ADMIN.labels.mirrorMatched, state.matched_values || 0],
-                [YPS_ADMIN.labels.mirrorPreserved, state.preserved_values || 0]
+                [YABLSEO_ADMIN.labels.portableProvider, state.provider_label || state.provider_id || ''],
+                [YABLSEO_ADMIN.labels.mirrorStatus, state.status || ''],
+                [YABLSEO_ADMIN.labels.mirrorPhase, state.phase || ''],
+                [YABLSEO_ADMIN.labels.mirrorPosts, state.processed_posts || 0],
+                [YABLSEO_ADMIN.labels.terms, state.processed_terms || 0],
+                [YABLSEO_ADMIN.labels.mirrorCopied, state.copied_values || 0],
+                [YABLSEO_ADMIN.labels.mirrorMatched, state.matched_values || 0],
+                [YABLSEO_ADMIN.labels.mirrorPreserved, state.preserved_values || 0]
             ].forEach(function (item) { const li = document.createElement('li'); li.textContent = item[0] + ': ' + item[1]; list.appendChild(li); });
             status.replaceChildren(list);
             if (state.message) { const p = document.createElement('p'); p.textContent = state.message; status.appendChild(p); }
@@ -1139,7 +1139,7 @@
         async function continueRun(state) {
             while (state && state.status === 'running') {
                 await sleep(Math.max(90, Number(state.recommended_delay_ms || 120)));
-                try { state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_portable_mirror_step'); }
+                try { state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_portable_mirror_step'); }
                 catch (error) { if (error.status === 429) { await sleep(Math.max(250, error.retryAfterMs || 400)); continue; } throw error; }
                 render(state);
             }
@@ -1149,19 +1149,19 @@
             button.addEventListener('click', async function () {
                 busy(true);
                 try {
-                    let state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_portable_mirror_start', {provider_id: button.dataset.yseoPortableProvider || ''});
+                    let state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_portable_mirror_start', {provider_id: button.dataset.yseoPortableProvider || ''});
                     render(state);
                     await continueRun(state);
-                } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; }
+                } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; }
                 finally { busy(false); }
             });
         });
-        if (resume) { resume.addEventListener('click', async function () { busy(true); try { let state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_portable_mirror_step'); render(state); await continueRun(state); } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; } finally { busy(false); } }); }
-        if (reset) { reset.addEventListener('click', async function () { busy(true); try { render(await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_portable_mirror_reset')); } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; } finally { busy(false); } }); }
+        if (resume) { resume.addEventListener('click', async function () { busy(true); try { let state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_portable_mirror_step'); render(state); await continueRun(state); } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; } finally { busy(false); } }); }
+        if (reset) { reset.addEventListener('click', async function () { busy(true); try { render(await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_portable_mirror_reset')); } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; } finally { busy(false); } }); }
     }
 
     function initAiMetadataBulk() {
-        if (typeof YPS_ADMIN === 'undefined') { return; }
+        if (typeof YABLSEO_ADMIN === 'undefined') { return; }
         const status = document.getElementById('yps-ai-metadata-status');
         const start = document.getElementById('yps-ai-metadata-start');
         const resume = document.getElementById('yps-ai-metadata-resume');
@@ -1179,16 +1179,16 @@
         }
         function selectedFields() { return fieldInputs.filter(function (input) { return input.checked; }).map(function (input) { return input.value; }); }
         function render(state) {
-            if (!state || state.status === 'reset') { status.textContent = YPS_ADMIN.labels.aiJobEmpty; return; }
+            if (!state || state.status === 'reset') { status.textContent = YABLSEO_ADMIN.labels.aiJobEmpty; return; }
             const list = document.createElement('ul');
             [
-                [YPS_ADMIN.labels.aiJobStatus, state.status],
-                [YPS_ADMIN.labels.aiJobPosts, state.processed_posts || 0],
-                [YPS_ADMIN.labels.aiJobGenerated, state.generated_posts || 0],
-                [YPS_ADMIN.labels.aiJobUpdated, state.updated_fields || 0],
-                [YPS_ADMIN.labels.aiJobDrafted, state.drafted_fields || 0],
-                [YPS_ADMIN.labels.aiJobPreserved, state.preserved_fields || 0],
-                [YPS_ADMIN.labels.aiJobMirrored, state.mirrored_source_values || 0]
+                [YABLSEO_ADMIN.labels.aiJobStatus, state.status],
+                [YABLSEO_ADMIN.labels.aiJobPosts, state.processed_posts || 0],
+                [YABLSEO_ADMIN.labels.aiJobGenerated, state.generated_posts || 0],
+                [YABLSEO_ADMIN.labels.aiJobUpdated, state.updated_fields || 0],
+                [YABLSEO_ADMIN.labels.aiJobDrafted, state.drafted_fields || 0],
+                [YABLSEO_ADMIN.labels.aiJobPreserved, state.preserved_fields || 0],
+                [YABLSEO_ADMIN.labels.aiJobMirrored, state.mirrored_source_values || 0]
             ].forEach(function (item) { const li = document.createElement('li'); li.textContent = item[0] + ': ' + item[1]; list.appendChild(li); });
             status.replaceChildren(list);
             if (state.message) { const p = document.createElement('p'); p.textContent = state.message; status.appendChild(p); }
@@ -1196,7 +1196,7 @@
         async function continueRun(state) {
             while (state && state.status === 'running') {
                 await sleep(Math.max(100, Number(state.recommended_delay_ms || 150)));
-                try { state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_ai_metadata_step'); }
+                try { state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_ai_metadata_step'); }
                 catch (error) { if (error.status === 429) { await sleep(Math.max(400, error.retryAfterMs || 750)); continue; } throw error; }
                 render(state);
             }
@@ -1204,19 +1204,19 @@
         }
         start.addEventListener('click', async function () {
             const fields = selectedFields();
-            if (!fields.length) { status.textContent = YPS_ADMIN.labels.selectAiField; return; }
+            if (!fields.length) { status.textContent = YABLSEO_ADMIN.labels.selectAiField; return; }
             const selected = policy.value || 'fill-missing';
-            if (selected === 'replace' && !window.confirm(YPS_ADMIN.labels.confirmAiReplace)) { return; }
+            if (selected === 'replace' && !window.confirm(YABLSEO_ADMIN.labels.confirmAiReplace)) { return; }
             busy(true);
             try {
-                let state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_ai_metadata_start', {policy: selected, fields: fields.join(',')});
+                let state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_ai_metadata_start', {policy: selected, fields: fields.join(',')});
                 render(state);
                 await continueRun(state);
-            } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; }
+            } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; }
             finally { busy(false); }
         });
-        if (resume) { resume.addEventListener('click', async function () { busy(true); try { let state = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_ai_metadata_step'); render(state); await continueRun(state); } catch (error) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; } finally { busy(false); } }); }
-        if (reset) { reset.addEventListener('click', async function () { busy(true); try { render(await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_ai_metadata_reset')); } catch (error) { status.textContent = error.message; } finally { busy(false); } }); }
+        if (resume) { resume.addEventListener('click', async function () { busy(true); try { let state = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_ai_metadata_step'); render(state); await continueRun(state); } catch (error) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; } finally { busy(false); } }); }
+        if (reset) { reset.addEventListener('click', async function () { busy(true); try { render(await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_ai_metadata_reset')); } catch (error) { status.textContent = error.message; } finally { busy(false); } }); }
     }
 
     function initSettingsWorkspace() {
@@ -1386,7 +1386,7 @@
             const list = document.createElement('div');
             list.className = 'yps-model-list';
             list.setAttribute('role', 'listbox');
-            list.setAttribute('aria-label', select.getAttribute('aria-label') || ((window.YPS_EDITOR && YPS_EDITOR.labels && YPS_EDITOR.labels.options) ? YPS_EDITOR.labels.options : 'Options'));
+            list.setAttribute('aria-label', select.getAttribute('aria-label') || ((window.YABLSEO_EDITOR && YABLSEO_EDITOR.labels && YABLSEO_EDITOR.labels.options) ? YABLSEO_EDITOR.labels.options : 'Options'));
             popover.appendChild(list);
 
             const empty = document.createElement('div');
@@ -1504,7 +1504,7 @@
     }
 
     function initAiSettingsConnection() {
-        if (typeof YPS_AI_SETTINGS === 'undefined') { return; }
+        if (typeof YABLSEO_AI_SETTINGS === 'undefined') { return; }
         const button = document.getElementById('yseo-ai-test-connection');
         const status = document.getElementById('yseo-ai-connection-status');
         function normalizeModelSearch(value) {
@@ -1616,9 +1616,9 @@
         if (!button || !status) { return; }
         button.addEventListener('click', async function () {
             button.disabled = true;
-            status.textContent = YPS_AI_SETTINGS.labels.testing;
+            status.textContent = YABLSEO_AI_SETTINGS.labels.testing;
             try {
-                const result = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_test_connection');
+                const result = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_test_connection');
                 const details = [
                     result.workspace,
                     result.plan,
@@ -1629,35 +1629,35 @@
                     Number.isFinite(Number(result.models)) ? String(result.models) + ' text' : '',
                     Number.isFinite(Number(result.image_models)) ? String(result.image_models) + ' image' : ''
                 ].filter(Boolean).join(' · ');
-                status.textContent = (result.message || YPS_AI_SETTINGS.labels.connected) + (details ? ' ' + details : '');
+                status.textContent = (result.message || YABLSEO_AI_SETTINGS.labels.connected) + (details ? ' ' + details : '');
                 window.setTimeout(function () { window.location.reload(); }, 650);
             } catch (error) {
-                status.textContent = error && error.message ? error.message : YPS_AI_SETTINGS.labels.failed;
+                status.textContent = error && error.message ? error.message : YABLSEO_AI_SETTINGS.labels.failed;
                 button.disabled = false;
             }
         });
     }
 
     function initAiComputeCanary() {
-        if (typeof YPS_AI_SETTINGS === 'undefined') { return; }
+        if (typeof YABLSEO_AI_SETTINGS === 'undefined') { return; }
         const button = document.getElementById('yseo-ai-test-compute');
         const status = document.getElementById('yseo-ai-connection-status');
         if (!button || !status) { return; }
         button.addEventListener('click', async function () {
             button.disabled = true;
-            status.textContent = YPS_AI_SETTINGS.labels.testingCompute || '';
+            status.textContent = YABLSEO_AI_SETTINGS.labels.testingCompute || '';
             try {
-                const data = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_test_compute', {});
+                const data = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_test_compute', {});
                 const details = [data.model ? 'model ' + String(data.model) : '', data.mode ? 'transport ' + String(data.mode) : '', data.cost !== null && data.cost !== undefined ? 'cost ' + String(data.cost) : ''].filter(Boolean).join(' · ');
-                status.textContent = (data.message || YPS_AI_SETTINGS.labels.computeReady || '') + (details ? ' ' + details : '');
+                status.textContent = (data.message || YABLSEO_AI_SETTINGS.labels.computeReady || '') + (details ? ' ' + details : '');
             } catch (error) {
-                status.textContent = error && error.message ? error.message : YPS_AI_SETTINGS.labels.failed;
+                status.textContent = error && error.message ? error.message : YABLSEO_AI_SETTINGS.labels.failed;
             } finally { button.disabled = false; }
         });
     }
 
     function initAiSettingsCopilot() {
-        if (typeof YPS_AI_SETTINGS === 'undefined') { return; }
+        if (typeof YABLSEO_AI_SETTINGS === 'undefined') { return; }
         const status = document.querySelector('[data-yseo-ai-settings-status]');
         const scopeButtons = Array.from(document.querySelectorAll('[data-yseo-ai-settings-scope]'));
         const fieldButtons = Array.from(document.querySelectorAll('[data-yseo-ai-setting-field]'));
@@ -1683,11 +1683,11 @@
             const empty = names.map(fieldNode).filter(function (node) { return !!node && !node.value.trim(); });
             if (!empty.length) { return; }
             empty.forEach(function (node) { setAiFieldProgress(node, true); });
-            setStatus(YPS_AI_SETTINGS.labels.generatingImage || '');
+            setStatus(YABLSEO_AI_SETTINGS.labels.generatingImage || '');
             try {
                 const context = ['site_display_name', 'site_description', 'home_title', 'home_description', 'home_og_title', 'home_og_description'].map(function (name) { const node = fieldNode(name); return node && node.value.trim() ? node.value.trim() : ''; }).filter(Boolean).join(' · ');
-                const data = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_generate_site_image', {field: 'default_social_image', prompt: context});
-                if (!data.url) { throw new Error(YPS_AI_SETTINGS.labels.imageFailed || 'Error'); }
+                const data = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_generate_site_image', {field: 'default_social_image', prompt: context});
+                if (!data.url) { throw new Error(YABLSEO_AI_SETTINGS.labels.imageFailed || 'Error'); }
                 empty.forEach(function (node) {
                     node.value = data.url;
                     node.dispatchEvent(new Event('input', {bubbles: true}));
@@ -1703,15 +1703,15 @@
                 const node = fieldNode(name);
                 return !!node && (replaceExplicit || !node.value.trim());
             });
-            if (!eligible.length) { setStatus(YPS_AI_SETTINGS.labels.settingsReview || ''); return; }
+            if (!eligible.length) { setStatus(YABLSEO_AI_SETTINGS.labels.settingsReview || ''); return; }
             const buttons = scopeButtons.concat(fieldButtons).concat(imageButtons);
             const progressNodes = eligible.map(fieldNode).filter(Boolean);
             progressNodes.forEach(function (node) { setAiFieldProgress(node, true); });
             buttons.forEach(function (button) { button.disabled = true; });
             if (trigger) { trigger.classList.add('is-working'); }
-            setStatus(YPS_AI_SETTINGS.labels.draftingSettings || '');
+            setStatus(YABLSEO_AI_SETTINGS.labels.draftingSettings || '');
             try {
-                const data = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_suggest_settings', {fields: eligible.join(',')});
+                const data = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_suggest_settings', {fields: eligible.join(',')});
                 const suggestions = data && data.suggestions ? data.suggestions : {};
                 Object.keys(suggestions).forEach(function (name) {
                     const node = fieldNode(name);
@@ -1720,9 +1720,9 @@
                     node.dispatchEvent(new Event('input', {bubbles: true}));
                     node.dispatchEvent(new Event('change', {bubbles: true}));
                 });
-                setStatus(data.message || YPS_AI_SETTINGS.labels.settingsReview || '');
+                setStatus(data.message || YABLSEO_AI_SETTINGS.labels.settingsReview || '');
             } catch (error) {
-                setStatus(error && error.message ? error.message : (YPS_AI_SETTINGS.labels.failed || 'Error'));
+                setStatus(error && error.message ? error.message : (YABLSEO_AI_SETTINGS.labels.failed || 'Error'));
             } finally {
                 progressNodes.forEach(function (node) { setAiFieldProgress(node, false); });
                 buttons.forEach(function (button) { button.disabled = false; });
@@ -1739,14 +1739,14 @@
                 if (!node || (!replaceExplicit && node.value.trim())) { return; }
                 eligible.push(slot); nodes.push(node);
             });
-            if (!eligible.length) { setSocialStatus(YPS_AI_SETTINGS.labels.settingsReview || ''); return; }
+            if (!eligible.length) { setSocialStatus(YABLSEO_AI_SETTINGS.labels.settingsReview || ''); return; }
             const allButtons = scopeButtons.concat(fieldButtons).concat(imageButtons).concat(socialTextButtons).concat(socialRowButtons).concat(socialImageButtons);
             nodes.forEach(function (node) { setAiFieldProgress(node, true); });
             allButtons.forEach(function (item) { item.disabled = true; });
             if (trigger) { trigger.classList.add('is-working'); }
-            setSocialStatus(YPS_AI_SETTINGS.labels.draftingSettings || '');
+            setSocialStatus(YABLSEO_AI_SETTINGS.labels.draftingSettings || '');
             try {
-                const data = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_suggest_social_template', {group: group, key: key, fields: eligible.join(',')});
+                const data = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_suggest_social_template', {group: group, key: key, fields: eligible.join(',')});
                 const suggestions = data && data.suggestions ? data.suggestions : {};
                 eligible.forEach(function (slot, index) {
                     const node = nodes[index];
@@ -1755,9 +1755,9 @@
                     node.dispatchEvent(new Event('input', {bubbles: true}));
                     node.dispatchEvent(new Event('change', {bubbles: true}));
                 });
-                setSocialStatus(data.message || YPS_AI_SETTINGS.labels.settingsReview || '');
+                setSocialStatus(data.message || YABLSEO_AI_SETTINGS.labels.settingsReview || '');
             } catch (error) {
-                setSocialStatus(error && error.message ? error.message : (YPS_AI_SETTINGS.labels.failed || 'Error'));
+                setSocialStatus(error && error.message ? error.message : (YABLSEO_AI_SETTINGS.labels.failed || 'Error'));
             } finally {
                 nodes.forEach(function (node) { setAiFieldProgress(node, false); });
                 allButtons.forEach(function (item) { item.disabled = false; });
@@ -1789,8 +1789,8 @@
                     const row = button.closest('[data-yseo-ai-social-row]');
                     return !!row && Array.from(row.querySelectorAll('[data-yseo-ai-social-template-field]')).some(function (item) { const target = document.getElementById(item.dataset.yseoAiSocialTarget || ''); return !!target && !target.value.trim(); });
                 });
-                if (!rows.length) { setSocialStatus(YPS_AI_SETTINGS.labels.settingsReview || ''); return; }
-                if (!window.confirm(YPS_AI_SETTINGS.labels.confirmSocialTemplateBatch || '')) { return; }
+                if (!rows.length) { setSocialStatus(YABLSEO_AI_SETTINGS.labels.settingsReview || ''); return; }
+                if (!window.confirm(YABLSEO_AI_SETTINGS.labels.confirmSocialTemplateBatch || '')) { return; }
                 socialAllButton.disabled = true;
                 socialAllButton.classList.add('is-working');
                 try {
@@ -1800,7 +1800,7 @@
                         const fields = Array.from(row.querySelectorAll('[data-yseo-ai-social-template-field]'));
                         await requestSocialTemplate(button.dataset.yseoAiSocialGroup || '', button.dataset.yseoAiSocialKey || '', fields.map(function (item) { return item.dataset.yseoAiSocialSlot || ''; }), fields.map(function (item) { return item.dataset.yseoAiSocialTarget || ''; }), false, button);
                     }
-                    setSocialStatus(YPS_AI_SETTINGS.labels.settingsReview || '');
+                    setSocialStatus(YABLSEO_AI_SETTINGS.labels.settingsReview || '');
                 } finally {
                     socialAllButton.disabled = false;
                     socialAllButton.classList.remove('is-working');
@@ -1819,21 +1819,21 @@
                 allButtons.forEach(function (item) { item.disabled = true; });
                 setAiFieldProgress(input, true);
                 button.classList.add('is-working');
-                setSocialStatus(YPS_AI_SETTINGS.labels.generatingImage || '');
+                setSocialStatus(YABLSEO_AI_SETTINGS.labels.generatingImage || '');
                 try {
-                    const data = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_generate_social_template_image', {
+                    const data = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_generate_social_template_image', {
                         group: button.dataset.yseoAiSocialGroup || '',
                         key: button.dataset.yseoAiSocialKey || '',
                         slot: button.dataset.yseoAiSocialSlot || '',
                         prompt: [siteContext, rowText].filter(Boolean).join(' · ')
                     });
-                    if (!data.url) { throw new Error(YPS_AI_SETTINGS.labels.imageFailed || 'Error'); }
+                    if (!data.url) { throw new Error(YABLSEO_AI_SETTINGS.labels.imageFailed || 'Error'); }
                     input.value = data.url;
                     input.dispatchEvent(new Event('input', {bubbles: true}));
                     input.dispatchEvent(new Event('change', {bubbles: true}));
-                    setSocialStatus(data.message || YPS_AI_SETTINGS.labels.imageGeneratedReview || '');
+                    setSocialStatus(data.message || YABLSEO_AI_SETTINGS.labels.imageGeneratedReview || '');
                 } catch (error) {
-                    setSocialStatus(error && error.message ? error.message : (YPS_AI_SETTINGS.labels.imageFailed || 'Error'));
+                    setSocialStatus(error && error.message ? error.message : (YABLSEO_AI_SETTINGS.labels.imageFailed || 'Error'));
                 } finally {
                     setAiFieldProgress(input, false);
                     allButtons.forEach(function (item) { item.disabled = false; });
@@ -1848,10 +1848,10 @@
                     await request(scopes[scope] || [], false, button);
                     if ('social' === scope || 'all' === scope) {
                         await generateSharedSocialImage(button);
-                        setStatus(YPS_AI_SETTINGS.labels.settingsReview || '');
+                        setStatus(YABLSEO_AI_SETTINGS.labels.settingsReview || '');
                     }
                 } catch (error) {
-                    setStatus(error && error.message ? error.message : (YPS_AI_SETTINGS.labels.failed || 'Error'));
+                    setStatus(error && error.message ? error.message : (YABLSEO_AI_SETTINGS.labels.failed || 'Error'));
                 }
             });
         });
@@ -1870,17 +1870,17 @@
                 buttons.forEach(function (item) { item.disabled = true; });
                 setAiFieldProgress(input, true);
                 button.classList.add('is-working');
-                setStatus(YPS_AI_SETTINGS.labels.generatingImage || '');
+                setStatus(YABLSEO_AI_SETTINGS.labels.generatingImage || '');
                 try {
                     const context = ['site_display_name', 'site_description', 'home_title', 'home_description', 'home_og_title', 'home_og_description', 'home_twitter_title', 'home_twitter_description'].map(function (name) { const node = fieldNode(name); return node && node.value.trim() ? node.value.trim() : ''; }).filter(Boolean).join(' · ');
-                    const data = await post(YPS_AI_SETTINGS.ajaxUrl, YPS_AI_SETTINGS.nonce, 'yseo_ai_generate_site_image', {field: field, prompt: context});
-                    if (!data.url) { throw new Error(YPS_AI_SETTINGS.labels.imageFailed || 'Error'); }
+                    const data = await post(YABLSEO_AI_SETTINGS.ajaxUrl, YABLSEO_AI_SETTINGS.nonce, 'yseo_ai_generate_site_image', {field: field, prompt: context});
+                    if (!data.url) { throw new Error(YABLSEO_AI_SETTINGS.labels.imageFailed || 'Error'); }
                     input.value = data.url;
                     input.dispatchEvent(new Event('input', {bubbles: true}));
                     input.dispatchEvent(new Event('change', {bubbles: true}));
-                    setStatus(data.message || YPS_AI_SETTINGS.labels.imageGeneratedReview || '');
+                    setStatus(data.message || YABLSEO_AI_SETTINGS.labels.imageGeneratedReview || '');
                 } catch (error) {
-                    setStatus(error && error.message ? error.message : (YPS_AI_SETTINGS.labels.imageFailed || 'Error'));
+                    setStatus(error && error.message ? error.message : (YABLSEO_AI_SETTINGS.labels.imageFailed || 'Error'));
                 } finally {
                     setAiFieldProgress(input, false);
                     buttons.forEach(function (item) { item.disabled = false; });
@@ -1891,7 +1891,7 @@
     }
 
     function initSeoImageStudio() {
-        if (typeof YPS_EDITOR === 'undefined') { return; }
+        if (typeof YABLSEO_EDITOR === 'undefined') { return; }
         const studio = document.querySelector('[data-yps-seo-image-studio]');
         if (!studio) { return; }
         const button = studio.querySelector('[data-yps-seo-image-generate]');
@@ -1902,33 +1902,33 @@
         const preview = studio.querySelector('[data-yps-seo-image-preview]');
         const editor = studio.closest('.yps-seo-editor');
         const postId = editor ? Number(editor.dataset.ypsPostId || 0) : 0;
-        const ogImage = editor ? editor.querySelector('[name="yps_og_image"]') : null;
-        const twitterImage = editor ? editor.querySelector('[name="yps_twitter_image"]') : null;
+        const ogImage = editor ? editor.querySelector('[name="yablseo_og_image"]') : null;
+        const twitterImage = editor ? editor.querySelector('[name="yablseo_twitter_image"]') : null;
         if (!button || !status || !ogImage) { return; }
         button.addEventListener('click', async function () {
             button.disabled = true;
             setAiFieldProgress(ogImage, true);
-            status.textContent = YPS_EDITOR.labels.generatingImage;
+            status.textContent = YABLSEO_EDITOR.labels.generatingImage;
             try {
                 const form = new URLSearchParams();
                 form.set('action', 'yseo_ai_generate_seo_image');
-                form.set('nonce', YPS_EDITOR.nonce);
+                form.set('nonce', YABLSEO_EDITOR.nonce);
                 form.set('post_id', String(postId));
                 form.set('model', model ? model.value : '');
                 form.set('prompt', prompt ? prompt.value : '');
                 form.set('aspect_ratio', ratio ? ratio.value : '16:9');
-                const response = await fetch(YPS_EDITOR.ajaxUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: form.toString() });
+                const response = await fetch(YABLSEO_EDITOR.ajaxUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: form.toString() });
                 const json = await response.json();
-                if (!response.ok || !json || !json.success) { throw new Error(json && json.data && json.data.message ? json.data.message : YPS_EDITOR.labels.imageFailed); }
+                if (!response.ok || !json || !json.success) { throw new Error(json && json.data && json.data.message ? json.data.message : YABLSEO_EDITOR.labels.imageFailed); }
                 const data = json.data || {};
-                if (!data.url) { throw new Error(YPS_EDITOR.labels.imageNoUrl); }
+                if (!data.url) { throw new Error(YABLSEO_EDITOR.labels.imageNoUrl); }
                 ogImage.value = data.url;
                 ogImage.dispatchEvent(new Event('input', { bubbles: true }));
                 if (twitterImage && !twitterImage.value.trim()) { twitterImage.value = data.url; twitterImage.dispatchEvent(new Event('input', { bubbles: true })); }
-                if (preview) { preview.innerHTML = ''; const img = document.createElement('img'); img.src = data.url; img.alt = ''; preview.appendChild(img); const label = document.createElement('span'); label.textContent = YPS_EDITOR.labels.imageGeneratedReview; preview.appendChild(label); }
-                status.textContent = data.message || YPS_EDITOR.labels.imageSavedReview;
+                if (preview) { preview.innerHTML = ''; const img = document.createElement('img'); img.src = data.url; img.alt = ''; preview.appendChild(img); const label = document.createElement('span'); label.textContent = YABLSEO_EDITOR.labels.imageGeneratedReview; preview.appendChild(label); }
+                status.textContent = data.message || YABLSEO_EDITOR.labels.imageSavedReview;
             } catch (error) {
-                status.textContent = error && error.message ? error.message : YPS_EDITOR.labels.imageFailed;
+                status.textContent = error && error.message ? error.message : YABLSEO_EDITOR.labels.imageFailed;
             } finally { button.disabled = false; }
         });
     }
@@ -2271,8 +2271,8 @@
             const input = targetId ? document.getElementById(targetId) : null;
             if (!input) { return; }
             const frame = wp.media({
-                title: typeof YPS_MEDIA !== 'undefined' ? YPS_MEDIA.title : 'Select or upload image',
-                button: { text: typeof YPS_MEDIA !== 'undefined' ? YPS_MEDIA.button : 'Use image' },
+                title: typeof YABLSEO_MEDIA !== 'undefined' ? YABLSEO_MEDIA.title : 'Select or upload image',
+                button: { text: typeof YABLSEO_MEDIA !== 'undefined' ? YABLSEO_MEDIA.button : 'Use image' },
                 library: { type: 'image' },
                 multiple: false
             });
@@ -2355,7 +2355,7 @@
     }
 
     function initContentPlanner() {
-        if (typeof YPS_ADMIN === 'undefined') { return; }
+        if (typeof YABLSEO_ADMIN === 'undefined') { return; }
         const root = document.querySelector('[data-yps-content-planner]');
         if (!root) { return; }
         const button = root.querySelector('[data-yps-content-plan-generate]');
@@ -2365,10 +2365,10 @@
         if (!button || !results) { return; }
         button.addEventListener('click', async function () {
             button.disabled = true;
-            if (status) { status.textContent = YPS_ADMIN.labels.contentPlanning || YPS_ADMIN.labels.failed; }
+            if (status) { status.textContent = YABLSEO_ADMIN.labels.contentPlanning || YABLSEO_ADMIN.labels.failed; }
             results.hidden = true; results.innerHTML = '';
             try {
-                const data = await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_ai_content_plan', {language: language ? language.value : ''});
+                const data = await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_ai_content_plan', {language: language ? language.value : ''});
                 const list = document.createElement('ol');
                 (data.items || []).forEach(function (item) {
                     const li = document.createElement('li');
@@ -2378,16 +2378,16 @@
                     li.appendChild(strong); if (meta.textContent) { li.appendChild(meta); } if (p.textContent) { li.appendChild(p); } list.appendChild(li);
                 });
                 results.appendChild(list); results.hidden = false;
-                if (status) { status.textContent = data.message || YPS_ADMIN.labels.contentPlanReady; }
+                if (status) { status.textContent = data.message || YABLSEO_ADMIN.labels.contentPlanReady; }
             } catch (error) {
-                if (status) { status.textContent = error && error.message ? error.message : YPS_ADMIN.labels.failed; }
+                if (status) { status.textContent = error && error.message ? error.message : YABLSEO_ADMIN.labels.failed; }
             } finally { button.disabled = false; }
         });
     }
 
     function initSitemapTransportTest() {
         const form = document.querySelector('[data-yseo-sitemap-transport-test]');
-        if (!form || typeof YPS_ADMIN === 'undefined') { return; }
+        if (!form || typeof YABLSEO_ADMIN === 'undefined') { return; }
         const button = form.querySelector('[data-yseo-sitemap-transport-button]');
         const live = document.querySelector('[data-yseo-sitemap-transport-live]');
         const state = live ? live.querySelector('[data-yseo-sitemap-transport-state]') : null;
@@ -2400,21 +2400,21 @@
             const started = Date.now();
             if (button) { button.disabled = true; }
             if (live) { live.hidden = false; }
-            if (state) { state.textContent = YPS_ADMIN.labels.running || 'Running'; }
+            if (state) { state.textContent = YABLSEO_ADMIN.labels.running || 'Running'; }
             if (progress) { progress.classList.add('is-indeterminate'); progress.setAttribute('aria-valuenow', '0'); }
             const tick = function () {
-                if (elapsed) { elapsed.textContent = (YPS_ADMIN.labels.elapsed || 'Elapsed') + ': ' + Math.max(0, Math.floor((Date.now() - started) / 1000)) + 's'; }
+                if (elapsed) { elapsed.textContent = (YABLSEO_ADMIN.labels.elapsed || 'Elapsed') + ': ' + Math.max(0, Math.floor((Date.now() - started) / 1000)) + 's'; }
             };
             tick();
             timer = window.setInterval(tick, 1000);
             try {
-                await post(YPS_ADMIN.ajaxUrl, YPS_ADMIN.nonce, 'yseo_sitemap_transport_probe');
-                if (state) { state.textContent = YPS_ADMIN.labels.phaseComplete || 'Complete'; }
+                await post(YABLSEO_ADMIN.ajaxUrl, YABLSEO_ADMIN.nonce, 'yseo_sitemap_transport_probe');
+                if (state) { state.textContent = YABLSEO_ADMIN.labels.phaseComplete || 'Complete'; }
                 if (progress) { progress.classList.remove('is-indeterminate'); progress.setAttribute('aria-valuenow', '100'); const bar = progress.querySelector('span'); if (bar) { bar.style.width = '100%'; } }
                 window.location.hash = '#yps-sitemaps';
                 window.location.reload();
             } catch (error) {
-                if (state) { state.textContent = error && error.message ? error.message : (YPS_ADMIN.labels.failed || 'Error'); }
+                if (state) { state.textContent = error && error.message ? error.message : (YABLSEO_ADMIN.labels.failed || 'Error'); }
                 if (progress) { progress.classList.remove('is-indeterminate'); }
                 if (button) { button.disabled = false; }
             } finally {

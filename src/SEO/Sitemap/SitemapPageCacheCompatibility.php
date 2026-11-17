@@ -36,7 +36,7 @@ final class SitemapPageCacheCompatibility {
 
     public function maybeFlushForUpgrade(): void {
         $previousVersion = (string) get_option( self::OPTION_VERSION, '' );
-        if ( YPS_VERSION === $previousVersion ) { return; }
+        if ( YSEO_VERSION === $previousVersion ) { return; }
 
         $this->flushAllKnown();
 
@@ -50,7 +50,7 @@ final class SitemapPageCacheCompatibility {
             $this->recoverLegacyTransportCache();
         }
 
-        update_option( self::OPTION_VERSION, YPS_VERSION, false );
+        update_option( self::OPTION_VERSION, YSEO_VERSION, false );
     }
 
     public function flushIndex(): void {

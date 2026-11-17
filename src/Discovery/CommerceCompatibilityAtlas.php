@@ -10,7 +10,7 @@ final class CommerceCompatibilityAtlas {
 
     /** @return array<string,array<string,mixed>> */
     public function platforms(): array {
-        $path = YPS_DIR . 'data/commerce-platforms.php';
+        $path = YSEO_DIR . 'data/commerce-platforms.php';
         $platforms = is_file( $path ) ? require $path : array();
         return is_array( $platforms ) ? $platforms : array();
     }
@@ -27,7 +27,7 @@ final class CommerceCompatibilityAtlas {
     /** @return array<string,array{name:string,region:string}> */
     public function countryRecords(): array {
         if ( is_array( $this->countryRecordsCache ) ) { return $this->countryRecordsCache; }
-        $path = YPS_DIR . 'data/commerce-countries.php';
+        $path = YSEO_DIR . 'data/commerce-countries.php';
         $records = is_file( $path ) ? require $path : array();
         $this->countryRecordsCache = is_array( $records ) ? $records : array();
         return $this->countryRecordsCache;

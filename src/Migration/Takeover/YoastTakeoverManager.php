@@ -49,14 +49,14 @@ final class YoastTakeoverManager {
             'provider'           => 'yoast',
             'plugin'             => $plugin,
             'provider_version'   => (string) $state->get( 'provider_version' ),
-            'previous_authority' => (string) get_option( 'yps_output_authority', 'shadow' ),
+            'previous_authority' => (string) get_option( 'yablseo_output_authority', 'shadow' ),
             'source_digest'      => (string) $state->get( 'source_digest' ),
             'backup_anchor_id'   => (string) $state->get( 'backup_anchor_id' ),
             'cutover_at'         => '',
             'status'             => 'awaiting_manual_deactivation',
         );
         update_option( self::ROLLBACK_OPTION, $checkpoint, false );
-        update_option( 'yps_output_authority', 'shadow', false );
+        update_option( 'yablseo_output_authority', 'shadow', false );
 
         update_option(
             self::EVENT_OPTION,
@@ -100,7 +100,7 @@ final class YoastTakeoverManager {
         $checkpoint['status'] = 'cutover';
         $checkpoint['cutover_at'] = gmdate( 'c' );
         update_option( self::ROLLBACK_OPTION, $checkpoint, false );
-        update_option( 'yps_output_authority', 'active', false );
+        update_option( 'yablseo_output_authority', 'active', false );
         update_option(
             self::EVENT_OPTION,
             array(

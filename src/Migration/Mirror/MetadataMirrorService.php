@@ -180,7 +180,7 @@ final class MetadataMirrorService {
         $snapshot = ( new YoastOptionSnapshotReader() )->read( array( 'wpseo', 'wpseo_titles', 'wpseo_social', 'wpseo_llmstxt' ) );
         $normalized = ( new YoastGlobalSettingsNormalizer() )->normalize( $snapshot );
         $sourceValues = isset( $normalized['values'] ) && is_array( $normalized['values'] ) ? $normalized['values'] : array();
-        $existing = get_option( 'yps_shadow_global_settings', array() );
+        $existing = get_option( 'yablseo_shadow_global_settings', array() );
         $existing = is_array( $existing ) ? $existing : array();
         $counts = $this->countsFromState( $state );
         $changed = false;
@@ -198,7 +198,7 @@ final class MetadataMirrorService {
                 ++$counts['preserved_values'];
             }
         }
-        if ( $changed ) { update_option( 'yps_shadow_global_settings', $existing, false ); }
+        if ( $changed ) { update_option( 'yablseo_shadow_global_settings', $existing, false ); }
         return $state->merge( array_merge( $counts, array( 'phase' => 'complete' ) ) );
     }
 

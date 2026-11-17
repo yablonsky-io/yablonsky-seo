@@ -9,7 +9,7 @@ final class ProvenanceRepository {
     private const POST_KEY = '_yps_migration_provenance';
     private const TERM_KEY = '_yps_migration_provenance';
     private const USER_KEY = '_yps_migration_provenance';
-    private const GLOBAL_OPTION = 'yps_migration_global_provenance';
+    private const GLOBAL_OPTION = 'yablseo_migration_global_provenance';
 
     /** @param array<string,array<string,string>> $records */
     public function mergePostRecords( int $postId, array $records ): bool {

@@ -9,7 +9,7 @@ final class SpecialPagesController {
     private $settings;
 
     public function __construct() {
-        $settings = get_option( 'yps_public_settings', array() );
+        $settings = get_option( 'yablseo_public_settings', array() );
         $this->settings = is_array( $settings ) ? $settings : array();
     }
 
