@@ -13,6 +13,8 @@ $yseo_assert = static function ( $condition, $message ) use ( &$checks ) {
     }
     echo "PASS #{$checks}: {$message}\n";
 };
+global $wpdb;
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
 $wpdb->hide_errors();
 $admin = get_user_by( 'login', 'admin' );
 $yseo_assert( $admin instanceof WP_User, 'Test administrator exists' );
