@@ -1,0 +1,58 @@
+name: YSEO 5.87.0 independent WPCS review
+
+on:
+  push:
+    branches: [audit/yseo-5.87.0-full-review]
+    paths:
+      - ".github/workflows/yseo-5.87.0-wpcs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wpcs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2, phpcs
+          coverage: none
+      - name: Install official WPCS sniffs
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require wp-coding-standards/wpcs:^3.3 --no-interaction --no-progress
+          phpcs -i
+      - name: Run broad WordPress security, SQL and prefix audit (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          phpcs --standard=WordPress --sniffs=WordPress.Security,WordPress.DB,WordPress.NamingConventions.PrefixAllGlobals \
+            --extensions=php --report=json \
+            --exclude=WordPress.DB.DirectDatabaseQuery.NoCaching \
+            --ignore=.github,tests \
+            src yablonsky-seo.php uninstall.php > /tmp/yseo-wpcs.json || true
+          python3 - <<'PY'
+          import json,collections
+          result=json.load(open('/tmp/yseo-wpcs.json'))
+          totals=result['totals']
+          counts=collections.Counter()
+          examples={}
+          for file,details in result.get('files',{}).items():
+              for message in details.get('messages',[]):
+                  code=message.get('source','unknown')
+                  counts[code]+=1
+                  examples.setdefault(code,[]).append((file.split('/yablonsky-seo/')[-1],message.get('line')))
+          print("WPCS security/SQL/prefix audit: ",totals)
+          for code,count in counts.most_common(35):
+              print(f"{count:4} {code} {examples[code][:3]}")
+          print("Audit classified all reported findings, including warnings; it does not claim full WordPress.org approval.")
+          if totals.get('errors',0)>0:
+              raise SystemExit("WPCS confirmed findings require review; not a clean gate")
+          PY
