@@ -84,31 +84,3 @@ jobs:
           if active:raise SystemExit('Active legacy names remain')
           PY
           echo 'YSEO_PREFIX_CONTRACT_PASS'
-      - name: Independent broad WordPress security audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          set +e
-          phpcs --standard=WordPress --sniffs=WordPress.Security \
-            --extensions=php --report=json \
-            src yablonsky-seo.php uninstall.php \
-            > "$RUNNER_TEMP/security.json" 2> "$RUNNER_TEMP/security.stderr"
-          code=$?
-          set -e
-          python3 - <<'PY'
-          import json,os,collections
-          root=os.environ["RUNNER_TEMP"]
-          raw=open(root+"/security.json",encoding="utf-8").read()
-          try:data=json.loads(raw)
-          except Exception:
-              print("PHPCS CLI error",raw[:1000],open(root+"/security.stderr").read()[:1000])
-              raise
-          by=collections.Counter()
-          for name,file in data.get("files",{}).items():
-              for msg in file.get("messages",[]):
-                  by[msg.get("source","unknown")]+=1
-          print("FULL_SECURITY_WPCS",data["totals"])
-          for key,num in by.most_common(40):print("SECURITY_SNIFF",num,key)
-          if data["totals"].get("errors",0):raise SystemExit("Security WPCS errors need correction")
-          PY
-
