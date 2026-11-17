@@ -1,0 +1,126 @@
+name: Validate YSEO 5.87.1 corrective release
+
+on:
+  push:
+    branches: [fix/yseo-5.87.1-sql-date-guards]
+    paths:
+      - ".github/workflows/yseo-5.87.1-regression.yml"
+      - "tests/review-regression-smoke.php"
+      - "src/**"
+      - "yablonsky-seo.php"
+      - "readme.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: isolated_ci_only
+          MYSQL_ROOT_PASSWORD: isolated_root_ci_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -pisolated_root_ci_only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+      - name: PHP 7.4 syntax and release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '^ \* Version: 5\.87\.1$' yablonsky-seo.php
+          grep -Fq "define( 'YSEO_VERSION', '5.87.1' );" yablonsky-seo.php
+          grep -Fxq 'Stable tag: 5.87.1' readme.txt
+          test "$(find . -path './.git' -prune -o -type f -name '*.php' ! -path './tests/*' -print | wc -l)" -eq 196
+          while IFS= read -r -d '' f; do php -l "$f" >/dev/null; done < <(find src -name '*.php' -type f -print0)
+          php -l yablonsky-seo.php >/dev/null
+          php -l uninstall.php >/dev/null
+          php -l tests/review-regression-smoke.php >/dev/null
+          git diff --check v5.87.0 HEAD
+          python3 - <<'PY'
+          import json,pathlib
+          for f in pathlib.Path('data').glob('*.json'):json.loads(f.read_text())
+          PY
+          echo 'PHP 7.4 source lint and data PASS'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, curl, mbstring, xml, zip
+          coverage: none
+      - name: Build sealed candidate ZIP and old reference from Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/zip"
+          stage="$(mktemp -d)"
+          mkdir -p "$stage/yablonsky-seo"
+          cp LICENSE readme.txt yablonsky-seo.php uninstall.php "$stage/yablonsky-seo/"
+          cp -a src assets data languages "$stage/yablonsky-seo/"
+          (
+            cd "$stage/yablonsky-seo"
+            { echo '# YSEO 5.87.1 SHA256 manifest excluding itself'; echo '# Reference YABLONSKY_PRODUCT_VERSIONING_CANON_v1.0.0_2026-09-21.md'; find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's|  \./|  |'; } > SHA256SUMS.txt
+            tail -n +3 SHA256SUMS.txt | sha256sum -c --status
+          )
+          (cd "$stage" && zip -qr "$RUNNER_TEMP/zip/yablonsky-seo-5.87.1.zip" yablonsky-seo)
+          unzip -tq "$RUNNER_TEMP/zip/yablonsky-seo-5.87.1.zip" >/dev/null
+          test "$(stat -c %s "$RUNNER_TEMP/zip/yablonsky-seo-5.87.1.zip")" -lt 10000000
+          legacy="$(mktemp -d)"
+          git archive --format=tar --prefix=yablonsky-seo/ 99d2609776c5e55c93886006e0f996e963e57e3a LICENSE readme.txt yablonsky-seo.php uninstall.php src assets data languages | tar -xf - -C "$legacy"
+          (cd "$legacy" && zip -qr "$RUNNER_TEMP/zip/yablonsky-seo-5.86.6.zip" yablonsky-seo)
+          unzip -tq "$RUNNER_TEMP/zip/yablonsky-seo-5.86.6.zip" >/dev/null
+          echo "Installable ZIP candidate sealed, old source verified"
+      - name: WordPress WP_DEBUG and old version baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$RUNNER_TEMP/wp-cli.phar"
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          wp core download --path="$RUNNER_TEMP/wordpress"
+          wp config create --path="$RUNNER_TEMP/wordpress" --dbname=wordpress --dbuser=wp --dbpass=isolated_ci_only --dbhost=127.0.0.1 --skip-check
+          wp config set --path="$RUNNER_TEMP/wordpress" WP_DEBUG true --raw
+          wp config set --path="$RUNNER_TEMP/wordpress" WP_DEBUG_LOG true --raw
+          wp config set --path="$RUNNER_TEMP/wordpress" WP_DEBUG_DISPLAY false --raw
+          wp core install --path="$RUNNER_TEMP/wordpress" --url=http://localhost:8080 --title='YSEO Isolated Review' --admin_user=admin --admin_password=only-for-ci --admin_email=ci@example.invalid --skip-email
+          wp plugin install "$RUNNER_TEMP/zip/yablonsky-seo-5.86.6.zip" --activate --path="$RUNNER_TEMP/wordpress"
+          wp plugin get yablonsky-seo --field=version --path="$RUNNER_TEMP/wordpress" | grep -Fx '5.86.6'
+          wp eval --path="$RUNNER_TEMP/wordpress" '$id=wp_insert_post(array("post_type"=>"post","post_title"=>"Legacy audit post","post_status"=>"publish"));update_post_meta($id,"_yps_seo_title","Preserved SEO Title 5.86.6");update_option("yseo_ci_seed_post_id",$id);update_option("yps_ci_legacy_preservation_marker","preserve-me");'
+          echo 'Historical 5.86.6 WordPress baseline seeded'
+      - name: Upgrade and run reviewer security/functional assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          wp plugin install "$RUNNER_TEMP/zip/yablonsky-seo-5.87.1.zip" --force --activate --path="$RUNNER_TEMP/wordpress"
+          wp plugin get yablonsky-seo --field=version --path="$RUNNER_TEMP/wordpress" | grep -Fx '5.87.1'
+          wp eval-file tests/review-regression-smoke.php --path="$RUNNER_TEMP/wordpress"
+          wp plugin deactivate yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          wp plugin activate yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          wp plugin is-active yablonsky-seo --path="$RUNNER_TEMP/wordpress"
+          if test -f "$RUNNER_TEMP/wordpress/wp-content/debug.log"; then
+            if grep -Ei 'PHP Fatal error|PHP Parse error|Uncaught Error|PHP Warning:.*yablonsky-seo' "$RUNNER_TEMP/wordpress/wp-content/debug.log";then
+              echo "WP_DEBUG errors" >&2;exit 1
+            fi
+          fi
+          echo 'Regression and WP_DEBUG PASS'
+      - name: Official Plugin Check on installed candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          wp plugin install plugin-check --activate --path="$RUNNER_TEMP/wordpress"
+          wp plugin check yablonsky-seo --path="$RUNNER_TEMP/wordpress" --require="$RUNNER_TEMP/wordpress/wp-content/plugins/plugin-check/cli.php"
