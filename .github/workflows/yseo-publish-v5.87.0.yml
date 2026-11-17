@@ -1,0 +1,111 @@
+name: Publish YSEO 5.87.0 from checked Git source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/yseo-publish-v5.87.0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yseo-publish-5.87.0
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout verified committed source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify version, source scope and candidate files
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '^ \* Version: 5\.87\.0$' yablonsky-seo.php
+          grep -Eq '^Stable tag: 5\.87\.0$' readme.txt
+          grep -Fq "define( 'YSEO_VERSION', '5.87.0' );" yablonsky-seo.php
+          test -s LICENSE
+          test "$(find . -path './.git' -prune -o -type f -name '*.php' -print | wc -l)" -eq 196
+          php -v
+          while IFS= read -r -d '' file; do php -l "$file" > /dev/null; done < <(find . -path './.git' -prune -o -type f -name '*.php' -print0)
+          python3 - <<'PY'
+          import json, pathlib
+          for file in pathlib.Path('data').glob('*.json'): json.loads(file.read_text(encoding='utf-8'))
+          PY
+
+      - name: Build and integrity-check installable source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          staging="$(mktemp -d)"
+          mkdir -p "$staging/yablonsky-seo"
+          cp LICENSE readme.txt yablonsky-seo.php uninstall.php "$staging/yablonsky-seo/"
+          cp -a src assets data languages "$staging/yablonsky-seo/"
+          (
+            cd "$staging/yablonsky-seo"
+            {
+              echo '# Yablonsky SEO 5.87.0 manifest (excluding this file)'
+              echo '# Reference: YABLONSKY_PRODUCT_VERSIONING_CANON_v1.0.0_2026-09-21.md'
+              find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's|  \./|  |'
+            } > SHA256SUMS.txt
+            tail -n +3 SHA256SUMS.txt | sha256sum -c --status
+          )
+          (cd "$staging" && zip -qr "$GITHUB_WORKSPACE/yablonsky-seo-5.87.0.zip" yablonsky-seo)
+          unzip -tq yablonsky-seo-5.87.0.zip >/dev/null
+          test "$(stat -c %s yablonsky-seo-5.87.0.zip)" -lt 10000000
+          sha256sum yablonsky-seo-5.87.0.zip
+
+      - name: Publish immutable release assets and verify download
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if ! gh release view v5.87.0 --repo "$GH_REPO" >/dev/null 2>&1; then
+            cat > release-notes.txt <<'NOTES'
+          # Yablonsky SEO 5.87.0
+
+          Consolidated WordPress.org pre-publication compliance build with unchanged SEO runtime behavior relative to v5.86.9, aside from version metadata.
+
+          - Consolidated ten PHPCS directives for the plugin-owned Internal Links and 404 Diagnostics SQL reports; query text and cache behavior are unchanged.
+          - PHP header, YSEO_VERSION constant, WordPress Stable tag, Git tag, and package filename all use 5.87.0.
+          - Installed and activated in fresh WordPress, post/meta smoke-tested, deactivated and reactivated.
+          - PHP 7.4: 196/196 syntax checks passed; executable-token equivalence for both SQL repositories passed.
+          - Official Plugin Check: "Checks complete. No errors found."
+          - ZIP content checksums and archive integrity verified, under 10 MB.
+
+          Validation run: https://github.com/yablonsky-io/yablonsky-seo/actions/runs/43986093167
+          WordPress.org approval is a separate external review process; this GitHub release is available for installation and further acceptance testing.
+
+          Versioning canon: YABLONSKY_PRODUCT_VERSIONING_CANON_v1.0.0_2026-09-21.md
+          Product: https://yablonsky.io/seo/
+          NOTES
+            gh release create v5.87.0 yablonsky-seo-5.87.0.zip \
+              --repo "$GH_REPO" \
+              --target "$GITHUB_SHA" \
+              --title "Yablonsky SEO 5.87.0" \
+              --notes-file release-notes.txt \
+              --latest
+            cp yablonsky-seo-5.87.0.zip yablonsky-seo.zip
+            gh release upload v5.87.0 yablonsky-seo.zip --repo "$GH_REPO"
+          fi
+          test "$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)" = v5.87.0
+          download="$(mktemp -d)"
+          gh release download v5.87.0 --repo "$GH_REPO" --dir "$download" --pattern 'yablonsky-seo-5.87.0.zip'
+          gh release download v5.87.0 --repo "$GH_REPO" --dir "$download" --pattern 'yablonsky-seo.zip'
+          cmp "$download/yablonsky-seo-5.87.0.zip" "$download/yablonsky-seo.zip"
+          unzip -tq "$download/yablonsky-seo-5.87.0.zip" >/dev/null
+          test "$(unzip -p "$download/yablonsky-seo-5.87.0.zip" yablonsky-seo/readme.txt | grep '^Stable tag:')" = 'Stable tag: 5.87.0'
+          unzip -p "$download/yablonsky-seo-5.87.0.zip" yablonsky-seo/yablonsky-seo.php | grep -Fq "define( 'YSEO_VERSION', '5.87.0' );"
+          echo "Release v5.87.0 verified: both public assets byte-identical"
+          gh release view v5.87.0 --repo "$GH_REPO" --json url,tagName,assets \
+            --jq '{url:.url,tag:.tagName,assets:[.assets[].name]}'
