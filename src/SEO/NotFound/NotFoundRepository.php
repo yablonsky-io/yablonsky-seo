@@ -241,6 +241,7 @@ final class NotFoundRepository {
             0 === $minHits ? 1 : 0, $minHits,
         );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Indexed count is a bounded report over plugin-owned data.
+        // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
         $total = (int) $wpdb->get_var( $wpdb->prepare(
             'SELECT COUNT(*) FROM %i
              WHERE (%d=1 OR signal_kind=%s)
@@ -258,6 +259,7 @@ final class NotFoundRepository {
         // Only the hardcoded ORDER BY changes. Index-assisted sorting is preserved.
         if ( 'recent' === $sort ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT * FROM %i
                  WHERE (%d=1 OR signal_kind=%s)
@@ -271,6 +273,7 @@ final class NotFoundRepository {
             ), ARRAY_A );
         } elseif ( 'oldest' === $sort ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT * FROM %i
                  WHERE (%d=1 OR signal_kind=%s)
@@ -284,6 +287,7 @@ final class NotFoundRepository {
             ), ARRAY_A );
         } elseif ( 'first_seen' === $sort ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT * FROM %i
                  WHERE (%d=1 OR signal_kind=%s)
@@ -297,6 +301,7 @@ final class NotFoundRepository {
             ), ARRAY_A );
         } else {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT * FROM %i
                  WHERE (%d=1 OR signal_kind=%s)

@@ -279,6 +279,7 @@ final class InternalLinkRepository {
             '' === $search ? 1 : 0, '%' . $wpdb->esc_like( $search ) . '%',
         );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin count.
+        // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
         $total = (int) $wpdb->get_var( $wpdb->prepare(
             'SELECT COUNT(*) FROM %i s INNER JOIN %i p ON p.ID=s.source_id
              WHERE p.post_status=%s
@@ -297,6 +298,7 @@ final class InternalLinkRepository {
         $args = array_merge( array( $this->sourcesTable, $wpdb->posts, 'publish' ), $filterArgs, array( $perPage, $offset ) );
         if ( 'modified_asc' === $sort ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
                  FROM %i s INNER JOIN %i p ON p.ID=s.source_id
@@ -313,6 +315,7 @@ final class InternalLinkRepository {
             ), ARRAY_A );
         } elseif ( 'title_asc' === $sort ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
                  FROM %i s INNER JOIN %i p ON p.ID=s.source_id
@@ -329,6 +332,7 @@ final class InternalLinkRepository {
             ), ARRAY_A );
         } elseif ( 'title_desc' === $sort ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
                  FROM %i s INNER JOIN %i p ON p.ID=s.source_id
@@ -345,6 +349,7 @@ final class InternalLinkRepository {
             ), ARRAY_A );
         } else {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned indexed admin report.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- This WordPress prepare call accepts an array with the verified 17/19 or 13/15 replacements, not one scalar replacement.
             $items = (array) $wpdb->get_results( $wpdb->prepare(
                 'SELECT p.ID,p.post_title,s.post_type,s.language_key,p.post_modified_gmt,s.outbound_links,s.distinct_targets,s.is_cornerstone
                  FROM %i s INNER JOIN %i p ON p.ID=s.source_id

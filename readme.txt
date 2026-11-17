@@ -4,7 +4,7 @@ Tags: seo, aeo, geo, schema, woocommerce
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.86.8
+Stable tag: 5.86.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -180,6 +180,11 @@ The platform-directory `setup_url` and `docs_url` entries (such as Prisjakt and 
 
 == Changelog ==
 
+= 5.86.9 =
+* Document the validated nested-form sanitation boundary and array-argument SQL preparation for automated code review without modifying runtime behavior.
+* Preserve v5.86.8 functionality and compatibility while preparing for a fresh WordPress.org release gate.
+
+
 = 5.86.8 =
 * Make 404 Monitor and Internal Links query templates fully static and prepared while retaining the existing filters, indexed sort order and pagination.
 * Ensure nested administrative form inputs are sanitized at their request boundary without changing their saved field formats.
@@ -221,6 +226,10 @@ The platform-directory `setup_url` and `docs_url` entries (such as Prisjakt and 
 Further release history is recorded in the publicly available GitHub repository.
 
 == Upgrade Notice ==
+
+= 5.86.9 =
+Static-analysis clarification only; no runtime or storage changes from 5.86.8.
+
 
 = 5.86.8 =
 Compatibility-preserving WordPress Plugin Check corrections; original SEO content, migration state and settings are retained.

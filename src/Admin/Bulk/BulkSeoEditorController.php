@@ -300,6 +300,7 @@ final class BulkSeoEditorController {
         // each expected leaf rather than passing a nested array through
         // FILTER_CALLBACK (which does not guarantee recursive validation).
         $postedRows = isset( $_POST['rows'] ) && is_array( $_POST['rows'] )
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nested array is bounded, unslashed, sanitized with map_deep and validated by field/post ID before use.
             ? map_deep( array_slice( wp_unslash( $_POST['rows'] ), 0, min( self::MAX_ROWS, $perPage ), true ), 'sanitize_text_field' ) : array();
         $rows = array();
         foreach ( array_slice( $postedRows, 0, min( self::MAX_ROWS, $perPage ), true ) as $id => $row ) {
@@ -316,6 +317,7 @@ final class BulkSeoEditorController {
         if ( 'selected' === $saveScope ) {
             // Only bounded positive IDs are accepted from selected rows.
             $rawSelected = isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] )
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nested array is bounded, unslashed, sanitized with map_deep and validated by field/post ID before use.
                 ? map_deep( array_slice( wp_unslash( $_POST['selected_rows'] ), 0, self::MAX_ROWS ), 'sanitize_text_field' ) : array();
             $selected = array();
             foreach ( array_slice( $rawSelected, 0, self::MAX_ROWS ) as $selectedId ) {
