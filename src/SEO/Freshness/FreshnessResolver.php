@@ -159,15 +159,15 @@ final class FreshnessResolver {
     /** @return array<int,string> */
     public static function semanticPostMetaKeys(): array {
         return array(
-            '_yps_seo_title', '_yps_meta_description', '_yps_canonical', '_yps_robots_noindex',
-            '_yps_robots_nofollow', '_yps_robots_advanced', '_yps_og_title', '_yps_og_description',
-            '_yps_og_image', '_yps_og_type', '_yps_twitter_title', '_yps_twitter_description',
-            '_yps_twitter_image', '_yps_schema_page_type', '_yps_schema_article_type',
-            '_yps_schema_entity_type', '_yps_schema_entity_name', '_yps_schema_entity_description',
-            '_yps_schema_person_job_title', '_yps_schema_person_image_url', '_yps_schema_person_same_as',
-            '_yps_schema_person_knows_about', '_yps_schema_service_type', '_yps_schema_area_served',
-            '_yps_schema_application_category', '_yps_schema_operating_system', '_yps_schema_offer_price',
-            '_yps_schema_offer_currency', '_yps_redirect_target', '_thumbnail_id', '_product_image_gallery', '_sku', '_price', '_regular_price',
+            '_yablseo_seo_title', '_yablseo_meta_description', '_yablseo_canonical', '_yablseo_robots_noindex',
+            '_yablseo_robots_nofollow', '_yablseo_robots_advanced', '_yablseo_og_title', '_yablseo_og_description',
+            '_yablseo_og_image', '_yablseo_og_type', '_yablseo_twitter_title', '_yablseo_twitter_description',
+            '_yablseo_twitter_image', '_yablseo_schema_page_type', '_yablseo_schema_article_type',
+            '_yablseo_schema_entity_type', '_yablseo_schema_entity_name', '_yablseo_schema_entity_description',
+            '_yablseo_schema_person_job_title', '_yablseo_schema_person_image_url', '_yablseo_schema_person_same_as',
+            '_yablseo_schema_person_knows_about', '_yablseo_schema_service_type', '_yablseo_schema_area_served',
+            '_yablseo_schema_application_category', '_yablseo_schema_operating_system', '_yablseo_schema_offer_price',
+            '_yablseo_schema_offer_currency', '_yablseo_redirect_target', '_thumbnail_id', '_product_image_gallery', '_sku', '_price', '_regular_price',
             '_sale_price', '_sale_price_dates_from', '_sale_price_dates_to', '_stock_status', '_stock', '_manage_stock', '_backorders',
         );
     }

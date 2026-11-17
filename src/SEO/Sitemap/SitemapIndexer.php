@@ -111,8 +111,8 @@ final class SitemapIndexer {
         $url = (string) get_permalink( $postId );
         $eligibility = ( new SitemapEligibilityPolicy() )->evaluatePost( $post, $url );
         if ( empty( $eligibility['eligible'] ) || ! ( new DiscoverySettings() )->familyEnabled( 'post', (string) $post->post_type ) ) { $this->repository->deleteObject( 'post', $postId ); return; }
-        $indexable = ! $this->truthy( get_post_meta( $postId, '_yps_robots_noindex', true ) ) && ! $this->globalNoindex( 'post', (string) $post->post_type );
-        $canonical = trim( (string) get_post_meta( $postId, '_yps_canonical', true ) );
+        $indexable = ! $this->truthy( get_post_meta( $postId, '_yablseo_robots_noindex', true ) ) && ! $this->globalNoindex( 'post', (string) $post->post_type );
+        $canonical = trim( (string) get_post_meta( $postId, '_yablseo_canonical', true ) );
         if ( '' !== $canonical && untrailingslashit( $canonical ) !== untrailingslashit( (string) $url ) ) { $indexable = false; }
         $this->repository->upsert( array(
             'resource_key' => 'post:' . $postId,
@@ -192,8 +192,8 @@ final class SitemapIndexer {
         if ( ! $tax || empty( $tax->public ) || ! ( new DiscoverySettings() )->familyEnabled( 'term', $taxonomy ) ) { $this->repository->deleteObject( 'term', $termId ); return; }
         $url = get_term_link( $term );
         if ( is_wp_error( $url ) ) { return; }
-        $indexable = ! $this->truthy( get_term_meta( $termId, '_yps_robots_noindex', true ) ) && ! $this->globalNoindex( 'term', $taxonomy );
-        $canonical = trim( (string) get_term_meta( $termId, '_yps_canonical', true ) );
+        $indexable = ! $this->truthy( get_term_meta( $termId, '_yablseo_robots_noindex', true ) ) && ! $this->globalNoindex( 'term', $taxonomy );
+        $canonical = trim( (string) get_term_meta( $termId, '_yablseo_canonical', true ) );
         if ( '' !== $canonical && untrailingslashit( $canonical ) !== untrailingslashit( (string) $url ) ) { $indexable = false; }
         $this->repository->upsert( array(
             'resource_key' => 'term:' . $taxonomy . ':' . $termId,
@@ -210,7 +210,7 @@ final class SitemapIndexer {
         $url = get_author_posts_url( $userId );
         $publicTypes = array_values( get_post_types( array( 'public' => true ), 'names' ) );
         $count = count_user_posts( $userId, $publicTypes, true );
-        $indexable = $count > 0 && ! $this->truthy( get_user_meta( $userId, '_yps_author_robots_noindex', true ) ) && ! $this->globalNoindex( 'author', 'author' );
+        $indexable = $count > 0 && ! $this->truthy( get_user_meta( $userId, '_yablseo_author_robots_noindex', true ) ) && ! $this->globalNoindex( 'author', 'author' );
         $this->repository->upsert( array(
             'resource_key' => 'author:' . $userId, 'resource_type' => 'author', 'resource_subtype' => 'author',
             'object_id' => $userId, 'language_key' => $this->languageKey( 'author', $userId ), 'url' => (string) $url,
@@ -237,7 +237,7 @@ final class SitemapIndexer {
 
     public function maybeSyncTermMeta( $metaId, $termId, $metaKey, $value ): void {
         unset( $metaId, $value );
-        if ( 0 === strpos( (string) $metaKey, '_yps_' ) ) {
+        if ( 0 === strpos( (string) $metaKey, '_yablseo_' ) ) {
             $this->freshness->touchTerm( (int) $termId );
             $this->syncTerm( (int) $termId );
         }
@@ -245,7 +245,7 @@ final class SitemapIndexer {
 
     public function maybeSyncUserMeta( $metaId, $userId, $metaKey, $value ): void {
         unset( $metaId, $value );
-        if ( 0 === strpos( (string) $metaKey, '_yps_' ) ) {
+        if ( 0 === strpos( (string) $metaKey, '_yablseo_' ) ) {
             $this->freshness->touchAuthor( (int) $userId );
             $this->syncUser( (int) $userId );
         }

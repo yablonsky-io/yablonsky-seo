@@ -130,7 +130,7 @@ final class AgentContentController {
 
     public function clearRelevantPostMetaCache( $metaId, int $postId, string $metaKey, $metaValue = null ): void {
         unset( $metaId, $metaValue );
-        if ( ! in_array( $metaKey, array( '_yps_meta_description', '_yps_og_image', '_thumbnail_id', '_sku', '_price', '_stock_status' ), true ) ) { return; }
+        if ( ! in_array( $metaKey, array( '_yablseo_meta_description', '_yablseo_og_image', '_thumbnail_id', '_sku', '_price', '_stock_status' ), true ) ) { return; }
         $this->store->purgeKey( 'md:post:' . $postId );
     }
 
@@ -489,7 +489,7 @@ final class AgentContentController {
         if ( 'post' === $type ) {
             $post = get_post( $id );
             if ( ! $post instanceof \WP_Post ) { return YSEO_VERSION . '|post|' . $id; }
-            $bits = array( YSEO_VERSION, 'post', $id, $this->freshness->postLastmod( $id ), get_post_meta( $id, '_yps_meta_description', true ), get_post_meta( $id, '_yps_og_image', true ), get_post_thumbnail_id( $id ) );
+            $bits = array( YSEO_VERSION, 'post', $id, $this->freshness->postLastmod( $id ), get_post_meta( $id, '_yablseo_meta_description', true ), get_post_meta( $id, '_yablseo_og_image', true ), get_post_thumbnail_id( $id ) );
             if ( 'product' === $post->post_type ) {
                 $bits[] = get_post_meta( $id, '_sku', true );
                 $bits[] = get_post_meta( $id, '_price', true );

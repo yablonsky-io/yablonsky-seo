@@ -94,11 +94,11 @@ final class AbilitiesController {
         $post = $this->postFromInput( $input );
         if ( ! $post instanceof \WP_Post ) { return new \WP_Error( 'yseo_resource_not_found', __( 'The requested SEO resource was not found.', 'yablonsky-seo' ) ); }
         $seoValues = array(
-            'focus_keyphrase'  => (string) get_post_meta( $post->ID, '_yps_focus_keyphrase', true ),
-            'seo_title'        => (string) get_post_meta( $post->ID, '_yps_seo_title', true ),
-            'meta_description' => (string) get_post_meta( $post->ID, '_yps_meta_description', true ),
-            'canonical'        => (string) get_post_meta( $post->ID, '_yps_canonical', true ),
-            'noindex'          => $this->truthy( get_post_meta( $post->ID, '_yps_robots_noindex', true ) ),
+            'focus_keyphrase'  => (string) get_post_meta( $post->ID, '_yablseo_focus_keyphrase', true ),
+            'seo_title'        => (string) get_post_meta( $post->ID, '_yablseo_seo_title', true ),
+            'meta_description' => (string) get_post_meta( $post->ID, '_yablseo_meta_description', true ),
+            'canonical'        => (string) get_post_meta( $post->ID, '_yablseo_canonical', true ),
+            'noindex'          => $this->truthy( get_post_meta( $post->ID, '_yablseo_robots_noindex', true ) ),
         );
         return ( new ContentOptimizationAnalyzer() )->analyzePost( $post, $seoValues );
     }

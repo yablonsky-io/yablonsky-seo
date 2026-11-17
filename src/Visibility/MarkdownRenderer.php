@@ -20,14 +20,14 @@ final class MarkdownRenderer {
         if ( 'publish' !== (string) $post->post_status || '' !== (string) $post->post_password ) { return ''; }
         $title = trim( wp_strip_all_tags( (string) get_the_title( $post ), true ) );
         $canonical = get_permalink( $post );
-        $description = trim( (string) get_post_meta( $post->ID, '_yps_meta_description', true ) );
+        $description = trim( (string) get_post_meta( $post->ID, '_yablseo_meta_description', true ) );
         if ( '' === $description ) {
             $description = trim( wp_strip_all_tags( (string) get_the_excerpt( $post ), true ) );
         }
         $language = $this->resourceLanguage( 'product' === $post->post_type ? 'product' : 'post', (int) $post->ID, is_string( $canonical ) ? $canonical : '' );
         $modified = $this->mysqlUtcToW3c( ( new FreshnessResolver() )->postLastmod( (int) $post->ID ) );
         $author = trim( wp_strip_all_tags( (string) get_the_author_meta( 'display_name', (int) $post->post_author ), true ) );
-        $preferredImage = trim( (string) get_post_meta( $post->ID, '_yps_og_image', true ) );
+        $preferredImage = trim( (string) get_post_meta( $post->ID, '_yablseo_og_image', true ) );
         if ( '' === $preferredImage && has_post_thumbnail( $post ) ) {
             $featured = get_the_post_thumbnail_url( $post, 'full' );
             $preferredImage = is_string( $featured ) ? $featured : '';
@@ -135,7 +135,7 @@ final class MarkdownRenderer {
             $lines[] = '';
             $lines[] = '## Related content';
             foreach ( $query->posts as $post ) {
-                if ( ! $post instanceof \WP_Post || 'attachment' === $post->post_type || '1' === (string) get_post_meta( $post->ID, '_yps_robots_noindex', true ) ) { continue; }
+                if ( ! $post instanceof \WP_Post || 'attachment' === $post->post_type || '1' === (string) get_post_meta( $post->ID, '_yablseo_robots_noindex', true ) ) { continue; }
                 $url = get_permalink( $post );
                 if ( ! is_string( $url ) || '' === $url || false !== strpos( $url, '?' ) ) { continue; }
                 $md = $locator->markdownUrl( 'post', (int) $post->ID, $url );
@@ -181,7 +181,7 @@ final class MarkdownRenderer {
             $lines[] = '';
             $lines[] = '## Recent content';
             foreach ( $query->posts as $post ) {
-                if ( ! $post instanceof \WP_Post || 'attachment' === $post->post_type || '1' === (string) get_post_meta( $post->ID, '_yps_robots_noindex', true ) ) { continue; }
+                if ( ! $post instanceof \WP_Post || 'attachment' === $post->post_type || '1' === (string) get_post_meta( $post->ID, '_yablseo_robots_noindex', true ) ) { continue; }
                 $url = get_permalink( $post );
                 if ( ! is_string( $url ) || '' === $url || false !== strpos( $url, '?' ) ) { continue; }
                 $md = $locator->markdownUrl( 'post', (int) $post->ID, $url );
@@ -232,7 +232,7 @@ final class MarkdownRenderer {
             foreach ( $query->posts as $postId ) {
                 $postId = (int) $postId;
                 $url = get_permalink( $postId );
-                if ( ! is_string( $url ) || '' === $url || '1' === (string) get_post_meta( $postId, '_yps_robots_noindex', true ) ) { continue; }
+                if ( ! is_string( $url ) || '' === $url || '1' === (string) get_post_meta( $postId, '_yablseo_robots_noindex', true ) ) { continue; }
                 $md = $locator->markdownUrl( 'post', $postId, $url );
                 if ( '' === $md ) { continue; }
                 $label = $this->safeLabel( (string) get_the_title( $postId ) );
@@ -319,7 +319,7 @@ final class MarkdownRenderer {
             foreach ( $query->posts as $postId ) {
                 $postId = (int) $postId;
                 $url = get_permalink( $postId );
-                if ( ! is_string( $url ) || '' === $url || '1' === (string) get_post_meta( $postId, '_yps_robots_noindex', true ) ) { continue; }
+                if ( ! is_string( $url ) || '' === $url || '1' === (string) get_post_meta( $postId, '_yablseo_robots_noindex', true ) ) { continue; }
                 $md = $locator->markdownUrl( 'post', $postId, $url );
                 if ( '' === $md ) { continue; }
                 $label = $this->safeLabel( (string) get_the_title( $postId ) );

@@ -6,9 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class ProvenanceRepository {
-    private const POST_KEY = '_yps_migration_provenance';
-    private const TERM_KEY = '_yps_migration_provenance';
-    private const USER_KEY = '_yps_migration_provenance';
+    private const POST_KEY = '_yablseo_migration_provenance';
+    private const TERM_KEY = '_yablseo_migration_provenance';
+    private const USER_KEY = '_yablseo_migration_provenance';
     private const GLOBAL_OPTION = 'yablseo_migration_global_provenance';
 
     /** @param array<string,array<string,string>> $records */

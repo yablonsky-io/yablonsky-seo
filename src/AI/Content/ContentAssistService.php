@@ -57,8 +57,8 @@ final class ContentAssistService {
                 'permalink' => (string) get_permalink( $postId ),
             ),
             'seo_context' => array(
-                'focus_keyphrase' => $this->boundedText( (string) get_post_meta( $postId, '_yps_focus_keyphrase', true ), 200 ),
-                'meta_description' => $this->boundedText( (string) get_post_meta( $postId, '_yps_meta_description', true ), 500 ),
+                'focus_keyphrase' => $this->boundedText( (string) get_post_meta( $postId, '_yablseo_focus_keyphrase', true ), 200 ),
+                'meta_description' => $this->boundedText( (string) get_post_meta( $postId, '_yablseo_meta_description', true ), 500 ),
             ),
             'constraints' => array(
                 'visible_content_only' => true,

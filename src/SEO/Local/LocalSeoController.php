@@ -142,7 +142,7 @@ final class LocalSeoController {
         $fields = $this->fieldDefinitions();
         echo '<div class="yps-location-grid">';
         foreach ( $fields as $key => $field ) {
-            $value = (string) get_post_meta( $post->ID, '_yps_local_' . $key, true );
+            $value = (string) get_post_meta( $post->ID, '_yablseo_local_' . $key, true );
             $wide = ! empty( $field['wide'] ) ? ' yps-field-wide' : '';
             echo '<div class="yps-setting-field' . esc_attr( $wide ) . '"><label for="yseo-local-' . esc_attr( $key ) . '">' . esc_html( (string) $field['label'] ) . '</label>';
             if ( 'textarea' === (string) $field['type'] ) {
@@ -190,10 +190,10 @@ final class LocalSeoController {
             } elseif ( 'select' === (string) $field['type'] && ! array_key_exists( $value, (array) $field['options'] ) ) {
                 continue;
             }
-            // _yps_local_* is existing stored WordPress metadata: preserve it for
+            // _yablseo_local_* is existing stored WordPress metadata: preserve it for
             // compatibility with verified Yoast-to-YSEO migrations.
-            if ( '' === $value ) { delete_post_meta( $postId, '_yps_local_' . $key ); }
-            else { update_post_meta( $postId, '_yps_local_' . $key, $value ); }
+            if ( '' === $value ) { delete_post_meta( $postId, '_yablseo_local_' . $key ); }
+            else { update_post_meta( $postId, '_yablseo_local_' . $key, $value ); }
         }
     }
 
@@ -320,7 +320,7 @@ final class LocalSeoController {
             array_filter(
                 $items,
                 static function ( $post ): bool {
-                    return $post instanceof \WP_Post && '1' !== (string) get_post_meta( (int) $post->ID, '_yps_robots_noindex', true );
+                    return $post instanceof \WP_Post && '1' !== (string) get_post_meta( (int) $post->ID, '_yablseo_robots_noindex', true );
                 }
             )
         );
@@ -328,7 +328,7 @@ final class LocalSeoController {
 
     /** @return array<string,mixed> */
     private function locationData( int $postId ): array {
-        $get = static function ( string $key ) use ( $postId ): string { return trim( (string) get_post_meta( $postId, '_yps_local_' . $key, true ) ); };
+        $get = static function ( string $key ) use ( $postId ): string { return trim( (string) get_post_meta( $postId, '_yablseo_local_' . $key, true ) ); };
         $type = $get( 'business_type' );
         $allowed = array( 'LocalBusiness', 'Store', 'ProfessionalService', 'Restaurant', 'Hotel', 'MedicalBusiness', 'AutomotiveBusiness', 'FinancialService', 'RealEstateAgent', 'TravelAgency' );
         if ( ! in_array( $type, $allowed, true ) ) { $type = 'LocalBusiness'; }

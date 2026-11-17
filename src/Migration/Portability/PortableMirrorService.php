@@ -82,7 +82,7 @@ final class PortableMirrorService {
     private function mirrorValues( string $type, int $id, array $values, array &$counts ): void {
         foreach ( $values as $target => $source ) {
             // Defense in depth: preserve-only portability may write only YSEO-owned metadata.
-            if ( 0 !== strpos( (string) $target, '_yps_' ) ) { ++$counts['invalid_values']; continue; }
+            if ( 0 !== strpos( (string) $target, '_yablseo_' ) ) { ++$counts['invalid_values']; continue; }
             if ( ! is_scalar( $source ) ) { ++$counts['invalid_values']; continue; }
             $source = (string) $source;
             if ( '' === trim( $source ) ) { continue; }

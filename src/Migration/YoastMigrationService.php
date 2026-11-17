@@ -302,7 +302,7 @@ final class YoastMigrationService {
                     continue;
                 }
                 $sourceValue = (string) $sourceValue;
-                if ( '_yps_canonical' === $targetKey && ! $this->isAbsoluteHttpUrl( $sourceValue ) ) {
+                if ( '_yablseo_canonical' === $targetKey && ! $this->isAbsoluteHttpUrl( $sourceValue ) ) {
                     $this->rememberSample( $invalid, 'post:' . $sourceKey );
                     ++$counts[ FieldClassification::INVALID_SOURCE ];
                     continue;
@@ -341,7 +341,7 @@ final class YoastMigrationService {
                 $this->rememberConflict(
                     $conflictDetails,
                     $conflictDetailsTruncated,
-                    $this->conflictEvidence( 'post', (int) $postId, 'provenance', '_yps_migration_provenance', 'provenance-write-verification-failed', '', '' )
+                    $this->conflictEvidence( 'post', (int) $postId, 'provenance', '_yablseo_migration_provenance', 'provenance-write-verification-failed', '', '' )
                 );
             }
         }
@@ -466,7 +466,7 @@ final class YoastMigrationService {
                     $this->rememberConflict(
                         $conflictDetails,
                         $conflictDetailsTruncated,
-                        $this->conflictEvidence( 'user', (int) $userId, 'provenance', '_yps_migration_provenance', 'provenance-write-verification-failed', '', '' )
+                        $this->conflictEvidence( 'user', (int) $userId, 'provenance', '_yablseo_migration_provenance', 'provenance-write-verification-failed', '', '' )
                     );
                 }
             }
@@ -544,7 +544,7 @@ final class YoastMigrationService {
                     continue;
                 }
                 $sourceValue = (string) $sourceValue;
-                if ( '_yps_canonical' === $map[ $sourceKey ] && ! $this->isAbsoluteHttpUrl( $sourceValue ) ) {
+                if ( '_yablseo_canonical' === $map[ $sourceKey ] && ! $this->isAbsoluteHttpUrl( $sourceValue ) ) {
                     $this->rememberSample( $invalid, 'term:' . $sourceKey );
                     ++$counts[ FieldClassification::INVALID_SOURCE ];
                     continue;
@@ -583,7 +583,7 @@ final class YoastMigrationService {
                 $this->rememberConflict(
                     $conflictDetails,
                     $conflictDetailsTruncated,
-                    $this->conflictEvidence( 'term', $termId, 'provenance', '_yps_migration_provenance', 'provenance-write-verification-failed', '', '' )
+                    $this->conflictEvidence( 'term', $termId, 'provenance', '_yablseo_migration_provenance', 'provenance-write-verification-failed', '', '' )
                 );
             }
         }

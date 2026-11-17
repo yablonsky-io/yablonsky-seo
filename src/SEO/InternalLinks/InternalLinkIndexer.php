@@ -41,12 +41,12 @@ final class InternalLinkIndexer {
 
     public function indexPost( int $postId, bool $force = false ): bool {
         $post = get_post( $postId );
-        if ( ! $post instanceof \WP_Post || 'publish' !== $post->post_status || ! $this->isPublicPostType( $post->post_type ) || '1' === (string) get_post_meta( $postId, '_yps_robots_noindex', true ) ) {
+        if ( ! $post instanceof \WP_Post || 'publish' !== $post->post_status || ! $this->isPublicPostType( $post->post_type ) || '1' === (string) get_post_meta( $postId, '_yablseo_robots_noindex', true ) ) {
             $this->repository->removePost( $postId );
             return false;
         }
         $content = (string) $post->post_content;
-        $isCornerstone = '1' === (string) get_post_meta( $postId, '_yps_is_cornerstone', true );
+        $isCornerstone = '1' === (string) get_post_meta( $postId, '_yablseo_is_cornerstone', true );
         $modifiedGmt = (string) $post->post_modified_gmt;
         $fingerprint = hash( 'sha256', $content . "\n" . $post->post_type . "\n" . $modifiedGmt . "\n" . ( $isCornerstone ? '1' : '0' ) );
         if ( ! $force && hash_equals( $this->repository->sourceHash( $postId ), $fingerprint ) ) { return false; }
@@ -101,7 +101,7 @@ final class InternalLinkIndexer {
             if ( $targetId <= 0 || $targetId === $sourceId ) { continue; }
             $target = get_post( $targetId );
             if ( ! $target instanceof \WP_Post || 'publish' !== $target->post_status || ! $this->isPublicPostType( $target->post_type ) ) { continue; }
-            if ( '1' === (string) get_post_meta( $targetId, '_yps_robots_noindex', true ) ) { continue; }
+            if ( '1' === (string) get_post_meta( $targetId, '_yablseo_robots_noindex', true ) ) { continue; }
             $out[ $targetId ] = min( 65535, (int) ( $out[ $targetId ] ?? 0 ) + 1 );
         }
         return $out;

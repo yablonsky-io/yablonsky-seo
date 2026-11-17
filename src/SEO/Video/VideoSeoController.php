@@ -58,7 +58,7 @@ final class VideoSeoController {
     public function sitemapIndexEntry( array $items ): array {
         $latest = $this->videoCandidateIds( 50 );
         foreach ( $latest as $candidateId ) {
-            if ( $candidateId <= 0 || '1' === (string) get_post_meta( $candidateId, '_yps_video_exclude', true ) || '1' === (string) get_post_meta( $candidateId, '_yps_robots_noindex', true ) ) { continue; }
+            if ( $candidateId <= 0 || '1' === (string) get_post_meta( $candidateId, '_yablseo_video_exclude', true ) || '1' === (string) get_post_meta( $candidateId, '_yablseo_robots_noindex', true ) ) { continue; }
             $post = get_post( $candidateId );
             $url = $post instanceof \WP_Post ? (string) get_permalink( $post ) : '';
             if ( ! $post instanceof \WP_Post || empty( ( new SitemapEligibilityPolicy() )->evaluatePost( $post, $url )['eligible'] ) ) { continue; }
@@ -75,15 +75,15 @@ final class VideoSeoController {
         if ( ! is_post_type_viewable( $post->post_type ) ) { return; }
         $detected = $this->detectVideo( (string) $post->post_content );
         if ( empty( $detected ) ) {
-            delete_post_meta( $postId, '_yps_video_detected_url' );
-            delete_post_meta( $postId, '_yps_video_detected_kind' );
-            delete_post_meta( $postId, '_yps_video_detected_thumbnail' );
+            delete_post_meta( $postId, '_yablseo_video_detected_url' );
+            delete_post_meta( $postId, '_yablseo_video_detected_kind' );
+            delete_post_meta( $postId, '_yablseo_video_detected_thumbnail' );
             return;
         }
-        update_post_meta( $postId, '_yps_video_detected_url', (string) $detected['url'] );
-        update_post_meta( $postId, '_yps_video_detected_kind', (string) $detected['kind'] );
-        if ( ! empty( $detected['thumbnail'] ) ) { update_post_meta( $postId, '_yps_video_detected_thumbnail', (string) $detected['thumbnail'] ); }
-        else { delete_post_meta( $postId, '_yps_video_detected_thumbnail' ); }
+        update_post_meta( $postId, '_yablseo_video_detected_url', (string) $detected['url'] );
+        update_post_meta( $postId, '_yablseo_video_detected_kind', (string) $detected['kind'] );
+        if ( ! empty( $detected['thumbnail'] ) ) { update_post_meta( $postId, '_yablseo_video_detected_thumbnail', (string) $detected['thumbnail'] ); }
+        else { delete_post_meta( $postId, '_yablseo_video_detected_thumbnail' ); }
     }
 
     public function route(): void {
@@ -98,7 +98,7 @@ final class VideoSeoController {
     public function augmentSchema( array $graph, array $document, $resource ): array {
         if ( ! is_object( $resource ) || ! method_exists( $resource, 'objectId' ) ) { return $graph; }
         $postId = (int) $resource->objectId();
-        if ( $postId <= 0 || '1' === (string) get_post_meta( $postId, '_yps_video_exclude', true ) ) { return $graph; }
+        if ( $postId <= 0 || '1' === (string) get_post_meta( $postId, '_yablseo_video_exclude', true ) ) { return $graph; }
         $video = $this->videoForPost( $postId );
         if ( empty( $video ) || empty( $video['thumbnail'] ) ) { return $graph; }
         $canonical = isset( $document['canonical'] ) ? (string) $document['canonical'] : (string) get_permalink( $postId );
@@ -131,7 +131,7 @@ final class VideoSeoController {
         echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">' . "\n";
         foreach ( $ids as $postId ) {
             $post = get_post( $postId );
-            if ( ! $post instanceof \WP_Post || '1' === (string) get_post_meta( $postId, '_yps_video_exclude', true ) || '1' === (string) get_post_meta( $postId, '_yps_robots_noindex', true ) ) { continue; }
+            if ( ! $post instanceof \WP_Post || '1' === (string) get_post_meta( $postId, '_yablseo_video_exclude', true ) || '1' === (string) get_post_meta( $postId, '_yablseo_robots_noindex', true ) ) { continue; }
             $video = $this->videoForPost( $postId );
             if ( empty( $video ) || empty( $video['thumbnail'] ) ) { continue; }
             $url = get_permalink( $post );
@@ -152,23 +152,23 @@ final class VideoSeoController {
 
     /** @return array<string,mixed> */
     private function videoForPost( int $postId ): array {
-        $manualUrl = esc_url_raw( (string) get_post_meta( $postId, '_yps_video_content_url', true ), array( 'http', 'https' ) );
-        $detectedUrl = esc_url_raw( (string) get_post_meta( $postId, '_yps_video_detected_url', true ), array( 'http', 'https' ) );
+        $manualUrl = esc_url_raw( (string) get_post_meta( $postId, '_yablseo_video_content_url', true ), array( 'http', 'https' ) );
+        $detectedUrl = esc_url_raw( (string) get_post_meta( $postId, '_yablseo_video_detected_url', true ), array( 'http', 'https' ) );
         $url = '' !== (string) $manualUrl ? (string) $manualUrl : (string) $detectedUrl;
         if ( '' === $url ) { return array(); }
-        $kind = '' !== (string) $manualUrl ? sanitize_key( (string) get_post_meta( $postId, '_yps_video_kind', true ) ) : sanitize_key( (string) get_post_meta( $postId, '_yps_video_detected_kind', true ) );
+        $kind = '' !== (string) $manualUrl ? sanitize_key( (string) get_post_meta( $postId, '_yablseo_video_kind', true ) ) : sanitize_key( (string) get_post_meta( $postId, '_yablseo_video_detected_kind', true ) );
         if ( ! in_array( $kind, array( 'content', 'player' ), true ) ) { $kind = $this->looksLikePlayer( $url ) ? 'player' : 'content'; }
-        $thumbnail = esc_url_raw( (string) get_post_meta( $postId, '_yps_video_thumbnail', true ), array( 'http', 'https' ) );
-        if ( '' === (string) $thumbnail ) { $thumbnail = esc_url_raw( (string) get_post_meta( $postId, '_yps_video_detected_thumbnail', true ), array( 'http', 'https' ) ); }
+        $thumbnail = esc_url_raw( (string) get_post_meta( $postId, '_yablseo_video_thumbnail', true ), array( 'http', 'https' ) );
+        if ( '' === (string) $thumbnail ) { $thumbnail = esc_url_raw( (string) get_post_meta( $postId, '_yablseo_video_detected_thumbnail', true ), array( 'http', 'https' ) ); }
         if ( '' === (string) $thumbnail && has_post_thumbnail( $postId ) ) {
             $featured = get_the_post_thumbnail_url( $postId, 'full' );
             $thumbnail = is_string( $featured ) ? esc_url_raw( $featured, array( 'http', 'https' ) ) : '';
         }
-        $title = trim( wp_strip_all_tags( (string) get_post_meta( $postId, '_yps_video_title', true ), true ) );
+        $title = trim( wp_strip_all_tags( (string) get_post_meta( $postId, '_yablseo_video_title', true ), true ) );
         if ( '' === $title ) { $title = trim( wp_strip_all_tags( (string) get_the_title( $postId ), true ) ); }
-        $description = trim( wp_strip_all_tags( (string) get_post_meta( $postId, '_yps_video_description', true ), true ) );
+        $description = trim( wp_strip_all_tags( (string) get_post_meta( $postId, '_yablseo_video_description', true ), true ) );
         if ( '' === $description ) { $description = wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $postId ), true ), 30, '…' ); }
-        $duration = min( 28800, max( 0, (int) get_post_meta( $postId, '_yps_video_duration', true ) ) );
+        $duration = min( 28800, max( 0, (int) get_post_meta( $postId, '_yablseo_video_duration', true ) ) );
         return array(
             'url' => $url,
             'kind' => $kind,
@@ -223,7 +223,7 @@ final class VideoSeoController {
         $limit = min( self::MAX_ITEMS, max( 1, $limit ) );
         $typePlaceholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
         $sql = "SELECT DISTINCT p.ID FROM %i p INNER JOIN %i pm ON pm.post_id=p.ID WHERE p.post_status='publish' AND p.post_type IN ({$typePlaceholders}) AND pm.meta_key IN (%s,%s) ORDER BY p.post_modified_gmt DESC,p.ID DESC LIMIT %d";
-        $args = array_merge( array( $wpdb->posts, $wpdb->postmeta ), $types, array( '_yps_video_content_url', '_yps_video_detected_url', $limit ) );
+        $args = array_merge( array( $wpdb->posts, $wpdb->postmeta ), $types, array( '_yablseo_video_content_url', '_yablseo_video_detected_url', $limit ) );
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fixed meta keys plus registered public post types are prepared; bounded query replaces slow OR meta_query scans.
         $ids = array_values( array_filter( array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, $args ) ) ) ) );
         if ( ! empty( $ids ) ) { update_meta_cache( 'post', $ids ); }

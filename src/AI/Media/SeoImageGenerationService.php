@@ -244,7 +244,7 @@ final class SeoImageGenerationService {
 
     private function altText( \WP_Post $post ): string {
         $title = trim( wp_strip_all_tags( (string) $post->post_title, true ) );
-        $keyphrase = trim( (string) get_post_meta( $post->ID, '_yps_focus_keyphrase', true ) );
+        $keyphrase = trim( (string) get_post_meta( $post->ID, '_yablseo_focus_keyphrase', true ) );
         $alt = '' !== $title ? $title : $keyphrase;
         if ( function_exists( 'mb_substr' ) ) { return mb_substr( $alt, 0, 180, 'UTF-8' ); }
         return substr( $alt, 0, 180 );

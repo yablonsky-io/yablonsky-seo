@@ -151,17 +151,17 @@ final class FrontEndSeoInspector {
         $evidence = array();
         $id = $resource->objectId();
         if ( $id > 0 && in_array( $resource->type(), array( 'post', 'product', 'posts_page', 'home' ), true ) ) {
-            $evidence['title'] = '' !== trim( (string) get_post_meta( $id, '_yps_seo_title', true ) ) ? 'authored-post-meta' : 'template-or-wordpress-fallback';
-            $evidence['description'] = '' !== trim( (string) get_post_meta( $id, '_yps_meta_description', true ) ) ? 'authored-post-meta' : 'template-or-content-fallback';
-            $evidence['canonical'] = '' !== trim( (string) get_post_meta( $id, '_yps_canonical', true ) ) ? 'authored-post-meta' : 'resource-url-fallback';
-            $evidence['open_graph'] = '' !== trim( (string) get_post_meta( $id, '_yps_og_title', true ) ) ? 'authored-post-meta' : 'social-template-or-search-fallback';
-            $evidence['twitter'] = '' !== trim( (string) get_post_meta( $id, '_yps_twitter_title', true ) ) ? 'authored-post-meta' : 'social-template-or-open-graph-fallback';
+            $evidence['title'] = '' !== trim( (string) get_post_meta( $id, '_yablseo_seo_title', true ) ) ? 'authored-post-meta' : 'template-or-wordpress-fallback';
+            $evidence['description'] = '' !== trim( (string) get_post_meta( $id, '_yablseo_meta_description', true ) ) ? 'authored-post-meta' : 'template-or-content-fallback';
+            $evidence['canonical'] = '' !== trim( (string) get_post_meta( $id, '_yablseo_canonical', true ) ) ? 'authored-post-meta' : 'resource-url-fallback';
+            $evidence['open_graph'] = '' !== trim( (string) get_post_meta( $id, '_yablseo_og_title', true ) ) ? 'authored-post-meta' : 'social-template-or-search-fallback';
+            $evidence['twitter'] = '' !== trim( (string) get_post_meta( $id, '_yablseo_twitter_title', true ) ) ? 'authored-post-meta' : 'social-template-or-open-graph-fallback';
         } elseif ( 'term' === $resource->type() && $id > 0 ) {
-            $evidence['title'] = '' !== trim( (string) get_term_meta( $id, '_yps_seo_title', true ) ) ? 'authored-term-meta' : 'template-or-wordpress-fallback';
-            $evidence['description'] = '' !== trim( (string) get_term_meta( $id, '_yps_meta_description', true ) ) ? 'authored-term-meta' : 'template-or-term-fallback';
-            $evidence['canonical'] = '' !== trim( (string) get_term_meta( $id, '_yps_canonical', true ) ) ? 'authored-term-meta' : 'resource-url-fallback';
-            $evidence['open_graph'] = '' !== trim( (string) get_term_meta( $id, '_yps_og_title', true ) ) ? 'authored-term-meta' : 'social-template-or-search-fallback';
-            $evidence['twitter'] = '' !== trim( (string) get_term_meta( $id, '_yps_twitter_title', true ) ) ? 'authored-term-meta' : 'social-template-or-open-graph-fallback';
+            $evidence['title'] = '' !== trim( (string) get_term_meta( $id, '_yablseo_seo_title', true ) ) ? 'authored-term-meta' : 'template-or-wordpress-fallback';
+            $evidence['description'] = '' !== trim( (string) get_term_meta( $id, '_yablseo_meta_description', true ) ) ? 'authored-term-meta' : 'template-or-term-fallback';
+            $evidence['canonical'] = '' !== trim( (string) get_term_meta( $id, '_yablseo_canonical', true ) ) ? 'authored-term-meta' : 'resource-url-fallback';
+            $evidence['open_graph'] = '' !== trim( (string) get_term_meta( $id, '_yablseo_og_title', true ) ) ? 'authored-term-meta' : 'social-template-or-search-fallback';
+            $evidence['twitter'] = '' !== trim( (string) get_term_meta( $id, '_yablseo_twitter_title', true ) ) ? 'authored-term-meta' : 'social-template-or-open-graph-fallback';
         } else {
             $evidence = array( 'title' => 'archive-template-or-wordpress-fallback', 'description' => 'archive-template-or-content-fallback', 'canonical' => 'resource-url-fallback', 'open_graph' => 'social-template-or-search-fallback', 'twitter' => 'social-template-or-open-graph-fallback' );
         }

@@ -12,9 +12,9 @@ final class YoastUserFieldMap {
     /** @return array<string,string> */
     public static function fields(): array {
         return array(
-            'wpseo_title'          => '_yps_author_seo_title',
-            'wpseo_metadesc'       => '_yps_author_meta_description',
-            'wpseo_noindex_author' => '_yps_author_robots_noindex',
+            'wpseo_title'          => '_yablseo_author_seo_title',
+            'wpseo_metadesc'       => '_yablseo_author_meta_description',
+            'wpseo_noindex_author' => '_yablseo_author_robots_noindex',
         );
     }
 
@@ -60,7 +60,7 @@ final class YoastUserFieldMap {
             return $fields[ $sourceKey ];
         }
         if ( in_array( $sourceKey, self::socialContactFields(), true ) ) {
-            return '_yps_author_social_' . sanitize_key( $sourceKey );
+            return '_yablseo_author_social_' . sanitize_key( $sourceKey );
         }
         return '';
     }
