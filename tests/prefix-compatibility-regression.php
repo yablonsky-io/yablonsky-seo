@@ -30,6 +30,7 @@ $testKeys = array(
     '_yps_og_title' => array( '_yablseo_og_title', 'Legacy social title' ),
     '_yps_schema_entity_name' => array( '_yablseo_schema_entity_name', 'Legacy named entity' ),
     '_yps_video_title' => array( '_yablseo_video_title', 'Legacy video title' ),
+    '_yps_video_content_url' => array( '_yablseo_video_content_url', 'https://www.youtube.com/watch?v=abc123DEF45' ),
     '_yps_focus_keyphrase' => array( '_yablseo_focus_keyphrase', 'legacy search phrase' ),
 );
 foreach ( $testKeys as $oldKey => $row ) {
@@ -42,6 +43,13 @@ foreach ( $testKeys as $oldKey => $row ) {
     $assert( get_post_meta( $postId, $newKey, true ) === $expected, "Read legacy SEO meta through canonical {$newKey}" );
     $assert( get_post_meta( $postId, $oldKey, true ) === $expected, "Legacy SEO record preserved {$oldKey}" );
 }
+
+// Read-only sitemap SQL must discover videos stored under pre-5.87.2 keys.
+$video = new \Yablonsky\PerformanceSEO\SEO\Video\VideoSeoController();
+$method = new ReflectionMethod( $video, 'videoCandidateIds' );
+$method->setAccessible( true );
+$videoIds = $method->invoke( $video, 100 );
+$assert( is_array( $videoIds ) && in_array( $postId, $videoIds, true ), 'Legacy video metadata remains discoverable by SQL-backed sitemap' );
 
 // A user edit uses only the canonical name. It must not mutate historical data.
 $assert( false !== update_post_meta( $postId, '_yablseo_seo_title', 'Edited SEO title' ), 'Canonical SEO edit accepted' );
