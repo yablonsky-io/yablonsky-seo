@@ -1,6 +1,6 @@
 # Yablonsky.io — WordPress.org pre-publication guidance
 
-**Version:** 1.1.1 · **Date:** 2026-11-18 · **Scope:** Yablonsky.io WordPress plugin repositories
+**Version:** 1.2.0 · **Date:** 2026-11-24 · **Scope:** Yablonsky.io WordPress plugin repositories
 
 > **Advisory engineering reference, not an instruction to refactor a product.** This file documents the common concerns seen in the YSEO WordPress.org review on 2026-11-08 and in official WordPress Plugin Directory guidance. Read it while building a feature, at the start of a publication-preparation task, and before a release candidate. Do **not** interpret reading the guidance as authorization to change functional code.
 
@@ -74,6 +74,16 @@ These are general engineering questions from reviewing WordPress plugin implemen
 - **Hot-path database and memory work:** Where a component processes large sitemaps, commerce feeds, 404 traffic or queues, look for demonstrable unbounded scans, repeated writes, stale locks and recovery after interrupted jobs. Test on representative volumes before claiming an optimization need; performance concerns alone do not authorize cache, SQL, scheduler or schema changes.
 - **Safety classification:** For any such observation, record the exact source line or isolated reproduction, impact and existing safeguard in the finding template below. Classify as `NEEDS_CONFIRMATION` or `FUTURE_IMPROVEMENT` by default. Upgrade to `REQUIRED_FOR_PUBLICATION` only when applicable official guidance, an actual reviewer requirement, or an independently verified release-blocking security/correctness issue justifies it. **No bulk audits, refactors, automatic tests or release blocks arise from this section.**
 
+### H. Storage location and request-boundary lessons
+
+These checks reflect the November 20 YSEO review and apply to relevant components only. Preserve accepted functionality, existing files, data, and product-specific exceptions. They do not authorize a cross-product refactor.
+- **Storage location:** prefer the database for privileged settings and the media APIs for media. For other generated files, resolve the actual uploads directory using `wp_upload_dir()` and use a plugin-slug subdirectory. Check the error state, site context and path validity; do not fall back to a hard-coded uploads path. Do not write to core, plugin, or theme directories. Writes to the site root, wp-content outside uploads, or outside the installation need a genuine applicable exception. Cache drop-ins and genuine backup/migration products can have justified exceptions; SEO metadata export alone was not accepted as a site-backup exception in the YSEO review.
+- **Private artifacts:** an uploads directory is normally web-accessible. Protect confidential exports against direct HTTP access across supported server configurations; `.htaccess` alone is not a portable guarantee. Consider database storage or authenticated encryption with keys kept outside public artifacts, with appropriate access checks. Preserve existing verified rollback anchors and do not silently relocate, overwrite or delete historical data. Changes to storage contracts require an approved narrow design and migration/rollback evidence.
+- **Reviewable input sanitization:** `FILTER_CALLBACK` is not inherently forbidden, but passing a callback or returning an unchanged string after syntax/length checks does not by itself demonstrate context-appropriate sanitization. Review all analogous request boundaries, including scalar and nested inputs, and prefer explicit WordPress sanitizers after type checks and unslashing superglobals. Use field-specific validation for JSON, CSV, redirect patterns, HTML and credentials; do not apply a destructive blanket text sanitizer to structured content.
+- **Structured data and output:** validate decoded schemas, expected keys and types, bounds and permissions before applying values. Keep URLs, regex patterns, HTML, identifiers and secrets semantically intact. For arrays validate shape and individual leaves. Investigate heuristic findings against actual source-to-sink behavior and document justified false positives. Avoid replacing an existing sanitizer with a PHPCS suppression as a substitute for evidence.
+- **Release evidence:** check the exact distribution candidate against the complete review history. A green Plugin Check or targeted WPCS run alone does not prove reviewer acceptance. Test clean install with WP_DEBUG, upgrades and the affected user workflows. Reply briefly in the existing reviewer email thread only after uploading the corrected package; mention necessary clarifications rather than a long change inventory.
+- **Scope:** keep existing packaged locales; community translation participation is optional. Do not remove or upload machine-generated catalogs for community approval without appropriate human review. Apply new checks during approved development and publication preparation, not as a blanket rewrite or automatic CI requirement.
+
 ## 4. Minimal finding / decision record
 
 ```text
@@ -106,6 +116,8 @@ Keep development open and human-governed. Guidance should prevent repeat review 
 - WordPress Polyglots guide for plugin/theme authors: https://make.wordpress.org/polyglots/handbook/plugin-theme-authors-guide/
 - WordPress Polyglots translation review and PTE process: https://make.wordpress.org/polyglots/handbook/plugin-theme-authors-guide/pte-request/
 - WordPress plugin internationalization guidance: https://developer.wordpress.org/plugins/internationalization/how-to-internationalize-your-plugin/
-- WordPress.org review case: private YSEO review email dated 2026-11-08. **This guide summarizes lessons; the original reviewer email is not copied into the public repository.**
+- WordPress uploads API: https://developer.wordpress.org/reference/functions/wp_upload_dir/
+- WordPress sanitization and escaping: https://developer.wordpress.org/apis/security/sanitizing/ and https://developer.wordpress.org/apis/security/escaping/
+- WordPress.org review cases: private YSEO review emails dated 2026-11-08, 2026-11-13 and 2026-11-20. **This guide summarizes lessons; the original reviewer email is not copied into the public repository.**
 
 **Simple rule:** Build correctly the first time. Preserve accepted functionality. Correct only evidenced WordPress.org publication issues, with proportionate tests and clear human approval for behavioral changes.
