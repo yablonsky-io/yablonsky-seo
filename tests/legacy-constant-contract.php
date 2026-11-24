@@ -1,6 +1,6 @@
 <?php
 /**
- * Isolated YSEO 5.87.2 constant and historical-identity compatibility contract.
+ * Isolated YSEO 5.87.3 constant and historical-identity compatibility contract.
  *
  * This deliberately simulates the old plugin already being loaded, using safe
  * WordPress stubs and an in-memory option store. It never accesses a real site.
@@ -46,7 +46,7 @@ $verify = static function ( bool $ok, string $message ) use ( &$checks ): void {
 $file = dirname( __DIR__ ) . '/yablonsky-seo.php';
 require $file;
 
-$verify( defined( 'YSEO_VERSION' ) && '5.87.2' === YSEO_VERSION, 'Canonical product version is declared' );
+$verify( defined( 'YSEO_VERSION' ) && '5.87.3' === YSEO_VERSION, 'Canonical product version is declared' );
 $verify( defined( 'YSEO_FILE' ) && YSEO_FILE === $file, 'Canonical main plugin file is declared' );
 $verify( defined( 'YSEO_DIR' ) && YSEO_DIR === dirname( $file ) . DIRECTORY_SEPARATOR, 'Canonical plugin directory is declared' );
 $verify( defined( 'YSEO_URL' ) && YSEO_URL === 'https://unit.example/wp-content/plugins/yablonsky-seo/', 'Canonical plugin URL is declared' );
