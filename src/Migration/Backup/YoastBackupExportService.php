@@ -80,10 +80,21 @@ final class YoastBackupExportService {
         }
 
         $anchorId = 'yoast-' . gmdate( 'YmdHis' ) . '-' . substr( str_replace( '-', '', wp_generate_uuid4() ), 0, 12 );
-        $path = $this->pathPolicy->createAnchorDirectory( $anchorId );
-        ( new BackupArtifactCipher() )->initialize( $path );
-        foreach ( array( 'options.jsonl', 'postmeta.jsonl', 'usermeta.jsonl', 'primary-term.jsonl' ) as $artifact ) {
-            $this->writer->writeAt( $path . DIRECTORY_SEPARATOR . $artifact, 0, '' );
+        try {
+            $path = $this->pathPolicy->createAnchorDirectory( $anchorId );
+            ( new BackupArtifactCipher() )->initialize( $path );
+            foreach ( array( 'options.jsonl', 'postmeta.jsonl', 'usermeta.jsonl', 'primary-term.jsonl' ) as $artifact ) {
+                $this->writer->writeAt( $path . DIRECTORY_SEPARATOR . $artifact, 0, '' );
+            }
+        } catch ( \Throwable $error ) {
+            $state = new BackupExportState( array(
+                'status' => BackupExportState::STATUS_BLOCKED,
+                'provider_version' => $version,
+                'blockers' => array( 'backup-storage:' . sanitize_key( $error->getMessage() ) ),
+                'message' => __( 'Backup/export stopped fail-closed. No source SEO data was modified.', 'yablonsky-seo' ),
+            ) );
+            $this->repository->save( $state );
+            return $state;
         }
 
         $state = new BackupExportState(
