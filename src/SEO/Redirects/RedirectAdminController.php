@@ -47,12 +47,12 @@ final class RedirectAdminController {
 
     public function save(): void {
         $this->guard( 'yseo_redirect_save' );
-        $match = sanitize_key( (string) filter_input( INPUT_POST, 'match_type', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $match = sanitize_key( (string) ( isset( $_POST['match_type'] ) && is_string( $_POST['match_type'] ) ? sanitize_text_field( wp_unslash( $_POST['match_type'] ) ) : null ) );
         $match = in_array( $match, array( 'plain', 'regex' ), true ) ? $match : 'plain';
-        $originRaw = trim( (string) filter_input( INPUT_POST, 'origin', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
+        $originRaw = trim( (string) \Yablonsky\PerformanceSEO\Core\InputValidation::urlOrPattern( isset( $_POST['origin'] ) && is_string( $_POST['origin'] ) ? wp_unslash( $_POST['origin'] ) : null ) );
         $status = (int) filter_input( INPUT_POST, 'status_code', FILTER_VALIDATE_INT );
-        $targetRaw = trim( (string) filter_input( INPUT_POST, 'target', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
-        $language = $this->sanitizeLanguage( (string) filter_input( INPUT_POST, 'language_key', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ), true );
+        $targetRaw = trim( (string) \Yablonsky\PerformanceSEO\Core\InputValidation::urlOrPattern( isset( $_POST['target'] ) && is_string( $_POST['target'] ) ? wp_unslash( $_POST['target'] ) : null ) );
+        $language = $this->sanitizeLanguage( (string) ( isset( $_POST['language_key'] ) && is_string( $_POST['language_key'] ) ? sanitize_text_field( wp_unslash( $_POST['language_key'] ) ) : null ), true );
         if ( ! in_array( $status, array( 301,302,307,410,451 ), true ) ) { $status = 301; }
         $origin = 'regex' === $match ? $originRaw : $this->validator->normalizeOrigin( $originRaw );
         $target = in_array( $status, array( 410,451 ), true ) ? '' : $this->validator->normalizeTarget( $targetRaw );
@@ -66,7 +66,7 @@ final class RedirectAdminController {
             $this->repository->save( array( 'origin' => $origin, 'target' => $target, 'status_code' => $status, 'match_type' => $match, 'language_key' => $language, 'enabled' => 1, 'source' => 'manual' ) );
         }
         $return = array();
-        if ( '404' === sanitize_key( (string) filter_input( INPUT_POST, 'yseo_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ) {
+        if ( '404' === sanitize_key( (string) ( isset( $_POST['yseo_from'] ) && is_string( $_POST['yseo_from'] ) ? sanitize_text_field( wp_unslash( $_POST['yseo_from'] ) ) : null ) ) ) {
             $return['yseo_from'] = '404';
         }
         $this->back( '' === $error ? 'saved' : $error, $return );
@@ -91,13 +91,18 @@ final class RedirectAdminController {
         // never read before its own capability and nonce checks.
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing redirects requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( 'yseo_redirect_bulk' );
-        $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $action = sanitize_key( (string) ( isset( $_POST['bulk_action'] ) && is_string( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : null ) );
         // Each submitted rule ID is sanitized before any mutation.
-        $rawIds = filter_input( INPUT_POST, 'yseo_ids', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => 'absint',
-        ) );
-        $ids = is_array( $rawIds ) ? array_slice( array_values( array_unique( array_filter( $rawIds ) ) ), 0, 100 ) : array();
+        $ids = array();
+        if ( isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ) {
+            foreach ( $_POST['yseo_ids'] as $rawId ) {
+                if ( ! is_string( $rawId ) ) { continue; }
+                $id = absint( wp_unslash( $rawId ) );
+                if ( $id > 0 ) { $ids[ $id ] = $id; }
+                if ( count( $ids ) >= 100 ) { break; }
+            }
+        }
+        $ids = array_values( $ids );
         if ( empty( $ids ) || ! in_array( $action, array( 'enable', 'disable', 'delete' ), true ) ) { $this->backToReferer( 'bulk-none' ); }
         $count = 0;
         foreach ( $ids as $id ) {
@@ -109,7 +114,7 @@ final class RedirectAdminController {
 
     public function importCsv(): void {
         $this->guard( 'yseo_redirect_import' );
-        $csv = (string) filter_input( INPUT_POST, 'redirect_csv', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'csv' ) ) );
+        $csv = (string) \Yablonsky\PerformanceSEO\Core\InputValidation::csv( isset( $_POST['redirect_csv'] ) && is_string( $_POST['redirect_csv'] ) ? wp_unslash( $_POST['redirect_csv'] ) : null );
         if ( strlen( $csv ) > 1048576 ) { $this->back( 'import_too_large' ); }
         $lines = preg_split( '/\r\n|\r|\n/', trim( $csv ) );
         $imported = 0;
@@ -154,25 +159,25 @@ final class RedirectAdminController {
 
     public function render(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Accessing this page requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
-        $search = trim( sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) );
-        $originPrefill = $this->validator->normalizeOrigin( (string) filter_input( INPUT_GET, 'origin', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $search = trim( sanitize_text_field( (string) ( isset( $_GET['yseo_search'] ) && is_string( $_GET['yseo_search'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_search'] ) ) : null ) ) );
+        $originPrefill = $this->validator->normalizeOrigin( (string) ( isset( $_GET['origin'] ) && is_string( $_GET['origin'] ) ? sanitize_text_field( wp_unslash( $_GET['origin'] ) ) : null ) );
         if ( RedirectSafetyPolicy::isProtectedPath( $originPrefill ) ) { $originPrefill = ''; }
-        $from404 = '404' === sanitize_key( (string) filter_input( INPUT_GET, 'yseo_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $match = sanitize_key( (string) filter_input( INPUT_GET, 'match', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $from404 = '404' === sanitize_key( (string) ( isset( $_GET['yseo_from'] ) && is_string( $_GET['yseo_from'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_from'] ) ) : null ) );
+        $match = sanitize_key( (string) ( isset( $_GET['match'] ) && is_string( $_GET['match'] ) ? sanitize_text_field( wp_unslash( $_GET['match'] ) ) : null ) );
         $status = (int) filter_input( INPUT_GET, 'status', FILTER_VALIDATE_INT );
-        $state = sanitize_key( (string) filter_input( INPUT_GET, 'state', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $language = $this->sanitizeLanguage( (string) filter_input( INPUT_GET, 'language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ), false );
-        $source = sanitize_key( (string) filter_input( INPUT_GET, 'source', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $state = sanitize_key( (string) ( isset( $_GET['state'] ) && is_string( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : null ) );
+        $language = $this->sanitizeLanguage( (string) ( isset( $_GET['language'] ) && is_string( $_GET['language'] ) ? sanitize_text_field( wp_unslash( $_GET['language'] ) ) : null ), false );
+        $source = sanitize_key( (string) ( isset( $_GET['source'] ) && is_string( $_GET['source'] ) ? sanitize_text_field( wp_unslash( $_GET['source'] ) ) : null ) );
         $source = in_array( $source, array( 'manual', 'csv', 'auto-post-move', 'auto-term-move', '404-bulk' ), true ) ? $source : '';
-        $dateFrom = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $dateTo = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $dateFrom = sanitize_text_field( (string) ( isset( $_GET['date_from'] ) && is_string( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : null ) );
+        $dateTo = sanitize_text_field( (string) ( isset( $_GET['date_to'] ) && is_string( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : null ) );
         $perPage = (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT );
         if ( ! in_array( $perPage, self::PER_PAGE_OPTIONS, true ) ) { $perPage = self::PER_PAGE; }
         $languageCatalog = $this->languageCatalog();
         $page = max( 1, (int) filter_input( INPUT_GET, 'yseo_paged', FILTER_VALIDATE_INT ) );
         $data = $this->repository->page( $page, $perPage, $search, $match, $status, $state, $language, $source, $dateFrom, $dateTo );
         $diag = $this->repository->diagnostics();
-        $notice = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_notice', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $notice = sanitize_text_field( (string) ( isset( $_GET['yseo_notice'] ) && is_string( $_GET['yseo_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_notice'] ) ) : null ) );
         ?>
         <div class="wrap yps-wrap yps-product-shell yseo-redirect-manager">
             <header class="yps-product-header"><div class="yps-product-title"><h1><?php echo esc_html__( 'Redirect Manager', 'yablonsky-seo' ); ?></h1><p><?php echo esc_html__( 'Fast indexed redirects with plain and REGEX rules, explicit language scope, automatic move redirects, HTTP status control and CSV portability.', 'yablonsky-seo' ); ?></p></div><div class="yps-product-actions"><a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo' ) ); ?>"><?php echo esc_html__( 'Dashboard', 'yablonsky-seo' ); ?></a><a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo-404-monitor' ) ); ?>"><?php echo esc_html__( '404 Monitor', 'yablonsky-seo' ); ?></a><span class="yps-pill"><?php echo esc_html( (string) $diag['enabled'] ); ?> <?php echo esc_html__( 'active', 'yablonsky-seo' ); ?></span></div></header>
@@ -279,14 +284,14 @@ final class RedirectAdminController {
     private function returnArgs(): array {
         return array_filter(
             array(
-                'yseo_search' => sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-                'match' => sanitize_key( (string) filter_input( INPUT_GET, 'match', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
+                'yseo_search' => sanitize_text_field( (string) ( isset( $_GET['yseo_search'] ) && is_string( $_GET['yseo_search'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_search'] ) ) : null ) ),
+                'match' => sanitize_key( (string) ( isset( $_GET['match'] ) && is_string( $_GET['match'] ) ? sanitize_text_field( wp_unslash( $_GET['match'] ) ) : null ) ),
                 'status' => (int) filter_input( INPUT_GET, 'status', FILTER_VALIDATE_INT ),
-                'state' => sanitize_key( (string) filter_input( INPUT_GET, 'state', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-                'language' => $this->sanitizeLanguage( (string) filter_input( INPUT_GET, 'language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ), false ),
-                'source' => sanitize_key( (string) filter_input( INPUT_GET, 'source', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-                'date_from' => sanitize_text_field( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-                'date_to' => sanitize_text_field( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
+                'state' => sanitize_key( (string) ( isset( $_GET['state'] ) && is_string( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : null ) ),
+                'language' => $this->sanitizeLanguage( (string) ( isset( $_GET['language'] ) && is_string( $_GET['language'] ) ? sanitize_text_field( wp_unslash( $_GET['language'] ) ) : null ), false ),
+                'source' => sanitize_key( (string) ( isset( $_GET['source'] ) && is_string( $_GET['source'] ) ? sanitize_text_field( wp_unslash( $_GET['source'] ) ) : null ) ),
+                'date_from' => sanitize_text_field( (string) ( isset( $_GET['date_from'] ) && is_string( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : null ) ),
+                'date_to' => sanitize_text_field( (string) ( isset( $_GET['date_to'] ) && is_string( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : null ) ),
                 'per_page' => (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT ),
                 'yseo_paged' => max( 1, (int) filter_input( INPUT_GET, 'yseo_paged', FILTER_VALIDATE_INT ) ),
             ),

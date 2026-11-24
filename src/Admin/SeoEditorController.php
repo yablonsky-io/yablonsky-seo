@@ -193,7 +193,7 @@ final class SeoEditorController {
             wp_die( esc_html__( 'Changing these settings requires the corresponding WordPress capability.', 'yablonsky-seo' ) );
         }
         check_admin_referer( 'yseo_settings_import' );
-        $raw = filter_input( INPUT_POST, 'yseo_settings_json', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'json' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::json( isset( $_POST['yseo_settings_json'] ) && is_string( $_POST['yseo_settings_json'] ) ? wp_unslash( $_POST['yseo_settings_json'] ) : null );
         if ( ! is_string( $raw ) ) {
             $this->redirectPortability( 'invalid' );
         }
@@ -250,7 +250,7 @@ final class SeoEditorController {
         $aeoAudit = ( new AeoReadinessAudit() )->report();
         $providers = $this->detector->detectActiveProviders();
         $authority = (string) get_option( 'yablseo_output_authority', 'active' );
-        $updatedFlag = filter_input( INPUT_GET, 'updated', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $updatedFlag = ( isset( $_GET['updated'] ) && is_string( $_GET['updated'] ) ? sanitize_text_field( wp_unslash( $_GET['updated'] ) ) : null );
         $localeStatus = ProductLocaleRegistry::currentStatus();
         $localeCoverage = ProductLocaleRegistry::coverage();
         $localeAudit = ProductLocalePackAudit::report();
@@ -259,7 +259,7 @@ final class SeoEditorController {
         $localeRegisteredReady = max( 0, (int) ( $localeAudit['registered_ready'] ?? 0 ) );
         $localeProgressPercent = $localeRegisteredTotal > 0 ? round( min( 100, ( $localeRegisteredReady / $localeRegisteredTotal ) * 100 ), 1 ) : 0.0;
         $portability = new SettingsPortability();
-        $portabilityStatus = filter_input( INPUT_GET, 'portability', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $portabilityStatus = ( isset( $_GET['portability'] ) && is_string( $_GET['portability'] ) ? sanitize_text_field( wp_unslash( $_GET['portability'] ) ) : null );
         $portabilityStatus = is_string( $portabilityStatus ) ? sanitize_key( $portabilityStatus ) : '';
         $portabilityChangedRaw = filter_input( INPUT_GET, 'changed', FILTER_VALIDATE_INT );
         $portabilityChanged = is_int( $portabilityChangedRaw ) ? max( 0, $portabilityChangedRaw ) : 0;
@@ -802,7 +802,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         check_admin_referer( self::SETTINGS_NONCE );
 
         $providers = $this->detector->detectActiveProviders();
-        $rawAuthority = filter_input( INPUT_POST, 'output_authority', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawAuthority = ( isset( $_POST['output_authority'] ) && is_string( $_POST['output_authority'] ) ? sanitize_text_field( wp_unslash( $_POST['output_authority'] ) ) : null );
         $requestedAuthority = is_string( $rawAuthority ) ? sanitize_key( $rawAuthority ) : 'shadow';
         $authority = empty( $providers ) && 'active' === $requestedAuthority ? 'active' : 'shadow';
         update_option( 'yablseo_output_authority', $authority, false );
@@ -890,24 +890,33 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         );
         // Preserve percent-encoded image URLs until the field-specific
         // SocialTemplateResolver sanitizer validates every nested key/value.
-        $rawSocialTemplates = filter_input( INPUT_POST, 'social_templates', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ),
-        ) );
-        $settings['social_templates'] = is_array( $rawSocialTemplates ) ? SocialTemplateResolver::sanitize( $rawSocialTemplates ) : array();
+        $rawSocialTemplates = array();
+        foreach ( array( 'singular', 'archive', 'taxonomy', 'special' ) as $group ) {
+            if ( ! isset( $_POST['social_templates'][ $group ] ) || ! is_array( $_POST['social_templates'][ $group ] ) ) { continue; }
+            foreach ( $_POST['social_templates'][ $group ] as $scope => $row ) {
+                $scope = sanitize_key( (string) $scope );
+                if ( '' === $scope || ! is_array( $row ) ) { continue; }
+                foreach ( array( 'og_title', 'og_description', 'og_image', 'twitter_title', 'twitter_description', 'twitter_image' ) as $field ) {
+                    if ( ! isset( $row[ $field ] ) || ! is_string( $row[ $field ] ) ) { continue; }
+                    $value = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( wp_unslash( $row[ $field ] ) );
+                    if ( is_string( $value ) ) { $rawSocialTemplates[ $group ][ $scope ][ $field ] = $value; }
+                }
+            }
+        }
+        $settings['social_templates'] = SocialTemplateResolver::sanitize( $rawSocialTemplates );
         update_option( self::SETTINGS_OPTION, $settings, false );
 
         $aiSettings = new AiSettings();
-        $disconnect = null !== filter_input( INPUT_POST, 'yseo_ai_disconnect', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $disconnect = null !== ( isset( $_POST['yseo_ai_disconnect'] ) && is_string( $_POST['yseo_ai_disconnect'] ) ? sanitize_text_field( wp_unslash( $_POST['yseo_ai_disconnect'] ) ) : null );
         if ( $disconnect ) {
             $aiSettings->disconnect();
         } else {
-            $rawApiKey = filter_input( INPUT_POST, 'yseo_ai_api_key', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+            $rawApiKey = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_POST['yseo_ai_api_key'] ) && is_string( $_POST['yseo_ai_api_key'] ) ? wp_unslash( $_POST['yseo_ai_api_key'] ) : null );
             if ( is_string( $rawApiKey ) && '' !== trim( $rawApiKey ) ) {
                 try { $aiSettings->saveApiKey( sanitize_text_field( trim( $rawApiKey ) ) ); }
                 catch ( ServiceError $error ) { wp_die( esc_html( $error->getMessage() ) ); }
             }
-            $rawCreativity = filter_input( INPUT_POST, 'yseo_ai_creativity', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+            $rawCreativity = ( isset( $_POST['yseo_ai_creativity'] ) && is_string( $_POST['yseo_ai_creativity'] ) ? sanitize_text_field( wp_unslash( $_POST['yseo_ai_creativity'] ) ) : null );
             $aiSettings->savePreferences(
                 array(
                     'workspace_id' => $this->postedText( 'yseo_ai_workspace_id' ),
@@ -1181,7 +1190,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( wp_is_post_autosave( $postId ) || wp_is_post_revision( $postId ) ) {
             return;
         }
-        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_meta_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNonce = ( isset( $_POST['yablseo_seo_meta_nonce'] ) && is_string( $_POST['yablseo_seo_meta_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['yablseo_seo_meta_nonce'] ) ) : null );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1203,7 +1212,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
         check_ajax_referer( 'yseo_ai_settings', 'nonce' );
-        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawFields = ( isset( $_POST['fields'] ) && is_string( $_POST['fields'] ) ? sanitize_text_field( wp_unslash( $_POST['fields'] ) ) : null );
         $fields = is_string( $rawFields ) ? array_values( array_filter( array_map( 'sanitize_key', explode( ',', $rawFields ) ) ) ) : array();
         try {
             $suggestions = ( new SiteSettingsSuggestionService() )->suggest( $fields );
@@ -1221,9 +1230,9 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
         check_ajax_referer( 'yseo_ai_settings', 'nonce' );
-        $rawGroup = filter_input( INPUT_POST, 'group', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-        $rawKey = filter_input( INPUT_POST, 'key', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawGroup = ( isset( $_POST['group'] ) && is_string( $_POST['group'] ) ? sanitize_text_field( wp_unslash( $_POST['group'] ) ) : null );
+        $rawKey = ( isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : null );
+        $rawFields = ( isset( $_POST['fields'] ) && is_string( $_POST['fields'] ) ? sanitize_text_field( wp_unslash( $_POST['fields'] ) ) : null );
         $group = is_string( $rawGroup ) ? sanitize_key( $rawGroup ) : '';
         $key = is_string( $rawKey ) ? sanitize_key( $rawKey ) : '';
         $fields = is_string( $rawFields ) ? array_values( array_filter( array_map( 'sanitize_key', explode( ',', $rawFields ) ) ) ) : array();
@@ -1305,7 +1314,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $rawField = filter_input( INPUT_POST, 'field', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawField = ( isset( $_POST['field'] ) && is_string( $_POST['field'] ) ? sanitize_text_field( wp_unslash( $_POST['field'] ) ) : null );
         $field = is_string( $rawField ) ? sanitize_key( $rawField ) : '';
         if ( ! SettingsAuthoringRegistry::supportsImage( $field ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Image generation failed.', 'yablonsky-seo' ) ), 400 );
@@ -1333,9 +1342,9 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting site setup suggestions requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $rawGroup = filter_input( INPUT_POST, 'group', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-        $rawKey = filter_input( INPUT_POST, 'key', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-        $rawSlot = filter_input( INPUT_POST, 'slot', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawGroup = ( isset( $_POST['group'] ) && is_string( $_POST['group'] ) ? sanitize_text_field( wp_unslash( $_POST['group'] ) ) : null );
+        $rawKey = ( isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : null );
+        $rawSlot = ( isset( $_POST['slot'] ) && is_string( $_POST['slot'] ) ? sanitize_text_field( wp_unslash( $_POST['slot'] ) ) : null );
         $group = is_string( $rawGroup ) ? sanitize_key( $rawGroup ) : '';
         $key = is_string( $rawKey ) ? sanitize_key( $rawKey ) : '';
         $slot = is_string( $rawSlot ) ? sanitize_key( $rawSlot ) : '';
@@ -1371,7 +1380,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         }
         $model = $this->postedText( 'model' );
         $prompt = $this->postedTextarea( 'prompt' );
-        $ratioRaw = filter_input( INPUT_POST, 'aspect_ratio', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $ratioRaw = ( isset( $_POST['aspect_ratio'] ) && is_string( $_POST['aspect_ratio'] ) ? sanitize_text_field( wp_unslash( $_POST['aspect_ratio'] ) ) : null );
         $ratio = is_string( $ratioRaw ) ? sanitize_text_field( $ratioRaw ) : '16:9';
         if ( ! in_array( $ratio, array( '16:9', '4:3', '1:1' ), true ) ) { $ratio = '16:9'; }
         try {
@@ -1410,15 +1419,15 @@ untimeException $error ) {
         // YSEO fields in the form. The browser sends both snapshots here so one local
         // analyzer remains authoritative for live and saved scoring.
         $analysisPost = clone $post;
-        $rawDraftTitle = filter_input( INPUT_POST, 'draft_title', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawDraftTitle = ( isset( $_POST['draft_title'] ) && is_string( $_POST['draft_title'] ) ? sanitize_text_field( wp_unslash( $_POST['draft_title'] ) ) : null );
         if ( is_string( $rawDraftTitle ) ) {
             $analysisPost->post_title = sanitize_text_field( $rawDraftTitle );
         }
-        $rawDraftExcerpt = filter_input( INPUT_POST, 'draft_excerpt', FILTER_CALLBACK, array( 'options' => 'sanitize_textarea_field' ) );
+        $rawDraftExcerpt = ( isset( $_POST['draft_excerpt'] ) && is_string( $_POST['draft_excerpt'] ) ? sanitize_textarea_field( wp_unslash( $_POST['draft_excerpt'] ) ) : null );
         if ( is_string( $rawDraftExcerpt ) ) {
             $analysisPost->post_excerpt = sanitize_textarea_field( $rawDraftExcerpt );
         }
-        $rawDraftContent = filter_input( INPUT_POST, 'draft_content', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'richHtml' ) ) );
+        $rawDraftContent = ( isset( $_POST['draft_content'] ) && is_string( $_POST['draft_content'] ) && strlen( $_POST['draft_content'] ) <= 2097152 ? \Yablonsky\PerformanceSEO\Core\InputValidation::richHtml( wp_unslash( $_POST['draft_content'] ) ) : null );
         if ( is_string( $rawDraftContent ) ) {
             // The live editor snapshot is untrusted request data even though it
             // is used only for analysis and is never saved by this endpoint.
@@ -1436,25 +1445,25 @@ untimeException $error ) {
         }
 
         foreach ( array( 'focus_keyphrase', 'seo_title' ) as $name ) {
-            $raw = filter_input( INPUT_POST, $name, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+            $raw = ( isset( $_POST[$name] ) && is_string( $_POST[$name] ) ? sanitize_text_field( wp_unslash( $_POST[$name] ) ) : null );
             if ( is_string( $raw ) ) {
                 $values[ $name ] = sanitize_text_field( $raw );
             }
         }
-        $rawDescription = filter_input( INPUT_POST, 'meta_description', FILTER_CALLBACK, array( 'options' => 'sanitize_textarea_field' ) );
+        $rawDescription = ( isset( $_POST['meta_description'] ) && is_string( $_POST['meta_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['meta_description'] ) ) : null );
         if ( is_string( $rawDescription ) ) {
             $values['meta_description'] = sanitize_textarea_field( $rawDescription );
         }
-        $rawNoindex = filter_input( INPUT_POST, 'noindex', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNoindex = ( isset( $_POST['noindex'] ) && is_string( $_POST['noindex'] ) ? sanitize_text_field( wp_unslash( $_POST['noindex'] ) ) : null );
         if ( is_string( $rawNoindex ) ) {
             $values['noindex'] = in_array( strtolower( trim( $rawNoindex ) ), array( '1', 'true', 'yes', 'on' ), true ) ? '1' : '';
         }
-        $rawSchemaPageType = filter_input( INPUT_POST, 'schema_page_type', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawSchemaPageType = ( isset( $_POST['schema_page_type'] ) && is_string( $_POST['schema_page_type'] ) ? sanitize_text_field( wp_unslash( $_POST['schema_page_type'] ) ) : null );
         if ( is_string( $rawSchemaPageType ) ) {
             $values['schema_page_type'] = sanitize_key( $rawSchemaPageType );
         }
 
-        $rawRelated = filter_input( INPUT_POST, 'focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $rawRelated = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST['focus_keyphrases'] ) && is_string( $_POST['focus_keyphrases'] ) ? wp_unslash( $_POST['focus_keyphrases'] ) : null );
         $relatedRaw = is_string( $rawRelated ) ? $rawRelated : '';
         $analysisValues = $values;
         $analysisValues['focus_keyphrases'] = $this->relatedKeyphrasesFromRaw( $relatedRaw, (string) ( $values['focus_keyphrase'] ?? '' ) );
@@ -1495,7 +1504,7 @@ untimeException $error ) {
         if ( ! $this->detector->hasProvider( 'yoast' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Yoast mirroring activates when Yoast SEO is active and provides live source metadata.', 'yablonsky-seo' ) ), 409 );
         }
-        $rawScope = filter_input( INPUT_POST, 'scope', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawScope = ( isset( $_POST['scope'] ) && is_string( $_POST['scope'] ) ? sanitize_text_field( wp_unslash( $_POST['scope'] ) ) : null );
         $scope = is_string( $rawScope ) && MetadataMirrorState::SCOPE_ALL === sanitize_key( $rawScope ) ? MetadataMirrorState::SCOPE_ALL : MetadataMirrorState::SCOPE_SEARCH;
         $result = ( new MetadataMirrorService( new MetadataMirrorRepository() ) )->mirrorPost( $postId, $scope );
         /* translators: 1: copied metadata value count, 2: exact match count, 3: preserved existing YSEO value count. */
@@ -1511,7 +1520,7 @@ untimeException $error ) {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Editing this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $rawField = filter_input( INPUT_POST, 'field', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawField = ( isset( $_POST['field'] ) && is_string( $_POST['field'] ) ? sanitize_text_field( wp_unslash( $_POST['field'] ) ) : null );
         $field = is_string( $rawField ) ? sanitize_key( $rawField ) : '';
         $requested = in_array( $field, array( 'focus_keyphrase', 'focus_keyphrases', 'seo_title', 'meta_description' ), true ) ? array( $field ) : array();
         try {
@@ -1536,7 +1545,7 @@ untimeException $error ) {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting AI assistance for this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $modeInput = filter_input( INPUT_POST, 'mode', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $modeInput = ( isset( $_POST['mode'] ) && is_string( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : null );
         $mode = is_string( $modeInput ) ? sanitize_key( $modeInput ) : '';
         try {
             $result = ( new ContentAssistService() )->assistPost( $postId, $mode );
@@ -1595,7 +1604,7 @@ untimeException $error ) {
     }
 
     public function saveTermFields( int $termId ): void {
-        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_term_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNonce = ( isset( $_POST['yablseo_seo_term_nonce'] ) && is_string( $_POST['yablseo_seo_term_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['yablseo_seo_term_nonce'] ) ) : null );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1639,7 +1648,7 @@ untimeException $error ) {
     }
 
     public function saveUserFields( int $userId ): void {
-        $rawNonce = filter_input( INPUT_POST, 'yablseo_seo_user_nonce', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawNonce = ( isset( $_POST['yablseo_seo_user_nonce'] ) && is_string( $_POST['yablseo_seo_user_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['yablseo_seo_user_nonce'] ) ) : null );
         if ( ! is_string( $rawNonce ) || '' === $rawNonce ) {
             return;
         }
@@ -1974,7 +1983,7 @@ untimeException $error ) {
     }
 
     private function saveRelatedKeyphrases( int $postId ): void {
-        $raw = filter_input( INPUT_POST, 'yablseo_focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST['yablseo_focus_keyphrases'] ) && is_string( $_POST['yablseo_focus_keyphrases'] ) ? wp_unslash( $_POST['yablseo_focus_keyphrases'] ) : null );
         $raw = is_string( $raw ) ? $raw : '';
         $primary = (string) get_post_meta( $postId, '_yablseo_focus_keyphrase', true );
         $primaryKey = $this->normalizedKeyphraseKey( $primary );
@@ -2053,7 +2062,7 @@ untimeException $error ) {
     private function saveObjectMetaValue( string $objectType, int $objectId, string $name, array $field ): void {
         $inputName = 'yablseo_' . $name;
         if ( 'checkbox' === $field['type'] ) {
-            $value = null !== filter_input( INPUT_POST, $inputName, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ? '1' : '';
+            $value = null !== ( isset( $_POST[$inputName] ) && is_string( $_POST[$inputName] ) ? sanitize_text_field( wp_unslash( $_POST[$inputName] ) ) : null ) ? '1' : '';
         } elseif ( 'textarea' === $field['type'] ) {
             $value = $this->postedTextarea( $inputName );
         } else {
@@ -2284,7 +2293,7 @@ untimeException $error ) {
     }
 
     private function postedVerification( string $key ): string {
-        $raw = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? wp_unslash( $_POST[$key] ) : null );
         if ( ! is_string( $raw ) ) { return ''; }
         $raw = trim( $raw );
         if ( '' === $raw ) { return ''; }
@@ -2296,23 +2305,23 @@ untimeException $error ) {
     }
 
     private function postedRssTemplate( string $key ): string {
-        $raw = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? wp_unslash( $_POST[$key] ) : null );
         if ( ! is_string( $raw ) ) { return ''; }
         return trim( wp_kses_post( $raw ) );
     }
 
     private function postedText( string $key ): string {
-        $value = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $value = ( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? sanitize_text_field( wp_unslash( $_POST[$key] ) ) : null );
         return is_string( $value ) ? sanitize_text_field( $value ) : '';
     }
 
     private function postedTextarea( string $key ): string {
-        $value = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_textarea_field' ) );
+        $value = ( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? sanitize_textarea_field( wp_unslash( $_POST[$key] ) ) : null );
         return is_string( $value ) ? $value : '';
     }
 
     private function postedKey( string $key ): string {
-        $value = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $value = ( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? sanitize_text_field( wp_unslash( $_POST[$key] ) ) : null );
         return is_string( $value ) ? sanitize_key( $value ) : '';
     }
 

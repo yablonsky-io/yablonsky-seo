@@ -6,8 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /**
  * Input-boundary validators for byte-sensitive request fields.
  *
- * Ordinary scalars are sanitized with sanitize_text_field() at the filter_input
- * boundary. The fields below must preserve their meaningful syntax (JSON,
+ * Ordinary scalars are type-checked, unslashed and sanitized at the
+ * WordPress request boundary. The fields below must preserve their meaningful syntax (JSON,
  * CSV, redirect patterns, and encoded request URLs), so validation is paired
  * with a separate, context-specific parser/sanitizer at the call site.
  */

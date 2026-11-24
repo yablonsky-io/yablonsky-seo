@@ -1,100 +1,96 @@
 <?php
 namespace Yablonsky\PerformanceSEO\Migration\Backup;
 
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-// phpcs:disable WordPress.WP.AlternativeFunctions -- Private local rollback artifacts require byte-offset writes, atomic rename, permission checks and direct hashing that WP_Filesystem cannot provide as one crash-resumable primitive.
-
-/**
- * Resolves private migration backup storage outside the WordPress document root.
- */
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Local owner-only permissions and canonical path checks for resumable backup artifacts.
+/** New encrypted backup storage lives under this site's WordPress uploads. Historical anchors remain read-only. */
 final class PrivateBackupPath {
-    private const DIRECTORY_NAME = 'yps-private-backups';
+    private const LEGACY_DIRECTORY = 'yps-private-backups';
+
+    private function currentRoot(): string {
+        $uploads = wp_upload_dir( null, false );
+        if ( ! empty( $uploads['error'] ) || ! isset( $uploads['basedir'] ) || ! is_string( $uploads['basedir'] ) || '' === trim( $uploads['basedir'] ) ) {
+            throw new \RuntimeException( 'backup-uploads-unavailable' );
+        }
+        return rtrim( $uploads['basedir'], '/\\' ) . DIRECTORY_SEPARATOR . 'yablonsky-seo' . DIRECTORY_SEPARATOR . 'private-backups';
+    }
+
+    private function legacyRoot(): string {
+        $webroot = realpath( rtrim( ABSPATH, '/\\' ) );
+        if ( false === $webroot ) { throw new \RuntimeException( 'backup-webroot-unavailable' ); }
+        return dirname( $webroot ) . DIRECTORY_SEPARATOR . self::LEGACY_DIRECTORY;
+    }
 
     public function root(): string {
-        $webroot = $this->canonicalWebroot();
-        $parent = dirname( $webroot );
-        $root = $parent . DIRECTORY_SEPARATOR . self::DIRECTORY_NAME;
-
-        if ( ! is_dir( $root ) ) {
-            if ( ! wp_mkdir_p( $root ) && ! is_dir( $root ) ) {
-                throw new \RuntimeException( 'Unable to create the private Yablonsky SEO backup directory.' );
-            }
-        }
+        $root = $this->currentRoot();
+        if ( is_link( $root ) || is_link( dirname( $root ) ) ) { throw new \RuntimeException( 'backup-directory-link' ); }
+        if ( ! is_dir( $root ) && ! wp_mkdir_p( $root ) ) { throw new \RuntimeException( 'backup-directory-unavailable' ); }
+        if ( is_link( $root ) || is_link( dirname( $root ) ) ) { throw new \RuntimeException( 'backup-directory-link' ); }
         @chmod( $root, 0700 );
-        $this->assertPrivateDirectory( $root );
+        $this->assertOwnerDirectory( $root );
         return $root;
     }
 
     public function createAnchorDirectory( string $anchorId ): string {
         $anchorId = sanitize_key( $anchorId );
-        if ( '' === $anchorId ) {
-            throw new \InvalidArgumentException( 'A valid backup anchor ID is required.' );
-        }
+        if ( ! $this->validAnchorId( $anchorId ) ) { throw new \InvalidArgumentException( 'backup-anchor-id-invalid' ); }
         $path = $this->root() . DIRECTORY_SEPARATOR . $anchorId;
-        if ( file_exists( $path ) && ! is_dir( $path ) ) {
-            throw new \RuntimeException( 'Backup anchor path is not a directory.' );
-        }
-        if ( ! is_dir( $path ) ) {
-            if ( ! wp_mkdir_p( $path ) && ! is_dir( $path ) ) {
-                throw new \RuntimeException( 'Unable to create the backup anchor directory.' );
-            }
-        }
+        if ( file_exists( $path ) || is_link( $path ) ) { throw new \RuntimeException( 'backup-anchor-already-exists' ); }
+        if ( ! wp_mkdir_p( $path ) ) { throw new \RuntimeException( 'backup-anchor-directory-unavailable' ); }
         @chmod( $path, 0700 );
-        $this->assertPrivateDirectory( $path );
+        $this->assertWritableDirectory( $path );
         return $path;
     }
 
+    public function assertWritableDirectory( string $path ): void {
+        $this->assertOwnerDirectory( $path );
+        $root = $this->currentRoot();
+        if ( ! $this->isAnchorUnder( $path, $root ) ) { throw new \RuntimeException( 'backup-current-directory-required' ); }
+    }
+
+    /** True only for a valid historical anchor directory. No creation or writes. */
+    public function isLegacyDirectory( string $path ): bool {
+        return $this->isAnchorUnder( $path, $this->legacyRoot() );
+    }
+
     public function assertPrivateDirectory( string $path ): void {
-        if ( is_link( $path ) || ! is_dir( $path ) ) {
-            throw new \RuntimeException( 'Backup directory is missing or unsafe.' );
-        }
-        $real = realpath( $path );
-        if ( false === $real ) {
-            throw new \RuntimeException( 'Backup directory cannot be resolved.' );
-        }
-        $webroot = $this->canonicalWebroot();
-        if ( $this->isWithin( $real, $webroot ) ) {
-            throw new \RuntimeException( 'Backup directory must be outside the WordPress webroot.' );
-        }
-        $mode = fileperms( $real );
-        if ( false === $mode || 0700 !== ( $mode & 0777 ) ) {
-            throw new \RuntimeException( 'Backup directory permissions must be owner-only (0700).' );
-        }
+        $this->assertOwnerDirectory( $path );
+        if ( $this->isLegacyDirectory( $path ) ) { return; }
+        $this->assertWritableDirectory( $path );
     }
 
     public function assertPrivateFile( string $path ): void {
-        if ( is_link( $path ) || ! is_file( $path ) ) {
-            throw new \RuntimeException( 'Backup artifact is missing or unsafe.' );
-        }
-        $real = realpath( $path );
-        if ( false === $real ) {
-            throw new \RuntimeException( 'Backup artifact cannot be resolved.' );
-        }
-        $webroot = $this->canonicalWebroot();
-        if ( $this->isWithin( $real, $webroot ) ) {
-            throw new \RuntimeException( 'Backup artifact must be outside the WordPress webroot.' );
-        }
-        $mode = fileperms( $real );
-        if ( false === $mode || 0600 !== ( $mode & 0777 ) ) {
-            throw new \RuntimeException( 'Backup artifact permissions must be owner-only (0600).' );
-        }
+        $this->assertPrivateDirectory( dirname( $path ) );
+        if ( is_link( $path ) || ! is_file( $path ) ) { throw new \RuntimeException( 'backup-artifact-missing-or-unsafe' ); }
+        $mode = fileperms( $path );
+        if ( false === $mode || 0600 !== ( $mode & 0777 ) ) { throw new \RuntimeException( 'backup-artifact-permissions' ); }
     }
 
-    private function canonicalWebroot(): string {
-        $webroot = realpath( rtrim( ABSPATH, '/\\' ) );
-        if ( false === $webroot ) {
-            throw new \RuntimeException( 'WordPress webroot cannot be resolved.' );
+    public function assertWritePath( string $path ): void {
+        $this->assertWritableDirectory( dirname( $path ) );
+        if ( ! in_array( basename( $path ), array( 'options.jsonl', 'postmeta.jsonl', 'usermeta.jsonl', 'primary-term.jsonl', 'manifest.json' ), true ) || is_link( $path ) ) {
+            throw new \RuntimeException( 'backup-artifact-path-unsafe' );
         }
-        return rtrim( $webroot, DIRECTORY_SEPARATOR );
+        if ( file_exists( $path ) ) { $this->assertPrivateFile( $path ); }
     }
 
-    private function isWithin( string $path, string $parent ): bool {
-        $path = rtrim( $path, DIRECTORY_SEPARATOR );
-        $parent = rtrim( $parent, DIRECTORY_SEPARATOR );
-        return $path === $parent || 0 === strpos( $path . DIRECTORY_SEPARATOR, $parent . DIRECTORY_SEPARATOR );
+    private function validAnchorId( string $id ): bool {
+        return 1 === preg_match( '/^yoast-[0-9]{14}-[a-f0-9]{12}$/D', $id );
+    }
+
+    private function assertOwnerDirectory( string $path ): void {
+        if ( is_link( $path ) || ! is_dir( $path ) || false === realpath( $path ) ) { throw new \RuntimeException( 'backup-directory-missing-or-unsafe' ); }
+        $mode = fileperms( $path );
+        if ( false === $mode || 0700 !== ( $mode & 0777 ) ) { throw new \RuntimeException( 'backup-directory-permissions' ); }
+    }
+
+    private function isAnchorUnder( string $path, string $root ): bool {
+        $path = rtrim( $path, '/\\' );
+        if ( ! $this->validAnchorId( basename( $path ) ) || is_link( $path ) || is_link( $root ) || is_link( dirname( $root ) ) ) { return false; }
+        $actual = realpath( $path );
+        $base = realpath( $root );
+        return false !== $actual && false !== $base && dirname( $actual ) === $base && $actual === $base . DIRECTORY_SEPARATOR . basename( $path );
     }
 }
 // phpcs:enable WordPress.WP.AlternativeFunctions

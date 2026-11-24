@@ -14,7 +14,7 @@ $assert = static function ( $ok, string $message ) use ( &$checks ): void {
     echo "PASS_META #{$checks}: {$message}\n";
 };
 
-$assert( defined( 'YSEO_VERSION' ) && '5.87.2' === YSEO_VERSION, 'Corrective plugin version booted' );
+$assert( defined( 'YSEO_VERSION' ) && '5.87.3' === YSEO_VERSION, 'Corrective plugin version booted' );
 foreach ( array( 'YPS_VERSION', 'YPS_FILE', 'YPS_DIR', 'YPS_URL' ) as $shortGlobal ) {
     $assert( ! defined( $shortGlobal ), 'No three-letter global alias: ' . $shortGlobal );
 }

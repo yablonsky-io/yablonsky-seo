@@ -96,7 +96,7 @@ final class AdminController {
         if ( ! current_user_can( 'manage_options' ) ) {
             return;
         }
-        $page = filter_input( INPUT_GET, 'page', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $page = ( isset( $_GET['page'] ) && is_string( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : null );
         if ( ! is_string( $page ) || self::LEGACY_PAGE !== sanitize_key( $page ) ) {
             return;
         }
@@ -1449,7 +1449,7 @@ final class AdminController {
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting a site content plan requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $languageInput = filter_input( INPUT_POST, 'language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $languageInput = ( isset( $_POST['language'] ) && is_string( $_POST['language'] ) ? sanitize_text_field( wp_unslash( $_POST['language'] ) ) : null );
         $language = is_string( $languageInput ) ? sanitize_text_field( $languageInput ) : '';
         try {
             $plan = ( new ContentPlannerService() )->plan( $language );
@@ -1472,7 +1472,7 @@ final class AdminController {
             wp_send_json_error( array( 'message' => esc_html__( 'Yoast SEO: activation required for live source migration.', 'yablonsky-seo' ) ), 409 );
         }
 
-        $rawMode = filter_input( INPUT_POST, 'mode', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawMode = ( isset( $_POST['mode'] ) && is_string( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : null );
         $mode    = is_string( $rawMode ) ? sanitize_key( $rawMode ) : MigrationState::MODE_DRY_RUN;
         if ( ! in_array( $mode, array( MigrationState::MODE_DRY_RUN, MigrationState::MODE_IMPORT ), true ) ) {
             $mode = MigrationState::MODE_DRY_RUN;
@@ -1559,7 +1559,7 @@ final class AdminController {
     public function ajaxStartMetadataMirror(): void {
         $this->guardAjax();
         if ( ! $this->detector->hasProvider( 'yoast' ) ) { wp_send_json_error( array( 'message' => esc_html__( 'Yoast SEO: activation required for live source migration.', 'yablonsky-seo' ) ), 409 ); }
-        $rawScope = filter_input( INPUT_POST, 'scope', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawScope = ( isset( $_POST['scope'] ) && is_string( $_POST['scope'] ) ? sanitize_text_field( wp_unslash( $_POST['scope'] ) ) : null );
         $scope = is_string( $rawScope ) && MetadataMirrorState::SCOPE_ALL === sanitize_key( $rawScope ) ? MetadataMirrorState::SCOPE_ALL : MetadataMirrorState::SCOPE_SEARCH;
         $repository = new MetadataMirrorRepository();
         $token = $repository->acquireLock();
@@ -1602,7 +1602,7 @@ final class AdminController {
 
     public function ajaxStartPortableMirror(): void {
         $this->guardAjax();
-        $rawProvider = filter_input( INPUT_POST, 'provider_id', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawProvider = ( isset( $_POST['provider_id'] ) && is_string( $_POST['provider_id'] ) ? sanitize_text_field( wp_unslash( $_POST['provider_id'] ) ) : null );
         $providerId = is_string( $rawProvider ) ? sanitize_key( $rawProvider ) : '';
         $profile = ( new PortableSourceRegistry() )->get( $providerId );
         if ( null === $profile || ! $this->detector->hasProvider( $providerId ) ) {
@@ -1660,17 +1660,17 @@ final class AdminController {
 
     public function ajaxStartAiMetadata(): void {
         $this->guardAjax();
-        $rawPolicy = filter_input( INPUT_POST, 'policy', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawPolicy = ( isset( $_POST['policy'] ) && is_string( $_POST['policy'] ) ? sanitize_text_field( wp_unslash( $_POST['policy'] ) ) : null );
         $policy = is_string( $rawPolicy ) ? sanitize_key( $rawPolicy ) : BulkMetadataState::POLICY_FILL_MISSING;
         if ( ! in_array( $policy, array( BulkMetadataState::POLICY_FILL_MISSING, BulkMetadataState::POLICY_AI_GENERATED, BulkMetadataState::POLICY_REPLACE ), true ) ) {
             $policy = BulkMetadataState::POLICY_FILL_MISSING;
         }
-        $rawFields = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawFields = ( isset( $_POST['fields'] ) && is_string( $_POST['fields'] ) ? sanitize_text_field( wp_unslash( $_POST['fields'] ) ) : null );
         $fields = array();
         if ( is_string( $rawFields ) && '' !== $rawFields ) {
             foreach ( explode( ',', $rawFields ) as $field ) { $fields[] = sanitize_key( $field ); }
         }
-        $rawLanguages = filter_input( INPUT_POST, 'languages', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $rawLanguages = ( isset( $_POST['languages'] ) && is_string( $_POST['languages'] ) ? sanitize_text_field( wp_unslash( $_POST['languages'] ) ) : null );
         $languages = array();
         if ( is_string( $rawLanguages ) && '' !== $rawLanguages ) {
             foreach ( explode( ',', $rawLanguages ) as $language ) { $languages[] = sanitize_text_field( $language ); }
