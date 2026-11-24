@@ -92,10 +92,12 @@ final class AgentDocumentStore {
             }
         }
         $root = trailingslashit( $uploadBase ) . 'yablonsky-seo';
-        $candidate = trailingslashit( $root ) . 'agent-cache-v2';
-        if ( isset( $directories[ $candidate ] ) && ! is_link( $root ) && $this->privatePermissions( $candidate, 0700 ) && is_dir( $candidate ) && is_writable( $candidate ) ) { return $candidate; }
-        if ( is_link( $root ) || is_link( $candidate ) || ( ! is_dir( $candidate ) && ! wp_mkdir_p( $candidate ) ) ) { return ''; }
-        if ( is_link( $root ) || is_link( $candidate ) ) { return ''; }
+        $cacheRoot = trailingslashit( $root ) . 'agent-cache-v2';
+        $siteKey = hash( 'sha256', (int) get_current_blog_id() . '|' . home_url( '/' ) );
+        $candidate = trailingslashit( $cacheRoot ) . $siteKey;
+        if ( isset( $directories[ $candidate ] ) && ! is_link( $root ) && ! is_link( $cacheRoot ) && $this->privatePermissions( $candidate, 0700 ) && is_dir( $candidate ) && is_writable( $candidate ) ) { return $candidate; }
+        if ( is_link( $root ) || is_link( $cacheRoot ) || is_link( $candidate ) || ( ! is_dir( $candidate ) && ! wp_mkdir_p( $candidate ) ) ) { return ''; }
+        if ( is_link( $root ) || is_link( $cacheRoot ) || is_link( $candidate ) ) { return ''; }
         @chmod( $candidate, 0700 );
         if ( ! is_dir( $candidate ) || ! is_writable( $candidate ) || ! $this->privatePermissions( $candidate, 0700 ) ) { return ''; }
         $directories[ $candidate ] = true;
