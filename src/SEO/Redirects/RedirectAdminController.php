@@ -49,9 +49,9 @@ final class RedirectAdminController {
         $this->guard( 'yseo_redirect_save' );
         $match = sanitize_key( (string) ( isset( $_POST['match_type'] ) && is_string( $_POST['match_type'] ) ? sanitize_text_field( wp_unslash( $_POST['match_type'] ) ) : null ) );
         $match = in_array( $match, array( 'plain', 'regex' ), true ) ? $match : 'plain';
-        $originRaw = trim( (string) filter_input( INPUT_POST, 'origin', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
+        $originRaw = trim( (string) \Yablonsky\PerformanceSEO\Core\InputValidation::urlOrPattern( isset( $_POST['origin'] ) && is_string( $_POST['origin'] ) ? wp_unslash( $_POST['origin'] ) : null ) );
         $status = (int) filter_input( INPUT_POST, 'status_code', FILTER_VALIDATE_INT );
-        $targetRaw = trim( (string) filter_input( INPUT_POST, 'target', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
+        $targetRaw = trim( (string) \Yablonsky\PerformanceSEO\Core\InputValidation::urlOrPattern( isset( $_POST['target'] ) && is_string( $_POST['target'] ) ? wp_unslash( $_POST['target'] ) : null ) );
         $language = $this->sanitizeLanguage( (string) ( isset( $_POST['language_key'] ) && is_string( $_POST['language_key'] ) ? sanitize_text_field( wp_unslash( $_POST['language_key'] ) ) : null ), true );
         if ( ! in_array( $status, array( 301,302,307,410,451 ), true ) ) { $status = 301; }
         $origin = 'regex' === $match ? $originRaw : $this->validator->normalizeOrigin( $originRaw );
@@ -109,7 +109,7 @@ final class RedirectAdminController {
 
     public function importCsv(): void {
         $this->guard( 'yseo_redirect_import' );
-        $csv = (string) filter_input( INPUT_POST, 'redirect_csv', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'csv' ) ) );
+        $csv = (string) \Yablonsky\PerformanceSEO\Core\InputValidation::csv( isset( $_POST['redirect_csv'] ) && is_string( $_POST['redirect_csv'] ) ? wp_unslash( $_POST['redirect_csv'] ) : null );
         if ( strlen( $csv ) > 1048576 ) { $this->back( 'import_too_large' ); }
         $lines = preg_split( '/\r\n|\r|\n/', trim( $csv ) );
         $imported = 0;
