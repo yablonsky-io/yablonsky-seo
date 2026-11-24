@@ -76,12 +76,30 @@ final class AgentDocumentStore {
     private function directory(): string {
         $uploads = wp_upload_dir( null, false );
         if ( ! empty( $uploads['error'] ) || ! isset( $uploads['basedir'] ) || ! is_string( $uploads['basedir'] ) || '' === trim( $uploads['basedir'] ) || ! $this->cipherAvailable() ) { return ''; }
-        $root = trailingslashit( $uploads['basedir'] ) . 'yablonsky-seo';
+        static $directories = array();
+        static $cleaned = array();
+        $uploadBase = $uploads['basedir'];
+        if ( ! isset( $cleaned[ $uploadBase ] ) ) {
+            $cleaned[ $uploadBase ] = true;
+            // Retain the prior cleanup of obsolete plugin-owned plaintext cache files.
+            $legacy = trailingslashit( $uploadBase ) . '.yablonsky-seo-agent-cache';
+            if ( is_dir( $legacy ) && ! is_link( $legacy ) ) {
+                foreach ( array( '*.cache', '*.cache.tmp-*' ) as $pattern ) {
+                    foreach ( (array) glob( trailingslashit( $legacy ) . $pattern ) as $file ) {
+                        if ( is_string( $file ) && is_file( $file ) && ! is_link( $file ) ) { @unlink( $file ); }
+                    }
+                }
+            }
+        }
+        $root = trailingslashit( $uploadBase ) . 'yablonsky-seo';
         $candidate = trailingslashit( $root ) . 'agent-cache-v2';
+        if ( isset( $directories[ $candidate ] ) && ! is_link( $root ) && $this->privatePermissions( $candidate, 0700 ) && is_dir( $candidate ) && is_writable( $candidate ) ) { return $candidate; }
         if ( is_link( $root ) || is_link( $candidate ) || ( ! is_dir( $candidate ) && ! wp_mkdir_p( $candidate ) ) ) { return ''; }
         if ( is_link( $root ) || is_link( $candidate ) ) { return ''; }
         @chmod( $candidate, 0700 );
-        return is_dir( $candidate ) && is_writable( $candidate ) && $this->privatePermissions( $candidate, 0700 ) ? $candidate : '';
+        if ( ! is_dir( $candidate ) || ! is_writable( $candidate ) || ! $this->privatePermissions( $candidate, 0700 ) ) { return ''; }
+        $directories[ $candidate ] = true;
+        return $candidate;
     }
 
     private function cipherAvailable(): bool {
