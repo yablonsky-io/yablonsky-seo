@@ -31,7 +31,7 @@ namespace {
     function get_option( $key, $default = false ) { return $GLOBALS['options'][ $key ] ?? $default; }
     function update_option( $key, $value, $autoload = null ) { $GLOBALS['options'][ $key ] = $value; return true; }
     function delete_option( $key ) { unset( $GLOBALS['options'][ $key ] ); return true; }
-    function get_current_blog_id() { return 1; }
+    function get_current_blog_id() { return $GLOBALS['fixture_blog_id'] ?? 1; }
     function wp_salt( $scheme = 'auth' ) { return 'test-only-site-salt'; }
     function home_url( $path = '/' ) { return 'https://example.test' . $path; }
     function get_bloginfo( $key ) { return 'Fixture'; }
@@ -104,8 +104,14 @@ namespace {
         $first = $store->remember( 'doc', 'revision', static function () use ( $body ) { return $body; } );
         $second = $store->remember( 'doc', 'revision', static function () { throw new \RuntimeException( 'cache hit should not rebuild' ); } );
         $assert( 'MISS' === $first['cache'] && 'HIT' === $second['cache'] && $second['body'] === $body && $first['etag'] === $second['etag'], 'Agent document cache hit and ETag parity' );
-        $cache = glob( $GLOBALS['uploads']['basedir'] . '/yablonsky-seo/agent-cache-v2/*.cache' );
+        $cache = glob( $GLOBALS['uploads']['basedir'] . '/yablonsky-seo/agent-cache-v2/*/*.cache' );
         $assert( count( $cache ) === 1 && false === strpos( file_get_contents( $cache[0] ), $body ), 'Agent cache does not expose plaintext' );
+        $GLOBALS['fixture_blog_id'] = 2;
+        $other = $store->remember( 'doc', 'revision', static function () { return 'other-site-document'; } );
+        $assert( 'MISS' === $other['cache'] && 'other-site-document' === $other['body'], 'Shared uploads preserve site cache isolation' );
+        $store->purgeKey( 'doc' );
+        $GLOBALS['fixture_blog_id'] = 1;
+        $assert( is_file( $cache[0] ), 'Other-site purge cannot erase original site cache' );
         $store->purgeKey( 'doc' );
         $assert( ! is_file( $cache[0] ), 'Agent cache purge retained' );
         $GLOBALS['uploads'] = array( 'error' => 'fixture uploads unavailable' );
