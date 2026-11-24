@@ -20,7 +20,7 @@ $admin = get_user_by( 'login', 'admin' );
 $yseo_assert( $admin instanceof WP_User, 'Test administrator exists' );
 wp_set_current_user( $admin->ID );
 
-$yseo_assert( defined( 'YSEO_VERSION' ) && YSEO_VERSION === '5.87.2', 'Installed version matches GitHub release' );
+$yseo_assert( defined( 'YSEO_VERSION' ) && YSEO_VERSION === '5.87.3', 'Installed version matches GitHub release' );
 $yseo_assert( is_plugin_active( 'yablonsky-seo/yablonsky-seo.php' ), 'Plugin active' );
 $yseo_assert( get_post_meta( (int ) get_option( 'yseo_ci_seed_post_id' ), '_yps_seo_title', true ) === 'Preserved SEO Title 5.86.6', 'Pre-upgrade YPS SEO title survived' );
 $yseo_assert( get_option( 'yps_ci_legacy_preservation_marker' ) === 'preserve-me', 'Pre-upgrade YPS option survived' );
@@ -104,7 +104,7 @@ $health = rest_do_request( new WP_REST_Request( 'GET', '/yablonsky-seo/v1/health
 $yseo_assert( $health instanceof WP_REST_Response && $health->get_status() === 200, 'Public read-only REST health route responds' );
 if ( $health instanceof WP_REST_Response ) {
     $payload = $health->get_data();
-    $yseo_assert( isset( $payload['plugin_version'] ) && $payload['plugin_version'] === '5.87.2', 'REST health advertises correct version' );
+    $yseo_assert( isset( $payload['plugin_version'] ) && $payload['plugin_version'] === '5.87.3', 'REST health advertises correct version' );
 }
 $contract = rest_do_request( new WP_REST_Request( 'GET', '/yablonsky-seo/v1/contract' ) );
 $yseo_assert( $contract instanceof WP_REST_Response && $contract->get_status() === 200, 'Public API contract route responds' );
