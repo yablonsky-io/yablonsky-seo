@@ -193,7 +193,7 @@ final class SeoEditorController {
             wp_die( esc_html__( 'Changing these settings requires the corresponding WordPress capability.', 'yablonsky-seo' ) );
         }
         check_admin_referer( 'yseo_settings_import' );
-        $raw = filter_input( INPUT_POST, 'yseo_settings_json', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'json' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::json( isset( $_POST['yseo_settings_json'] ) && is_string( $_POST['yseo_settings_json'] ) ? wp_unslash( $_POST['yseo_settings_json'] ) : null );
         if ( ! is_string( $raw ) ) {
             $this->redirectPortability( 'invalid' );
         }
@@ -902,7 +902,7 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         if ( $disconnect ) {
             $aiSettings->disconnect();
         } else {
-            $rawApiKey = filter_input( INPUT_POST, 'yseo_ai_api_key', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+            $rawApiKey = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_POST['yseo_ai_api_key'] ) && is_string( $_POST['yseo_ai_api_key'] ) ? wp_unslash( $_POST['yseo_ai_api_key'] ) : null );
             if ( is_string( $rawApiKey ) && '' !== trim( $rawApiKey ) ) {
                 try { $aiSettings->saveApiKey( sanitize_text_field( trim( $rawApiKey ) ) ); }
                 catch ( ServiceError $error ) { wp_die( esc_html( $error->getMessage() ) ); }
@@ -1418,7 +1418,7 @@ untimeException $error ) {
         if ( is_string( $rawDraftExcerpt ) ) {
             $analysisPost->post_excerpt = sanitize_textarea_field( $rawDraftExcerpt );
         }
-        $rawDraftContent = filter_input( INPUT_POST, 'draft_content', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'richHtml' ) ) );
+        $rawDraftContent = ( isset( $_POST['draft_content'] ) && is_string( $_POST['draft_content'] ) && strlen( $_POST['draft_content'] ) <= 2097152 ? \Yablonsky\PerformanceSEO\Core\InputValidation::richHtml( wp_unslash( $_POST['draft_content'] ) ) : null );
         if ( is_string( $rawDraftContent ) ) {
             // The live editor snapshot is untrusted request data even though it
             // is used only for analysis and is never saved by this endpoint.
@@ -1454,7 +1454,7 @@ untimeException $error ) {
             $values['schema_page_type'] = sanitize_key( $rawSchemaPageType );
         }
 
-        $rawRelated = filter_input( INPUT_POST, 'focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $rawRelated = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST['focus_keyphrases'] ) && is_string( $_POST['focus_keyphrases'] ) ? wp_unslash( $_POST['focus_keyphrases'] ) : null );
         $relatedRaw = is_string( $rawRelated ) ? $rawRelated : '';
         $analysisValues = $values;
         $analysisValues['focus_keyphrases'] = $this->relatedKeyphrasesFromRaw( $relatedRaw, (string) ( $values['focus_keyphrase'] ?? '' ) );
@@ -1974,7 +1974,7 @@ untimeException $error ) {
     }
 
     private function saveRelatedKeyphrases( int $postId ): void {
-        $raw = filter_input( INPUT_POST, 'yablseo_focus_keyphrases', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST['yablseo_focus_keyphrases'] ) && is_string( $_POST['yablseo_focus_keyphrases'] ) ? wp_unslash( $_POST['yablseo_focus_keyphrases'] ) : null );
         $raw = is_string( $raw ) ? $raw : '';
         $primary = (string) get_post_meta( $postId, '_yablseo_focus_keyphrase', true );
         $primaryKey = $this->normalizedKeyphraseKey( $primary );
@@ -2284,7 +2284,7 @@ untimeException $error ) {
     }
 
     private function postedVerification( string $key ): string {
-        $raw = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? wp_unslash( $_POST[$key] ) : null );
         if ( ! is_string( $raw ) ) { return ''; }
         $raw = trim( $raw );
         if ( '' === $raw ) { return ''; }
@@ -2296,7 +2296,7 @@ untimeException $error ) {
     }
 
     private function postedRssTemplate( string $key ): string {
-        $raw = filter_input( INPUT_POST, $key, FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ) ) );
+        $raw = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( isset( $_POST[$key] ) && is_string( $_POST[$key] ) ? wp_unslash( $_POST[$key] ) : null );
         if ( ! is_string( $raw ) ) { return ''; }
         return trim( wp_kses_post( $raw ) );
     }
