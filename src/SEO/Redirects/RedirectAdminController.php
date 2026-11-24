@@ -93,11 +93,16 @@ final class RedirectAdminController {
         check_admin_referer( 'yseo_redirect_bulk' );
         $action = sanitize_key( (string) ( isset( $_POST['bulk_action'] ) && is_string( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : null ) );
         // Each submitted rule ID is sanitized before any mutation.
-        $rawIds = filter_input( INPUT_POST, 'yseo_ids', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => 'absint',
-        ) );
-        $ids = is_array( $rawIds ) ? array_slice( array_values( array_unique( array_filter( $rawIds ) ) ), 0, 100 ) : array();
+        $ids = array();
+        if ( isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ) {
+            foreach ( $_POST['yseo_ids'] as $rawId ) {
+                if ( ! is_string( $rawId ) ) { continue; }
+                $id = absint( wp_unslash( $rawId ) );
+                if ( $id > 0 ) { $ids[ $id ] = $id; }
+                if ( count( $ids ) >= 100 ) { break; }
+            }
+        }
+        $ids = array_values( $ids );
         if ( empty( $ids ) || ! in_array( $action, array( 'enable', 'disable', 'delete' ), true ) ) { $this->backToReferer( 'bulk-none' ); }
         $count = 0;
         foreach ( $ids as $id ) {
