@@ -29,6 +29,10 @@ final class BackupArtifactWriter {
             throw new \RuntimeException( 'Unable to open a backup artifact for writing.' );
         }
         try {
+            // A newly created artifact must be owner-only before any write.
+            @chmod( $path, 0600 );
+            clearstatcache( true, $path );
+            ( new PrivateBackupPath() )->assertPrivateFile( $path );
             if ( ! flock( $handle, LOCK_EX ) ) {
                 throw new \RuntimeException( 'Unable to lock a backup artifact.' );
             }
@@ -76,6 +80,9 @@ final class BackupArtifactWriter {
             throw new \RuntimeException( 'Unable to create an atomic manifest temporary file.' );
         }
         try {
+            @chmod( $temporary, 0600 );
+            clearstatcache( true, $temporary );
+            ( new PrivateBackupPath() )->assertPrivateFile( $temporary );
             if ( strlen( $json ) !== fwrite( $handle, $json ) ) {
                 throw new \RuntimeException( 'Unable to write the complete backup manifest.' );
             }
@@ -83,9 +90,12 @@ final class BackupArtifactWriter {
             if ( function_exists( 'fsync' ) ) {
                 @fsync( $handle );
             }
-        } finally {
+        } catch ( \Throwable $error ) {
             fclose( $handle );
+            @unlink( $temporary );
+            throw $error;
         }
+        fclose( $handle );
         @chmod( $temporary, 0600 );
         if ( ! @rename( $temporary, $path ) ) {
             @unlink( $temporary );
