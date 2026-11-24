@@ -890,11 +890,20 @@ echo esc_html( $meta ? $meta->title : '' );</code></pre></article>
         );
         // Preserve percent-encoded image URLs until the field-specific
         // SocialTemplateResolver sanitizer validates every nested key/value.
-        $rawSocialTemplates = filter_input( INPUT_POST, 'social_templates', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'structuredScalar' ),
-        ) );
-        $settings['social_templates'] = is_array( $rawSocialTemplates ) ? SocialTemplateResolver::sanitize( $rawSocialTemplates ) : array();
+        $rawSocialTemplates = array();
+        foreach ( array( 'singular', 'archive', 'taxonomy', 'special' ) as $group ) {
+            if ( ! isset( $_POST['social_templates'][ $group ] ) || ! is_array( $_POST['social_templates'][ $group ] ) ) { continue; }
+            foreach ( $_POST['social_templates'][ $group ] as $scope => $row ) {
+                $scope = sanitize_key( (string) $scope );
+                if ( '' === $scope || ! is_array( $row ) ) { continue; }
+                foreach ( array( 'og_title', 'og_description', 'og_image', 'twitter_title', 'twitter_description', 'twitter_image' ) as $field ) {
+                    if ( ! isset( $row[ $field ] ) || ! is_string( $row[ $field ] ) ) { continue; }
+                    $value = \Yablonsky\PerformanceSEO\Core\InputValidation::structuredScalar( wp_unslash( $row[ $field ] ) );
+                    if ( is_string( $value ) ) { $rawSocialTemplates[ $group ][ $scope ][ $field ] = $value; }
+                }
+            }
+        }
+        $settings['social_templates'] = SocialTemplateResolver::sanitize( $rawSocialTemplates );
         update_option( self::SETTINGS_OPTION, $settings, false );
 
         $aiSettings = new AiSettings();
