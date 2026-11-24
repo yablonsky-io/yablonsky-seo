@@ -55,11 +55,16 @@ final class InternalLinkAdminController {
         check_admin_referer( 'yseo_internal_links_bulk' );
         $action = sanitize_key( (string) ( isset( $_POST['bulk_action'] ) && is_string( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : null ) );
         // Sanitize every array element before selecting bounded post IDs.
-        $rawIds = filter_input( INPUT_POST, 'yseo_ids', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => 'absint',
-        ) );
-        $ids = is_array( $rawIds ) ? array_slice( array_values( array_unique( array_filter( $rawIds ) ) ), 0, 100 ) : array();
+        $ids = array();
+        if ( isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ) {
+            foreach ( $_POST['yseo_ids'] as $rawId ) {
+                if ( ! is_string( $rawId ) ) { continue; }
+                $id = absint( wp_unslash( $rawId ) );
+                if ( $id > 0 ) { $ids[ $id ] = $id; }
+                if ( count( $ids ) >= 100 ) { break; }
+            }
+        }
+        $ids = array_values( $ids );
         if ( empty( $ids ) || ! in_array( $action, array( 'cornerstone', 'uncornerstone', 'reindex', 'bulk-editor' ), true ) ) { $this->backToReferer( 'bulk-none' ); }
         if ( 'bulk-editor' === $action ) {
             $url = add_query_arg( array( 'page' => 'yablonsky-seo-bulk-editor', 'ids' => implode( ',', $ids ), 'per_page' => max( 25, min( 100, count( $ids ) ) ) ), admin_url( 'admin.php' ) );
