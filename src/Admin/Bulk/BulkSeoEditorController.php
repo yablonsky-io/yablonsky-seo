@@ -295,35 +295,35 @@ final class BulkSeoEditorController {
         if ( ! current_user_can( 'edit_posts' ) ) { wp_die( esc_html__( 'Editing SEO metadata requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::NONCE );
         $perPage = $this->sanitizePerPage( (int) filter_input( INPUT_POST, 'return_per_page', FILTER_VALIDATE_INT ) );
-        // WordPress submits rows as a nested array keyed by post ID.
-        // Check the nonce above, then unslash, bound, validate and sanitize
-        // each expected leaf rather than passing a nested array through
-        // FILTER_CALLBACK (which does not guarantee recursive validation).
-        $postedRows = isset( $_POST['rows'] ) && is_array( $_POST['rows'] )
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nested array is bounded, unslashed, sanitized with map_deep and validated by field/post ID before use.
-            ? map_deep( array_slice( wp_unslash( $_POST['rows'] ), 0, min( self::MAX_ROWS, $perPage ), true ), 'sanitize_text_field' ) : array();
+        // Validate the bounded row shape and sanitize only the expected scalar leaves.
         $rows = array();
-        foreach ( array_slice( $postedRows, 0, min( self::MAX_ROWS, $perPage ), true ) as $id => $row ) {
-            if ( ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_array( $row ) ) { continue; }
-            $clean = array();
-            foreach ( array( 'focus_keyphrase', 'seo_title', 'meta_description' ) as $key ) {
-                $rawValue = $row[ $key ] ?? '';
-                if ( ! is_string( $rawValue ) || strlen( $rawValue ) > 10000 ) { continue; }
-                $clean[ $key ] = sanitize_text_field( $rawValue );
+        if ( isset( $_POST['rows'] ) && is_array( $_POST['rows'] ) ) {
+            $limit = min( self::MAX_ROWS, $perPage );
+            $seen = 0;
+            foreach ( $_POST['rows'] as $id => $row ) {
+                if ( $seen++ >= $limit ) { break; }
+                if ( ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_array( $row ) ) { continue; }
+                $clean = array();
+                foreach ( array( 'focus_keyphrase', 'seo_title', 'meta_description' ) as $key ) {
+                    if ( ! isset( $row[ $key ] ) || ! is_string( $row[ $key ] ) ) { continue; }
+                    $value = sanitize_text_field( wp_unslash( $row[ $key ] ) );
+                    if ( strlen( $value ) <= 10000 ) { $clean[ $key ] = $value; }
+                }
+                $rows[ (int) $id ] = $clean;
             }
-            $rows[ (int) $id ] = $clean;
         }
         $saveScope = sanitize_key( (string) ( isset( $_POST['save_scope'] ) && is_string( $_POST['save_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['save_scope'] ) ) : null ) );
         if ( 'selected' === $saveScope ) {
             // Only bounded positive IDs are accepted from selected rows.
-            $rawSelected = isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] )
-                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nested array is bounded, unslashed, sanitized with map_deep and validated by field/post ID before use.
-                ? map_deep( array_slice( wp_unslash( $_POST['selected_rows'] ), 0, self::MAX_ROWS ), 'sanitize_text_field' ) : array();
             $selected = array();
-            foreach ( array_slice( $rawSelected, 0, self::MAX_ROWS ) as $selectedId ) {
-                if ( ! is_scalar( $selectedId ) || ! ctype_digit( (string) $selectedId ) ) { continue; }
-                $selectedId = absint( $selectedId );
-                if ( $selectedId > 0 ) { $selected[ $selectedId ] = $selectedId; }
+            if ( isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] ) ) {
+                $seen = 0;
+                foreach ( $_POST['selected_rows'] as $rawId ) {
+                    if ( $seen++ >= self::MAX_ROWS ) { break; }
+                    if ( ! is_string( $rawId ) || ! ctype_digit( $rawId ) ) { continue; }
+                    $selectedId = absint( wp_unslash( $rawId ) );
+                    if ( $selectedId > 0 ) { $selected[ $selectedId ] = $selectedId; }
+                }
             }
             $selected = array_values( $selected );
             $allowed = array_fill_keys( $selected, true );
@@ -332,9 +332,9 @@ final class BulkSeoEditorController {
         foreach ( $rows as $id => $row ) {
             $postId = (int) $id;
             if ( $postId <= 0 || ! is_array( $row ) || ! current_user_can( 'edit_post', $postId ) ) { continue; }
-            $this->saveField( $postId, '_yablseo_focus_keyphrase', $row['focus_keyphrase'] ?? '', 200 );
-            $this->saveField( $postId, '_yablseo_seo_title', $row['seo_title'] ?? '', 200 );
-            $this->saveField( $postId, '_yablseo_meta_description', $row['meta_description'] ?? '', 500 );
+            if ( array_key_exists( 'focus_keyphrase', $row ) ) { $this->saveField( $postId, '_yablseo_focus_keyphrase', $row['focus_keyphrase'], 200 ); }
+            if ( array_key_exists( 'seo_title', $row ) ) { $this->saveField( $postId, '_yablseo_seo_title', $row['seo_title'], 200 ); }
+            if ( array_key_exists( 'meta_description', $row ) ) { $this->saveField( $postId, '_yablseo_meta_description', $row['meta_description'], 500 ); }
         }
         $return = add_query_arg( array(
             'page' => self::PAGE,
