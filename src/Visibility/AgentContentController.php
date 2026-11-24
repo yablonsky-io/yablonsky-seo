@@ -562,7 +562,7 @@ final class AgentContentController {
     }
 
     private function relativeRequestPath(): string {
-        $request = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+        $request = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : null );
         if ( ! is_string( $request ) || '' === $request ) { return ''; }
         $path = wp_parse_url( $request, PHP_URL_PATH );
         $path = is_string( $path ) ? $path : '';
