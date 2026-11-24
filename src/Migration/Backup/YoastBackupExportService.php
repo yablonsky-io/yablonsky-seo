@@ -81,6 +81,7 @@ final class YoastBackupExportService {
 
         $anchorId = 'yoast-' . gmdate( 'YmdHis' ) . '-' . substr( str_replace( '-', '', wp_generate_uuid4() ), 0, 12 );
         $path = $this->pathPolicy->createAnchorDirectory( $anchorId );
+        ( new BackupArtifactCipher() )->initialize( $path );
         foreach ( array( 'options.jsonl', 'postmeta.jsonl', 'usermeta.jsonl', 'primary-term.jsonl' ) as $artifact ) {
             $this->writer->writeAt( $path . DIRECTORY_SEPARATOR . $artifact, 0, '' );
         }
@@ -116,6 +117,10 @@ final class YoastBackupExportService {
         }
 
         try {
+            // Never resume writes to a pre-5.87.3 external directory. Its data
+            // and any previously verified anchor remain intact; Start creates
+            // a new protected export if the older job was still incomplete.
+            $this->pathPolicy->assertWritableDirectory( (string) $state->get( 'path' ) );
             switch ( (string) $state->get( 'phase' ) ) {
                 case 'export-options':
                     $next = $this->stepOptions( $state, false );
@@ -455,7 +460,7 @@ final class YoastBackupExportService {
         }
 
         $path = (string) $state->get( 'path' );
-        $this->pathPolicy->assertPrivateDirectory( $path );
+        $this->pathPolicy->assertWritableDirectory( $path );
         $artifacts = array();
         foreach ( array( 'options.jsonl', 'postmeta.jsonl', 'usermeta.jsonl', 'primary-term.jsonl' ) as $name ) {
             $artifactPath = $path . DIRECTORY_SEPARATOR . $name;
@@ -470,6 +475,7 @@ final class YoastBackupExportService {
         $completedAt = gmdate( 'c' );
         $manifest = array(
             'schema'                => 'yps.backup-anchor.v1',
+            'storage_format'        => 'encrypted-frames-v2',
             'anchor_id'             => (string) $state->get( 'anchor_id' ),
             'provider'              => 'yoast',
             'provider_version'      => (string) $state->get( 'provider_version' ),
@@ -494,6 +500,7 @@ final class YoastBackupExportService {
         $verifiedAt = gmdate( 'c' );
         $anchor = array(
             'schema'                => 'yps.backup-anchor.v1',
+            'storage_format'        => 'encrypted-frames-v2',
             'anchor_id'             => (string) $state->get( 'anchor_id' ),
             'path'                  => $path,
             'provider'              => 'yoast',
