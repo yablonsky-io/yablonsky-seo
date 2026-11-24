@@ -53,7 +53,7 @@ final class NotFoundAdminController {
         $validator = new RedirectController( $redirectRepository );
         $target = '';
         if ( 'redirect' === $action ) {
-            $targetRaw = trim( (string) filter_input( INPUT_POST, 'bulk_target', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
+            $targetRaw = trim( (string) \Yablonsky\PerformanceSEO\Core\InputValidation::urlOrPattern( isset( $_POST['bulk_target'] ) && is_string( $_POST['bulk_target'] ) ? wp_unslash( $_POST['bulk_target'] ) : null ) );
             $target = $validator->normalizeTarget( $targetRaw );
             if ( '' === $target ) { $this->back( 'bulk-invalid-target' ); }
         }
