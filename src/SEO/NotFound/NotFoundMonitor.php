@@ -25,7 +25,7 @@ final class NotFoundMonitor {
         if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ! is_404() || headers_sent() ) { return; }
         $method = strtoupper( trim( (string) ( isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null ) ) );
         if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) ) { return; }
-        $uri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+        $uri = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : null );
         $path = is_string( $uri ) ? (string) wp_parse_url( $uri, PHP_URL_PATH ) : '';
         if ( '' === $path || $this->ignored( $path ) ) { return; }
         $language = apply_filters( 'yablonsky_seo_request_language_v1', '', $path );
