@@ -124,7 +124,7 @@ final class CrawlOptimizationController {
     }
 
     private function maybeCleanTrackingParameters(): void {
-        $methodRaw = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $methodRaw = ( isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null );
         $method = is_string( $methodRaw ) ? strtoupper( sanitize_key( $methodRaw ) ) : 'GET';
         if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) || is_feed() ) { return; }
         $queryRaw = filter_input( INPUT_SERVER, 'QUERY_STRING', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
