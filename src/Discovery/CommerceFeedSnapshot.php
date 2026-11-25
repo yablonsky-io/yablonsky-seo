@@ -58,9 +58,11 @@ final class CommerceFeedSnapshot {
         $started = microtime( true );
         try {
             if ( ! $this->repository->isReady() ) { $this->appendLog( 'warning', 'publish-skipped', array( 'reason' => 'materialization-not-ready' ) ); return array( 'ok' => false, 'error' => 'materialization-not-ready' ); }
-            $directory = dirname( $this->path() );
+            $path = $this->path();
+            if ( '' === $path ) { throw new \RuntimeException( 'snapshot-uploads-unavailable' ); }
+            $directory = dirname( $path );
             if ( ! wp_mkdir_p( $directory ) ) { throw new \RuntimeException( 'snapshot-directory-unavailable' ); }
-            $temp = $this->path() . '.tmp-' . wp_generate_password( 8, false, false );
+            $temp = $path . '.tmp-' . wp_generate_password( 8, false, false );
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming a potentially large generated XML snapshot avoids loading the entire feed into PHP memory.
             $handle = fopen( $temp, 'wb' );
             if ( false === $handle ) { throw new \RuntimeException( 'snapshot-temp-open-failed' ); }
@@ -75,12 +77,12 @@ final class CommerceFeedSnapshot {
             $validation = $this->validatePath( $temp );
             if ( empty( $validation['ok'] ) ) { wp_delete_file( $temp ); throw new \RuntimeException( 'snapshot-invalid-xml' ); }
             // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Same-filesystem rename provides atomic snapshot publication; WP_Filesystem::move() does not guarantee atomic replacement.
-            if ( ! @rename( $temp, $this->path() ) ) { wp_delete_file( $temp ); throw new \RuntimeException( 'snapshot-atomic-replace-failed' ); }
+            if ( ! @rename( $temp, $path ) ) { wp_delete_file( $temp ); throw new \RuntimeException( 'snapshot-atomic-replace-failed' ); }
             $durationMs = (int) round( ( microtime( true ) - $started ) * 1000 );
             $state = array(
                 'dirty' => false, 'generated_at' => time(), 'duration_ms' => $durationMs,
                 'products' => (int) ( $stats['products'] ?? 0 ), 'bytes' => $bytes,
-                'sha256' => (string) hash_file( 'sha256', $this->path() ), 'revision' => $this->repository->revision(),
+                'sha256' => (string) hash_file( 'sha256', $path ), 'revision' => $this->repository->revision(),
                 'reason' => sanitize_key( $reason ), 'status' => 'ready',
             );
             update_option( self::OPTION_STATE, $state, false );
@@ -100,7 +102,13 @@ final class CommerceFeedSnapshot {
     public function state(): array { $state = get_option( self::OPTION_STATE, array( 'dirty' => true, 'status' => 'pending' ) ); return is_array( $state ) ? $state : array( 'dirty' => true, 'status' => 'pending' ); }
     /** @return array<int,array<string,mixed>> */
     public function logs(): array { $logs = get_option( self::OPTION_LOG, array() ); return is_array( $logs ) ? array_slice( $logs, -self::LOG_LIMIT ) : array(); }
-    public function path(): string { $uploads = wp_upload_dir( null, false ); $base = isset( $uploads['basedir'] ) ? (string) $uploads['basedir'] : WP_CONTENT_DIR . '/uploads'; return trailingslashit( $base ) . 'yablonsky-seo/commerce/' . CommerceFeedController::PATH; }
+    public function path(): string {
+        $uploads = wp_upload_dir( null, false );
+        if ( ! empty( $uploads['error'] ) || ! isset( $uploads['basedir'] ) || ! is_string( $uploads['basedir'] ) || '' === trim( $uploads['basedir'] ) ) {
+            return '';
+        }
+        return trailingslashit( $uploads['basedir'] ) . 'yablonsky-seo/commerce/' . CommerceFeedController::PATH;
+    }
 
     private function ensureReconcileSchedule(): void {
         $wanted = $this->scheduleName( ( new DiscoverySettings() )->commerceRefresh() );

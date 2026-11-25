@@ -53,13 +53,19 @@ final class InternalLinkAdminController {
     public function bulk(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing internal link workflows requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( 'yseo_internal_links_bulk' );
-        $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $action = sanitize_key( (string) ( isset( $_POST['bulk_action'] ) && is_string( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : null ) );
         // Sanitize every array element before selecting bounded post IDs.
-        $rawIds = filter_input( INPUT_POST, 'yseo_ids', FILTER_CALLBACK, array(
-            'flags' => FILTER_REQUIRE_ARRAY,
-            'options' => 'absint',
-        ) );
-        $ids = is_array( $rawIds ) ? array_slice( array_values( array_unique( array_filter( $rawIds ) ) ), 0, 100 ) : array();
+        $ids = array();
+        if ( isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Each scalar rule ID is individually unslashed and converted to a positive integer below.
+            foreach ( $_POST['yseo_ids'] as $rawId ) {
+                if ( ! is_string( $rawId ) ) { continue; }
+                $id = absint( wp_unslash( $rawId ) );
+                if ( $id > 0 ) { $ids[ $id ] = $id; }
+                if ( count( $ids ) >= 100 ) { break; }
+            }
+        }
+        $ids = array_values( $ids );
         if ( empty( $ids ) || ! in_array( $action, array( 'cornerstone', 'uncornerstone', 'reindex', 'bulk-editor' ), true ) ) { $this->backToReferer( 'bulk-none' ); }
         if ( 'bulk-editor' === $action ) {
             $url = add_query_arg( array( 'page' => 'yablonsky-seo-bulk-editor', 'ids' => implode( ',', $ids ), 'per_page' => max( 25, min( 100, count( $ids ) ) ) ), admin_url( 'admin.php' ) );
@@ -78,14 +84,21 @@ final class InternalLinkAdminController {
 
     public function render(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Accessing this page requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
-        $view = sanitize_key( (string) filter_input( INPUT_GET, 'yseo_view', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $view = sanitize_key( (string) ( isset( $_GET['yseo_view'] ) && is_string( $_GET['yseo_view'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_view'] ) ) : null ) );
         if ( ! in_array( $view, array( 'orphaned', 'cornerstone', 'inventory' ), true ) ) { $view = 'orphaned'; }
-        $search = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $postType = sanitize_key( (string) filter_input( INPUT_GET, 'yseo_post_type', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $language = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $dateFrom = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $dateTo = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $sort = sanitize_key( (string) filter_input( INPUT_GET, 'sort', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $search = sanitize_text_field( (string) ( isset( $_GET['yseo_search'] ) && is_string( $_GET['yseo_search'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_search'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $postType = sanitize_key( (string) ( isset( $_GET['yseo_post_type'] ) && is_string( $_GET['yseo_post_type'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_post_type'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $language = sanitize_text_field( (string) ( isset( $_GET['yseo_language'] ) && is_string( $_GET['yseo_language'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_language'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $dateFrom = sanitize_text_field( (string) ( isset( $_GET['date_from'] ) && is_string( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $dateTo = sanitize_text_field( (string) ( isset( $_GET['date_to'] ) && is_string( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $sort = sanitize_key( (string) ( isset( $_GET['sort'] ) && is_string( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : null ) );
         if ( ! in_array( $sort, array( 'modified_desc', 'modified_asc', 'title_asc', 'title_desc' ), true ) ) { $sort = 'cornerstone' === $view ? 'modified_asc' : 'modified_desc'; }
         $perPage = (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT );
         if ( ! in_array( $perPage, self::PER_PAGE_OPTIONS, true ) ) { $perPage = self::PER_PAGE; }
@@ -105,7 +118,8 @@ final class InternalLinkAdminController {
         ?>
         <div class="wrap yps-wrap yps-product-shell yseo-internal-links">
             <header class="yps-product-header"><div class="yps-product-title"><h1><?php echo esc_html__( 'Internal Linking', 'yablonsky-seo' ); ?></h1><p><?php echo esc_html__( 'Local link evidence, inbound/outbound counters, orphaned-content discovery and contextual suggestions using on-site analysis.', 'yablonsky-seo' ); ?></p></div><div class="yps-product-actions"><a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo' ) ); ?>"><?php echo esc_html__( 'Dashboard', 'yablonsky-seo' ); ?></a><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=yseo_internal_links_rebuild' ), 'yseo_internal_links_rebuild' ) ); ?>"><?php echo esc_html__( 'Rebuild link index', 'yablonsky-seo' ); ?></a></div></header>
-            <?php $notice = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_notice', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ); if ( '' !== $notice ) : ?><div class="notice notice-success inline"><p><?php echo esc_html( $this->noticeText( $notice ) ); ?></p></div><?php endif; ?>
+            <?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+            $notice = sanitize_text_field( (string) ( isset( $_GET['yseo_notice'] ) && is_string( $_GET['yseo_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_notice'] ) ) : null ) ); if ( '' !== $notice ) : ?><div class="notice notice-success inline"><p><?php echo esc_html( $this->noticeText( $notice ) ); ?></p></div><?php endif; ?>
             <div class="yps-kpi-grid yseo-kpi-grid-five">
                 <?php $this->kpi( __( 'Indexed resources', 'yablonsky-seo' ), $diag['indexed_sources'] . ' / ' . $diag['eligible_sources'], __( 'Local saved-content index', 'yablonsky-seo' ) ); ?>
                 <?php $this->kpi( __( 'Internal links', 'yablonsky-seo' ), (string) $diag['link_occurrences'], __( 'Observed link occurrences', 'yablonsky-seo' ) ); ?>

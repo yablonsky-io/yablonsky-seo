@@ -89,15 +89,20 @@ final class BulkSeoEditorController {
     public function render(): void {
         if ( ! current_user_can( 'edit_posts' ) ) { wp_die( esc_html__( 'Editing SEO metadata requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         $pageNumber = max( 1, (int) filter_input( INPUT_GET, 'paged', FILTER_VALIDATE_INT ) );
-        $postType = sanitize_key( (string) filter_input( INPUT_GET, 'post_type_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $postStatus = sanitize_key( (string) filter_input( INPUT_GET, 'post_status_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $search = sanitize_text_field( (string) filter_input( INPUT_GET, 's', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $languageFilter = sanitize_text_field( (string) filter_input( INPUT_GET, 'language_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $postType = sanitize_key( (string) ( isset( $_GET['post_type_filter'] ) && is_string( $_GET['post_type_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['post_type_filter'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $postStatus = sanitize_key( (string) ( isset( $_GET['post_status_filter'] ) && is_string( $_GET['post_status_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['post_status_filter'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $search = sanitize_text_field( (string) ( isset( $_GET['s'] ) && is_string( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $languageFilter = sanitize_text_field( (string) ( isset( $_GET['language_filter'] ) && is_string( $_GET['language_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['language_filter'] ) ) : null ) );
         $languageIndex = new ResourceLanguageIndex();
         $languageCatalog = $languageIndex->catalog( true );
         if ( '' !== $languageFilter && ! isset( $languageCatalog[ $languageFilter ] ) ) { $languageFilter = ''; }
         $perPage = $this->sanitizePerPage( (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT ) );
-        $idsRaw = sanitize_text_field( (string) filter_input( INPUT_GET, 'ids', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $idsRaw = sanitize_text_field( (string) ( isset( $_GET['ids'] ) && is_string( $_GET['ids'] ) ? sanitize_text_field( wp_unslash( $_GET['ids'] ) ) : null ) );
         $selectedIds = array_slice( array_values( array_unique( array_filter( array_map( 'intval', explode( ',', $idsRaw ) ) ) ) ), 0, self::MAX_ROWS );
 
         $publicTypes = get_post_types( array( 'public' => true ), 'objects' );
@@ -137,7 +142,8 @@ final class BulkSeoEditorController {
                 <div class="yps-product-actions"><a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=yablonsky-seo' ) ); ?>"><?php echo esc_html__( 'Dashboard', 'yablonsky-seo' ); ?></a></div>
             </header>
 
-            <?php if ( '1' === sanitize_text_field( (string) filter_input( INPUT_GET, 'updated', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ) : ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'SEO metadata for this page was saved.', 'yablonsky-seo' ); ?></p></div><?php endif; ?>
+            <?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+            if ( '1' === sanitize_text_field( (string) ( isset( $_GET['updated'] ) && is_string( $_GET['updated'] ) ? sanitize_text_field( wp_unslash( $_GET['updated'] ) ) : null ) ) ) : ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html__( 'SEO metadata for this page was saved.', 'yablonsky-seo' ); ?></p></div><?php endif; ?>
 
             <section class="yseo-bulk-toolbar-card" aria-label="<?php echo esc_attr__( 'Bulk editor filters', 'yablonsky-seo' ); ?>">
                 <form method="get" class="yseo-bulk-filter-form">
@@ -236,9 +242,9 @@ final class BulkSeoEditorController {
         if ( ! current_user_can( 'edit_posts' ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Requesting bulk AI drafts requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $idsInput = filter_input( INPUT_POST, 'post_ids', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $idsInput = ( isset( $_POST['post_ids'] ) && is_string( $_POST['post_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['post_ids'] ) ) : null );
         $ids = is_string( $idsInput ) ? array_slice( array_values( array_unique( array_filter( array_map( 'absint', explode( ',', $idsInput ) ) ) ) ), 0, 5 ) : array();
-        $fieldsInput = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $fieldsInput = ( isset( $_POST['fields'] ) && is_string( $_POST['fields'] ) ? sanitize_text_field( wp_unslash( $_POST['fields'] ) ) : null );
         $requested = $this->sanitizeAiFields( is_string( $fieldsInput ) ? explode( ',', $fieldsInput ) : array() );
         $editable = array();
         foreach ( $ids as $postId ) { if ( current_user_can( 'edit_post', $postId ) ) { $editable[] = $postId; } }
@@ -267,9 +273,9 @@ final class BulkSeoEditorController {
         if ( $postId <= 0 || ! current_user_can( 'edit_post', $postId ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Editing this content requires the corresponding WordPress capability.', 'yablonsky-seo' ) ), 403 );
         }
-        $fieldInput = filter_input( INPUT_POST, 'field', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $fieldInput = ( isset( $_POST['field'] ) && is_string( $_POST['field'] ) ? sanitize_text_field( wp_unslash( $_POST['field'] ) ) : null );
         $field = is_string( $fieldInput ) ? sanitize_key( $fieldInput ) : '';
-        $fieldsInput = filter_input( INPUT_POST, 'fields', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $fieldsInput = ( isset( $_POST['fields'] ) && is_string( $_POST['fields'] ) ? sanitize_text_field( wp_unslash( $_POST['fields'] ) ) : null );
         $requested = in_array( $field, array( 'focus_keyphrase', 'seo_title', 'meta_description' ), true )
             ? array( $field )
             : $this->sanitizeAiFields( is_string( $fieldsInput ) ? explode( ',', $fieldsInput ) : array() );
@@ -295,35 +301,37 @@ final class BulkSeoEditorController {
         if ( ! current_user_can( 'edit_posts' ) ) { wp_die( esc_html__( 'Editing SEO metadata requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( self::NONCE );
         $perPage = $this->sanitizePerPage( (int) filter_input( INPUT_POST, 'return_per_page', FILTER_VALIDATE_INT ) );
-        // WordPress submits rows as a nested array keyed by post ID.
-        // Check the nonce above, then unslash, bound, validate and sanitize
-        // each expected leaf rather than passing a nested array through
-        // FILTER_CALLBACK (which does not guarantee recursive validation).
-        $postedRows = isset( $_POST['rows'] ) && is_array( $_POST['rows'] )
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nested array is bounded, unslashed, sanitized with map_deep and validated by field/post ID before use.
-            ? map_deep( array_slice( wp_unslash( $_POST['rows'] ), 0, min( self::MAX_ROWS, $perPage ), true ), 'sanitize_text_field' ) : array();
+        // Validate the bounded row shape and sanitize only the expected scalar leaves.
         $rows = array();
-        foreach ( array_slice( $postedRows, 0, min( self::MAX_ROWS, $perPage ), true ) as $id => $row ) {
-            if ( ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_array( $row ) ) { continue; }
-            $clean = array();
-            foreach ( array( 'focus_keyphrase', 'seo_title', 'meta_description' ) as $key ) {
-                $rawValue = $row[ $key ] ?? '';
-                if ( ! is_string( $rawValue ) || strlen( $rawValue ) > 10000 ) { continue; }
-                $clean[ $key ] = sanitize_text_field( $rawValue );
+        if ( isset( $_POST['rows'] ) && is_array( $_POST['rows'] ) ) {
+            $limit = min( self::MAX_ROWS, $perPage );
+            $seen = 0;
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Bounded row shape and positive IDs are validated; only allowlisted scalar leaves are individually unslashed and sanitized below.
+            foreach ( $_POST['rows'] as $id => $row ) {
+                if ( $seen++ >= $limit ) { break; }
+                if ( ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_array( $row ) ) { continue; }
+                $clean = array();
+                foreach ( array( 'focus_keyphrase', 'seo_title', 'meta_description' ) as $key ) {
+                    if ( ! isset( $row[ $key ] ) || ! is_string( $row[ $key ] ) ) { continue; }
+                    $value = sanitize_text_field( wp_unslash( $row[ $key ] ) );
+                    if ( strlen( $value ) <= 10000 ) { $clean[ $key ] = $value; }
+                }
+                $rows[ (int) $id ] = $clean;
             }
-            $rows[ (int) $id ] = $clean;
         }
-        $saveScope = sanitize_key( (string) filter_input( INPUT_POST, 'save_scope', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $saveScope = sanitize_key( (string) ( isset( $_POST['save_scope'] ) && is_string( $_POST['save_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['save_scope'] ) ) : null ) );
         if ( 'selected' === $saveScope ) {
             // Only bounded positive IDs are accepted from selected rows.
-            $rawSelected = isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] )
-                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nested array is bounded, unslashed, sanitized with map_deep and validated by field/post ID before use.
-                ? map_deep( array_slice( wp_unslash( $_POST['selected_rows'] ), 0, self::MAX_ROWS ), 'sanitize_text_field' ) : array();
             $selected = array();
-            foreach ( array_slice( $rawSelected, 0, self::MAX_ROWS ) as $selectedId ) {
-                if ( ! is_scalar( $selectedId ) || ! ctype_digit( (string) $selectedId ) ) { continue; }
-                $selectedId = absint( $selectedId );
-                if ( $selectedId > 0 ) { $selected[ $selectedId ] = $selectedId; }
+            if ( isset( $_POST['selected_rows'] ) && is_array( $_POST['selected_rows'] ) ) {
+                $seen = 0;
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Bounded positive scalar IDs are individually unslashed and converted to integers below.
+                foreach ( $_POST['selected_rows'] as $rawId ) {
+                    if ( $seen++ >= self::MAX_ROWS ) { break; }
+                    if ( ! is_string( $rawId ) || ! ctype_digit( $rawId ) ) { continue; }
+                    $selectedId = absint( wp_unslash( $rawId ) );
+                    if ( $selectedId > 0 ) { $selected[ $selectedId ] = $selectedId; }
+                }
             }
             $selected = array_values( $selected );
             $allowed = array_fill_keys( $selected, true );
@@ -332,16 +340,16 @@ final class BulkSeoEditorController {
         foreach ( $rows as $id => $row ) {
             $postId = (int) $id;
             if ( $postId <= 0 || ! is_array( $row ) || ! current_user_can( 'edit_post', $postId ) ) { continue; }
-            $this->saveField( $postId, '_yablseo_focus_keyphrase', $row['focus_keyphrase'] ?? '', 200 );
-            $this->saveField( $postId, '_yablseo_seo_title', $row['seo_title'] ?? '', 200 );
-            $this->saveField( $postId, '_yablseo_meta_description', $row['meta_description'] ?? '', 500 );
+            if ( array_key_exists( 'focus_keyphrase', $row ) ) { $this->saveField( $postId, '_yablseo_focus_keyphrase', $row['focus_keyphrase'], 200 ); }
+            if ( array_key_exists( 'seo_title', $row ) ) { $this->saveField( $postId, '_yablseo_seo_title', $row['seo_title'], 200 ); }
+            if ( array_key_exists( 'meta_description', $row ) ) { $this->saveField( $postId, '_yablseo_meta_description', $row['meta_description'], 500 ); }
         }
         $return = add_query_arg( array(
             'page' => self::PAGE,
-            'post_type_filter' => sanitize_key( (string) filter_input( INPUT_POST, 'return_post_type', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-            'post_status_filter' => sanitize_key( (string) filter_input( INPUT_POST, 'return_post_status', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-            'language_filter' => sanitize_text_field( (string) filter_input( INPUT_POST, 'return_language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
-            's' => sanitize_text_field( (string) filter_input( INPUT_POST, 'return_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ),
+            'post_type_filter' => sanitize_key( (string) ( isset( $_POST['return_post_type'] ) && is_string( $_POST['return_post_type'] ) ? sanitize_text_field( wp_unslash( $_POST['return_post_type'] ) ) : null ) ),
+            'post_status_filter' => sanitize_key( (string) ( isset( $_POST['return_post_status'] ) && is_string( $_POST['return_post_status'] ) ? sanitize_text_field( wp_unslash( $_POST['return_post_status'] ) ) : null ) ),
+            'language_filter' => sanitize_text_field( (string) ( isset( $_POST['return_language'] ) && is_string( $_POST['return_language'] ) ? sanitize_text_field( wp_unslash( $_POST['return_language'] ) ) : null ) ),
+            's' => sanitize_text_field( (string) ( isset( $_POST['return_search'] ) && is_string( $_POST['return_search'] ) ? sanitize_text_field( wp_unslash( $_POST['return_search'] ) ) : null ) ),
             'paged' => max( 1, (int) filter_input( INPUT_POST, 'return_paged', FILTER_VALIDATE_INT ) ),
             'per_page' => $perPage,
             'updated' => 1,

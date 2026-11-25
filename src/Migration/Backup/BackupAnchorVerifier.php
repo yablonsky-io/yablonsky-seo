@@ -50,17 +50,21 @@ final class BackupAnchorVerifier {
         }
         $policy = new PrivateBackupPath();
         $policy->assertPrivateDirectory( $path );
+        $legacy = $policy->isLegacyDirectory( $path );
+        $cipher = new BackupArtifactCipher();
+        if ( ! $legacy && 'encrypted-frames-v2' !== ( $anchor['storage_format'] ?? '' ) ) { throw new \RuntimeException( 'backup-storage-format-invalid' ); }
         $manifestPath = rtrim( $path, '/\\' ) . DIRECTORY_SEPARATOR . 'manifest.json';
         $policy->assertPrivateFile( $manifestPath );
         $actualManifestSha = hash_file( 'sha256', $manifestPath );
         if ( ! is_string( $actualManifestSha ) || ! hash_equals( $manifestSha, $actualManifestSha ) ) {
             throw new \RuntimeException( 'Backup manifest hash mismatch.' );
         }
-        $raw = file_get_contents( $manifestPath );
+        $raw = $legacy ? file_get_contents( $manifestPath ) : $cipher->read( $manifestPath, true );
         $manifest = is_string( $raw ) ? json_decode( $raw, true ) : null;
         if ( ! is_array( $manifest ) || ! isset( $manifest['artifacts'] ) || ! is_array( $manifest['artifacts'] ) ) {
             throw new \RuntimeException( 'Backup manifest is invalid.' );
         }
+        if ( ! $legacy && 'encrypted-frames-v2' !== ( $manifest['storage_format'] ?? '' ) ) { throw new \RuntimeException( 'backup-manifest-storage-format-invalid' ); }
         foreach ( $manifest['artifacts'] as $artifact ) {
             if ( ! is_array( $artifact ) ) {
                 throw new \RuntimeException( 'Backup manifest contains an invalid artifact record.' );
@@ -71,6 +75,7 @@ final class BackupAnchorVerifier {
             }
             $artifactPath = rtrim( $path, '/\\' ) . DIRECTORY_SEPARATOR . $name;
             $policy->assertPrivateFile( $artifactPath );
+            if ( ! $legacy ) { $cipher->read( $artifactPath ); }
             $bytes = filesize( $artifactPath );
             $sha = hash_file( 'sha256', $artifactPath );
             if ( false === $bytes || (int) ( $artifact['bytes'] ?? -1 ) !== (int) $bytes ) {

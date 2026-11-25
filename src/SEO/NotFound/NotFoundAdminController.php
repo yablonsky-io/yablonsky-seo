@@ -33,7 +33,7 @@ final class NotFoundAdminController {
     public function bulkAction(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Managing the 404 monitor requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
         check_admin_referer( 'yseo_404_bulk' );
-        $action = sanitize_key( (string) filter_input( INPUT_POST, 'bulk_action', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        $action = sanitize_key( (string) ( isset( $_POST['bulk_action'] ) && is_string( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : null ) );
         $rawIds = isset( $_POST['yseo_ids'] ) && is_array( $_POST['yseo_ids'] ) ? map_deep( wp_unslash( $_POST['yseo_ids'] ), 'sanitize_text_field' ) : array();
         $unique = array();
         foreach ( array_slice( $rawIds, 0, 100 ) as $rawId ) {
@@ -53,7 +53,8 @@ final class NotFoundAdminController {
         $validator = new RedirectController( $redirectRepository );
         $target = '';
         if ( 'redirect' === $action ) {
-            $targetRaw = trim( (string) filter_input( INPUT_POST, 'bulk_target', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'urlOrPattern' ) ) ) );
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Bounded input preserves URL syntax; the redirect validator normalizes the destination before storage.
+            $targetRaw = trim( (string) \Yablonsky\PerformanceSEO\Core\InputValidation::urlOrPattern( isset( $_POST['bulk_target'] ) && is_string( $_POST['bulk_target'] ) ? wp_unslash( $_POST['bulk_target'] ) : null ) );
             $target = $validator->normalizeTarget( $targetRaw );
             if ( '' === $target ) { $this->back( 'bulk-invalid-target' ); }
         }
@@ -111,13 +112,19 @@ final class NotFoundAdminController {
 
     public function render(): void {
         if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Accessing this page requires the corresponding WordPress capability.', 'yablonsky-seo' ) ); }
-        $search = trim( sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_search', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) );
-        $language = strtolower( str_replace( '_', '-', sanitize_text_field( (string) filter_input( INPUT_GET, 'language', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) ) );
-        $dateFrom = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_from', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $dateTo = sanitize_text_field( (string) filter_input( INPUT_GET, 'date_to', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $search = trim( sanitize_text_field( (string) ( isset( $_GET['yseo_search'] ) && is_string( $_GET['yseo_search'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_search'] ) ) : null ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $language = strtolower( str_replace( '_', '-', sanitize_text_field( (string) ( isset( $_GET['language'] ) && is_string( $_GET['language'] ) ? sanitize_text_field( wp_unslash( $_GET['language'] ) ) : null ) ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $dateFrom = sanitize_text_field( (string) ( isset( $_GET['date_from'] ) && is_string( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $dateTo = sanitize_text_field( (string) ( isset( $_GET['date_to'] ) && is_string( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : null ) );
         $minHits = max( 0, (int) filter_input( INPUT_GET, 'min_hits', FILTER_VALIDATE_INT ) );
-        $sort = sanitize_key( (string) filter_input( INPUT_GET, 'sort', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
-        $signal = sanitize_key( (string) filter_input( INPUT_GET, 'signal', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $sort = sanitize_key( (string) ( isset( $_GET['sort'] ) && is_string( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : null ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $signal = sanitize_key( (string) ( isset( $_GET['signal'] ) && is_string( $_GET['signal'] ) ? sanitize_text_field( wp_unslash( $_GET['signal'] ) ) : null ) );
         if ( '' === $signal ) { $signal = 'seo'; }
         $perPage = (int) filter_input( INPUT_GET, 'per_page', FILTER_VALIDATE_INT );
         if ( ! in_array( $perPage, array( 25, 50, 100 ), true ) ) { $perPage = 25; }
@@ -139,7 +146,8 @@ final class NotFoundAdminController {
         }
         $securityBridge = NotFoundSecurityBridge::status();
         $securityPlugin = NotFoundSecurityBridge::yablonskySecurityPluginState();
-        $notice = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_notice', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $notice = sanitize_text_field( (string) ( isset( $_GET['yseo_notice'] ) && is_string( $_GET['yseo_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_notice'] ) ) : null ) );
         $exportUrl = wp_nonce_url( admin_url( 'admin-post.php?action=yseo_404_export' ), 'yseo_404_export' );
         $cleanupUrl = wp_nonce_url( admin_url( 'admin-post.php?action=yseo_404_cleanup_noise' ), 'yseo_404_cleanup_noise' );
         $maintenanceUrl = wp_nonce_url( admin_url( 'admin-post.php?action=yseo_404_run_maintenance' ), 'yseo_404_run_maintenance' );

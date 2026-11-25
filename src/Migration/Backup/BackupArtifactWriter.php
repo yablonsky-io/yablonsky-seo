@@ -16,7 +16,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class BackupArtifactWriter {
     public function writeAt( string $path, int $offset, string $payload ): int {
+        ( new PrivateBackupPath() )->assertWritePath( $path );
         $offset = max( 0, $offset );
+        $payload = ( new BackupArtifactCipher() )->encrypt( $path, $offset, $payload );
         $directory = dirname( $path );
         if ( ! is_dir( $directory ) || is_link( $directory ) ) {
             throw new \RuntimeException( 'Backup artifact directory is unavailable.' );
@@ -27,9 +29,15 @@ final class BackupArtifactWriter {
             throw new \RuntimeException( 'Unable to open a backup artifact for writing.' );
         }
         try {
+            // A newly created artifact must be owner-only before any write.
+            @chmod( $path, 0600 );
+            clearstatcache( true, $path );
+            ( new PrivateBackupPath() )->assertPrivateFile( $path );
             if ( ! flock( $handle, LOCK_EX ) ) {
                 throw new \RuntimeException( 'Unable to lock a backup artifact.' );
             }
+            $stat = fstat( $handle );
+            if ( false === $stat || (int) $stat['size'] < $offset ) { throw new \RuntimeException( 'backup-persisted-offset-missing' ); }
             if ( 0 !== fseek( $handle, $offset, SEEK_SET ) ) {
                 throw new \RuntimeException( 'Unable to seek to the persisted backup offset.' );
             }
@@ -60,17 +68,21 @@ final class BackupArtifactWriter {
 
     /** @param array<string,mixed> $data */
     public function writeAtomicJson( string $path, array $data ): string {
+        ( new PrivateBackupPath() )->assertWritePath( $path );
         $json = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
         if ( ! is_string( $json ) ) {
             throw new \RuntimeException( 'Unable to encode the backup manifest.' );
         }
-        $json .= "\n";
+        $json = ( new BackupArtifactCipher() )->encrypt( $path, 0, $json . "\n" );
         $temporary = $path . '.tmp-' . wp_generate_uuid4();
         $handle = @fopen( $temporary, 'xb' );
         if ( false === $handle ) {
             throw new \RuntimeException( 'Unable to create an atomic manifest temporary file.' );
         }
         try {
+            @chmod( $temporary, 0600 );
+            clearstatcache( true, $temporary );
+            ( new PrivateBackupPath() )->assertPrivateFile( $temporary );
             if ( strlen( $json ) !== fwrite( $handle, $json ) ) {
                 throw new \RuntimeException( 'Unable to write the complete backup manifest.' );
             }
@@ -78,9 +90,12 @@ final class BackupArtifactWriter {
             if ( function_exists( 'fsync' ) ) {
                 @fsync( $handle );
             }
-        } finally {
+        } catch ( \Throwable $error ) {
             fclose( $handle );
+            @unlink( $temporary );
+            throw $error;
         }
+        fclose( $handle );
         @chmod( $temporary, 0600 );
         if ( ! @rename( $temporary, $path ) ) {
             @unlink( $temporary );

@@ -98,7 +98,8 @@ final class ContentListSignalsController {
         if ( $this->hasMultilingualOwner() ) { return; }
         $object = get_post_type_object( $postType );
         if ( ! $object || empty( $object->public ) ) { return; }
-        $selected = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $selected = sanitize_text_field( (string) ( isset( $_GET['yseo_language_filter'] ) && is_string( $_GET['yseo_language_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_language_filter'] ) ) : null ) );
         $index = new ResourceLanguageIndex();
         echo '<select name="yseo_language_filter" aria-label="' . esc_attr__( 'Content language', 'yablonsky-seo' ) . '" data-yps-search-select data-yps-search-placeholder="' . esc_attr__( 'Search languages…', 'yablonsky-seo' ) . '">';
         echo '<option value="">' . esc_html__( 'All content languages', 'yablonsky-seo' ) . '</option>';
@@ -110,7 +111,8 @@ final class ContentListSignalsController {
 
     public function applyLanguageFilter( \WP_Query $query ): void {
         if ( ! is_admin() || ! $query->is_main_query() ) { return; }
-        $language = sanitize_text_field( (string) filter_input( INPUT_GET, 'yseo_language_filter', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin navigation, filter or display state; no privileged mutation is authorized by this value.
+        $language = sanitize_text_field( (string) ( isset( $_GET['yseo_language_filter'] ) && is_string( $_GET['yseo_language_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['yseo_language_filter'] ) ) : null ) );
         if ( '' === $language ) { return; }
         $catalog = ( new ResourceLanguageIndex() )->catalog( true );
         if ( ! isset( $catalog[ $language ] ) ) { return; }

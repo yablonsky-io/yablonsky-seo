@@ -87,7 +87,8 @@ final class CrawlOptimizationController {
         if ( $this->enabled( 'crawl_search_filter_spam' ) && preg_match( '/(?:TALK\s*:|QQ\s*:|[：（）〖〗［］])/iu', $query ) ) { $this->rejectSearch(); }
         if ( $this->enabled( 'crawl_search_filter_special' ) && '' !== $query && ! preg_match( '/[\p{L}\p{N}]/u', $query ) ) { $this->rejectSearch(); }
         if ( $this->enabled( 'crawl_search_redirect_pretty' ) ) {
-            $requestUriRaw = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Bounded request target is sanitized and parsed for search route matching.
+            $requestUriRaw = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : null );
             $requestUri = is_string( $requestUriRaw ) ? sanitize_text_field( wp_unslash( $requestUriRaw ) ) : '';
             $requestPath = trim( (string) wp_parse_url( $requestUri, PHP_URL_PATH ), '/' );
             if ( 0 === strpos( $requestPath . '/', 'search/' ) ) {
@@ -124,10 +125,11 @@ final class CrawlOptimizationController {
     }
 
     private function maybeCleanTrackingParameters(): void {
-        $methodRaw = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $methodRaw = ( isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null );
         $method = is_string( $methodRaw ) ? strtoupper( sanitize_key( $methodRaw ) ) : 'GET';
         if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) || is_feed() ) { return; }
-        $queryRaw = filter_input( INPUT_SERVER, 'QUERY_STRING', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Bounded query string is parsed; tracking keys are removed and remaining values sanitized before safe redirect.
+        $queryRaw = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_SERVER['QUERY_STRING'] ) && is_string( $_SERVER['QUERY_STRING'] ) ? wp_unslash( $_SERVER['QUERY_STRING'] ) : null );
         if ( ! is_string( $queryRaw ) || '' === $queryRaw ) { return; }
         $args = array();
         parse_str( $queryRaw, $args );
@@ -141,7 +143,8 @@ final class CrawlOptimizationController {
             }
         }
         if ( ! $changed ) { return; }
-        $requestUriRaw = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Bounded request target is parsed for a same-site safe redirect.
+        $requestUriRaw = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : null );
         $requestUri = is_string( $requestUriRaw ) ? wp_unslash( $requestUriRaw ) : '/';
         $path = (string) wp_parse_url( $requestUri, PHP_URL_PATH );
         if ( '' === $path ) { $path = '/'; }

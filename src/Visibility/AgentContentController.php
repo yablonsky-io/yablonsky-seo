@@ -546,9 +546,9 @@ final class AgentContentController {
     }
 
     private function notModified( string $etag, int $mtime ): bool {
-        $ifNoneMatch = filter_input( INPUT_SERVER, 'HTTP_IF_NONE_MATCH', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $ifNoneMatch = ( isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) && is_string( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : null );
         if ( is_string( $ifNoneMatch ) && '' !== trim( $ifNoneMatch ) && trim( $ifNoneMatch ) === $etag ) { return true; }
-        $ifModifiedSince = filter_input( INPUT_SERVER, 'HTTP_IF_MODIFIED_SINCE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $ifModifiedSince = ( isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) && is_string( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : null );
         if ( is_string( $ifModifiedSince ) && '' !== trim( $ifModifiedSince ) ) {
             $since = strtotime( $ifModifiedSince );
             if ( false !== $since && $since >= $mtime ) { return true; }
@@ -557,12 +557,13 @@ final class AgentContentController {
     }
 
     private function requestMethod(): string {
-        $method = filter_input( INPUT_SERVER, 'REQUEST_METHOD', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+        $method = ( isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null );
         return is_string( $method ) ? strtoupper( sanitize_text_field( $method ) ) : '';
     }
 
     private function relativeRequestPath(): string {
-        $request = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_CALLBACK, array( 'options' => array( \Yablonsky\PerformanceSEO\Core\InputValidation::class, 'requestTarget' ) ) );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Bounded request target preserves encoded bytes; URL path is parsed for route matching.
+        $request = \Yablonsky\PerformanceSEO\Core\InputValidation::requestTarget( isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : null );
         if ( ! is_string( $request ) || '' === $request ) { return ''; }
         $path = wp_parse_url( $request, PHP_URL_PATH );
         $path = is_string( $path ) ? $path : '';
